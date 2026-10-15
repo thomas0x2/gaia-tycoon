@@ -65,6 +65,44 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .ctrl .sep{width:1px;align-self:stretch;background:var(--line);margin:4px 4px}
 
 /* Charter (objectives) */
+/* rarity */
+.rtag{display:inline-block;vertical-align:1px;margin-left:4px;padding:0 6px;border:1px solid var(--rc);border-radius:999px;color:var(--rc);font:600 9.5px/15px var(--mono);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.gtags .rtag{margin-left:0;font-size:10.5px;line-height:20px;padding:0 9px}
+.wnode[style*="--rc"]{box-shadow:inset 3px 0 0 var(--rc)}
+/* the reveal */
+#reveal{position:fixed;inset:0;z-index:90;display:grid;place-items:center;pointer-events:none;overflow:hidden}
+#reveal[hidden]{display:none}
+.rv::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(10,16,12,.55),rgba(10,16,12,.15) 60%,transparent 80%);opacity:0;transition:opacity .35s}
+.rv.in::before{opacity:1}
+.rv-rays{position:absolute;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;border-radius:50%;opacity:0;
+  background:repeating-conic-gradient(from 0deg,var(--rc) 0deg 5deg,transparent 5deg 15deg);
+  -webkit-mask:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 12%,transparent 42%);mask:radial-gradient(circle,#000 0,rgba(0,0,0,.6) 12%,transparent 42%);animation:rvspin 14s linear infinite;transition:opacity .5s}
+.rv.in .rv-rays{opacity:.22}.rv.r3.in .rv-rays{opacity:.3}.rv.r4.in .rv-rays{opacity:.42;animation-duration:9s}
+.rv-sparks{position:absolute;left:50%;top:46%;width:0;height:0}
+.rv-sparks i{position:absolute;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:var(--rc);box-shadow:0 0 10px var(--rc);opacity:0;transform:scale(var(--s))}
+.rv.in .rv-sparks i{animation:rvspark 1.3s cubic-bezier(.15,.7,.3,1) var(--d) forwards}
+.rv-card{position:relative;pointer-events:auto;width:min(340px,86vw);padding:18px 22px 16px;border-radius:16px;text-align:center;cursor:pointer;
+  background:linear-gradient(180deg,rgba(38,52,40,.97),rgba(24,34,27,.97));border:1px solid var(--rc);
+  box-shadow:0 0 0 1px rgba(0,0,0,.3),0 24px 70px rgba(0,0,0,.55),0 0 60px -12px var(--rc);opacity:0;transform:scale(.6) translateY(20px)}
+.rv.in .rv-card{animation:rvpop .55s cubic-bezier(.2,1.4,.4,1) forwards}
+.rv.out .rv-card{transition:opacity .35s,transform .35s;opacity:0;transform:scale(.9) translateY(-14px)}
+.rv.out .rv-rays,.rv.out::before{opacity:0}
+.rv-tag{font:600 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)}
+.rv-pic{height:150px;display:grid;place-items:center;margin:4px 0 2px}
+.rv-pic img{width:190px;height:154px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.35));transform:scale(0);animation:rvimg .7s cubic-bezier(.2,1.6,.4,1) .15s forwards}
+.rv-rar{display:inline-block;padding:2px 12px;border-radius:999px;font:700 11px var(--mono);letter-spacing:.16em;text-transform:uppercase;color:#18201a;
+  background:linear-gradient(110deg,var(--rc) 0 40%,#fff 50%,var(--rc) 60% 100%);background-size:250% 100%;animation:rvshine 1.6s ease-in-out .4s 2}
+.rv-card h2{margin:8px 0 0;font-family:'Young Serif',serif;font-weight:400;font-size:26px;line-height:1.15}
+.rv-card em{display:block;color:var(--ink-dim);font-size:13px;margin-top:2px}
+.rv-card p{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--ink)}
+.rv-act{display:flex;justify-content:center;gap:10px;margin-top:12px}.rv-ok{padding:6px 14px;border-radius:8px;background:var(--rc);color:#18201a;font-weight:600;font-size:13px}
+.rv.r4 .rv-card h2{background:linear-gradient(110deg,#f2c14e 0 40%,#fff6d6 50%,#f2c14e 60%);background-size:250% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rvshine 2s linear .3s infinite}
+@keyframes rvspin{to{transform:rotate(360deg)}}
+@keyframes rvpop{0%{opacity:0;transform:scale(.6) translateY(20px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes rvimg{to{transform:scale(1)}}
+@keyframes rvspark{0%{opacity:1;transform:translate(0,0) scale(var(--s))}70%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(calc(var(--s)*.3))}}
+@keyframes rvshine{0%{background-position:100% 0}100%{background-position:-50% 0}}
+@media (prefers-reduced-motion:reduce){.rv-rays{animation:none}.rv-sparks{display:none}.rv.in .rv-card,.rv-pic img{animation-duration:.01s}}
 .dialog.cpanel{max-width:1060px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
 .csum{display:flex;flex-wrap:wrap;gap:8px}.csum div{flex:1 1 120px;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.04)}.csum b{display:block;font-family:var(--mono);font-size:18px;font-weight:500;color:var(--lichen)}.csum span{font-size:12px;color:var(--ink-dim)}
 .ctabs{display:flex;gap:4px}.ctabs button{padding:6px 12px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);background:rgba(255,255,255,.04)}.ctabs button[aria-pressed="true"]{background:var(--lichen);color:#1d2614}
@@ -426,6 +464,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   </header>
 
   <div id="toasts" aria-live="polite"></div>
+  <div id="reveal" hidden aria-live="polite"></div>
 
   <nav id="dock">
     <button id="dockShow" class="panel dockbtn" hidden title="Show the toolbar">Tools ▴</button>
@@ -1645,7 +1684,7 @@ function apply(x,y,quiet){
 function discover(kind,id,title){
   if(S.seen[id])return;S.seen[id]=1;newDot[kind]=1;
   const d=kind==='flora'?FLORA[id]:FAUNA[id];
-  toast(title||(kind==='flora'?`New: ${d.name}`:`${d.name} has arrived`),`<em>${d.latin}</em>. ${d.desc} <button class="glink" data-enc="${id}">Field guide ›</button>`,'unlock');
+  reveal(kind,id,title||(kind==='flora'?'First sighting':'Arrived in the city'),d.desc);
 }
 
 /* ---------- simulation ---------- */
@@ -1769,8 +1808,7 @@ function colonise(){
       const i0=UT[(Math.random()*UT.length)|0],x=i0%N,y=(i0/N)|0;
       if(!canStand(F.mv,T(x,y))||!habOk(sp,x,y))continue;
       for(let j=0;j<(F.cls==='insect'?1:2);j++)S.an.push({id:S.nid++,sp,x,y,hx:x,hy:y,tx:x,ty:y,w:1,f:1,bad:0,m:0});
-      const[sx,sy]=isoG(x,y);burst(sx,sy-6,'ring',1);const first=!S.seen[sp];discover('fauna',sp);
-      if(first)toast(`${F.name} moved in by itself`,`Its home was ready, so it found its own way here. ${F.desc}`,'unlock');break;
+      const[sx,sy]=isoG(x,y);burst(sx,sy-6,'ring',1);discover('fauna',sp,'Moved in by itself');break;
     }
   }
 }
@@ -3229,6 +3267,7 @@ function buyRes(k){
   S.seeds-=c;S.res[k]=lvl(k)+1;sfx('grow');
   webSay(R0.g==='force'?`${n} is now level ${lvl(k)}.`:R0.g==='plant'?`${n} can now take hold, and you can sow it.`:`${n} can now find its way into the city.`,'good');
   computeDerived();updateHUD();updateInfo();refreshCards();renderWeb();webDetail(webSel||k);save();
+  if(R0.g!=='force')reveal(FLORA[k]?'flora':'fauna',k,'Unlocked in the Wood Wide Web',FLORA[k]?'It can now take hold in the city, and you can sow it by hand.':ARRIVE[k]?'It will find its own way in once its home is ready.':'Release it by hand where it has habitat, and it will breed.');
 }
 
 /* ---------- damage: by hand, and by the forces of nature ---------- */
@@ -3407,7 +3446,7 @@ function renderWeb(){
   $('webSeeds').textContent=`${fmt(S.seeds)} seeds`;$('webBio').textContent=`${D.bio} BIO · best ${S.peak||0}`;
   for(const b of grid.querySelectorAll('.wnode')){const k=b.dataset.k,R0=RES[k],st=webState(k);
     const cls='wnode '+(st.hidden?'secret locked':st.maxed?'owned':st.open?'avail':'locked')+(!st.hidden&&!st.maxed&&st.reqOk&&!st.bio?' biolock':'')+(st.open&&!st.maxed&&S.seeds<st.c?' poor':'')+(R0.secret&&!st.hidden?' revealed':'');
-    const K=webKind(k),cls2=cls+' k-'+K.cls+(webSel===k?' sel':'');if(b.className!==cls2)b.className=cls2;
+    const K=webKind(k),cls2=cls+' k-'+K.cls+(webSel===k?' sel':'');if(b.className!==cls2)b.className=cls2;if(R0.g!=='force'&&!st.hidden)b.style.setProperty('--rc',RARITY[rarityOf(k)].c);else b.style.removeProperty('--rc');
     const wb=b.querySelector('.wb');wb.textContent=st.hidden?'':K.tag;
     const name=st.hidden?'Secret':resName(k),sub=st.hidden?'hidden ecosystem':R0.g==='force'?(R0.max?`Lv ${st.l}/${R0.max}${st.maxed?'':' · '+fmt(st.c)}`:''):st.maxed?(R0.g==='plant'?'growing':'can arrive'):!st.bio&&st.reqOk?`needs ${bioNeed(k)} BIO`:bioNeed(k)?`${fmt(st.c)} · ${bioNeed(k)} BIO`:`${fmt(st.c)} seeds`;
     const img=b.querySelector('img'),src=iconURL(st.hidden?'?':k);if(img.getAttribute('src')!==src)img.src=src;
@@ -3865,7 +3904,7 @@ function showGuide(k){
     const res=R0?`<li><b>Wood Wide Web</b> ${has(k)?'researched':`${fmt(resCost(k))} seeds${bioNeed(k)?`, needs ${bioNeed(k)} BIO`:''}${(R0.req||[]).length?`, after ${(R0.req||[]).map(resName).join(' and ')}`:''}`}.</li>`:'';
     pg.innerHTML=`<div class="ghero"><img class="gbig" src="${speciesPic(k,256)}" alt=""><div>
         <div class="eyebrow">${cls}</div><h2>${d.name}</h2><em class="glatin">${d.latin}</em>
-        <div class="gtags">${E.status?`<span class="gtag st">${E.status}</span>`:''}<span class="gtag ${n?'here':''}">${n?`In your city: ${n}${isF?' tiles':''}`:S.seen[k]?'Not in your city right now':'Not yet seen in your city'}</span>${R0&&R0.secret?'<span class="gtag sec">Secret species</span>':''}</div></div></div>
+        <div class="gtags">${rarTag(k)}${E.status?`<span class="gtag st">${E.status}</span>`:''}<span class="gtag ${n?'here':''}">${n?`In your city: ${n}${isF?' tiles':''}`:S.seen[k]?'Not in your city right now':'Not yet seen in your city'}</span>${R0&&R0.secret?'<span class="gtag sec">Secret species</span>':''}</div></div></div>
       ${seasons}
       ${(()=>{const w=E.w||{},q=[['Size',w.size],['Lifespan',w.lifespan],['Range',w.range]].filter(r=>r[1]);
         return q.length?`<div class="gquick">${q.map(([a,b])=>`<div><span class="gk">${a}</span><p>${b}</p></div>`).join('')}</div>`:''})()}
@@ -3921,6 +3960,7 @@ function plantPanel(k){
   const keys=[k,f.base].filter(Boolean).map(id=>`isP('${id}')`).concat(f.graze?['isGraze']:[],f.flower?['isFlower']:[],f.kind==='tree'?['isTree','isScrubby','isForest']:[],bid(k)==='hawthorn'?['isScrubby']:[]);
   const lives=Object.keys(FAUNA).filter(a=>!guideHidden(a)&&keys.some(q=>FAUNA[a].ok.toString().includes(q)));
   return kv([
+    ['Rarity',rarTag(k)],
     ['Status',lk?`<b class="warn">Not researched</b> · ${fmt(resCost(k))} seeds${bioNeed(k)?`, ${bioNeed(k)} BIO`:''} in the Wood Wide Web`:`<b>${sowCost(k)} seeds</b> a tile · planted ${Math.round(SOWN_G()*100)}% grown${(S.sown||0)>=SOW_FREE?' · each tile sown makes the next 3% dearer':` · ${SOW_FREE-(S.sown||0)} more before prices rise`}`],
     ['Earns',`<b>${f.sps} seeds/s</b> per grown tile`],
     ['Bonus',f.fx],
@@ -3937,6 +3977,7 @@ function plantPanel(k){
 function animalPanel(k){
   const F=FAUNA[k],R0=RES[k],lk=!has(k),eats=(ENC[k]&&ENC[k].eats)||[],plants=WILD_FLORA.filter(p=>F.ok.toString().includes(`isP('${p}')`));
   return kv([
+    ['Rarity',rarTag(k)],
     ['Status',lk?`<b class="warn">Not researched</b> · ${fmt(resCost(k))} seeds${bioNeed(k)?`, ${bioNeed(k)} BIO`:''} in the Wood Wide Web`:`<b>${relCost(k)} seeds</b> to release one`],
     ['What it adds',mechList(animalMechanics(k))],
     ['Room for',`<b>${D.fa[k]} of ${capOf(k)}</b> · ${capInfo(k).text}`],
@@ -4333,6 +4374,9 @@ const SFX={
   note(t,b){tone(t,'sine',659.3,659.3,.5,.07,b)},
   bad(t,b){tone(t,'triangle',233,175,.18,.16,b,0,.005,1200)},
   pop(t,b){tone(t,'sine',620,1240,.09,.22,b);tone(t+.05,'sine',1568,1568,.35,.08,b,.2);nz(t,'bandpass',4200,2,.06,.08,b)},
+  reveal(t,b,ri){ri=Math.max(0,Math.min(4,+ri||0));const N0=[523.3,659.3,784,1046.5,1318.5,1568,2093],n=3+ri;for(let i=0;i<n;i++){const f=N0[i];tone(t+i*.09,'sine',f,f,1.2+ri*.2,.13,b,(i/(n-1)-.5)*.6,.01);tone(t+i*.09,'triangle',f*2,f*2,.5,.02,b)}
+    nz(t,'highpass',5000,.7,.9+ri*.3,.05+ri*.02,b,0,false,.3);
+    if(ri>=3){[261.6,329.6,392].forEach(f=>tone(t+.05,'sine',f,f,2.4,.07,b,0,.4));}if(ri>=4){for(let i=0;i<8;i++)tone(t+.6+i*.07,'sine',2637-i*120,2637-i*120,.6,.04,b,Math.sin(i)*.6)}},
   levelup(t,b){tone(t,'sine',880,1318.5,.25,.07,b)},
 };
 function sfx(name,arg,vol=1){
@@ -4491,7 +4535,7 @@ function renderCensus(){
       sub=`${g} grown${n-g?`, ${n-g} young`:''} · ${c.earn[k]>=.1?c.earn[k].toFixed(1):c.earn[k].toFixed(2)} seeds/s${VBASE[k]?` · level ${levelOf(k)}`:''}`}
     else{const cap=capOf(k),pct2=cap?Math.min(1,n/cap):1;bar=`<i class="${n>cap?'over':''}" style="width:${Math.max(3,pct2*100)}%"></i>`;
       sub=`${n} of room for ${cap}${n>cap?' · over capacity: some will leave':n>=cap?' · the land is full':''}`}
-    return `<li><button class="crow" data-enc="${k}" title="Field guide: ${d.name}"><img src="${speciesPic(k,64)}" alt=""><span class="cn"><b>${d.name}</b><small>${sub}</small></span><span class="cq"><b>${fmt(n)}</b>${trendOf(isF?'fl':'fa',k,n)}</span><span class="cbar">${bar}</span></button><button class="cloc" data-loc="${k}" title="Show on the map" aria-label="Show ${d.name} on the map">◎</button></li>`};
+    return `<li><button class="crow" data-enc="${k}" title="Field guide: ${d.name}"><img src="${speciesPic(k,64)}" alt=""><span class="cn"><b>${d.name} ${rarTag(k)}</b><small>${sub}</small></span><span class="cq"><b>${fmt(n)}</b>${trendOf(isF?'fl':'fa',k,n)}</span><span class="cbar">${bar}</span></button><button class="cloc" data-loc="${k}" title="Show on the map" aria-label="Show ${d.name} on the map">◎</button></li>`};
   let h='';
   if(censusTab!=='animals'){h+=`<section><h3>Plants</h3>`;
     if(!pl.length)h+=`<p class="cempty">No wild plants yet. Sow pioneer weeds on bare soil to begin.</p>`;
@@ -4534,6 +4578,41 @@ $('cClose').addEventListener('click',()=>{$('census').hidden=true});
 $('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').hidden=true;return}const l=e.target.closest('[data-loc]');if(l){locateSpecies(l.dataset.loc);return}
   const t=e.target.closest('[data-ct]');if(t){censusTab=t.dataset.ct;renderCensus()}});
 $('census').addEventListener('keydown',e=>{if(e.key==='Escape')$('census').hidden=true});
+
+/* ---------- rarity ----------
+   Five tiers. Plants: by stage, and how far up their line a level sits; secret levels are legendary.
+   Animals: by how rare they are in Britain and how hard they are to bring back. */
+const RARITY=[{n:'Common',c:'#b9c2a8'},{n:'Uncommon',c:'#8fd06a'},{n:'Rare',c:'#6fb6f0'},{n:'Epic',c:'#c08af0'},{n:'Legendary',c:'#f2c14e'}];
+const RAR_BASE={weeds:0,meadow:0,reed:0,hawthorn:0,lily:1,birch:1,willow:1,pine:2,oak:2};
+const RAR_FAUNA={bee:0,hoverfly:0,beetle:0,rabbit:0,vole:0,thrush:0,frog:0,mayfly:0,butterfly:0,moth:0,
+  dragonfly:1,hedgehog:1,jay:1,fox:1,trout:1,heron:1,skylark:1,swallow:1,woodpecker:1,kestrel:1,squirrel:1,badger:1,
+  kingfisher:2,owl:2,barnowl:2,deer:2,newt:2,watervole:2,swift:2,bat:2,falcon:2,glowworm:2,dormouse:2,
+  beaver:3,otter:3,marten:3,stagbeetle:3,stork:3,boar:3,wolf:4,lynx:4,bison:4};
+function rarityOf(k){
+  if(FAUNA[k])return RAR_FAUNA[k]??1;
+  if(VSECRET[k])return 4;const b=bid(k),base=RAR_BASE[b]??1,at=LINE_AT[k];if(!at)return base;
+  const f=(at[1]+1)/at[0].items.length;return Math.min(3,base+(f>.67?2:f>.34?1:0));
+}
+const rarTag=k=>{const r=RARITY[rarityOf(k)];return `<span class="rtag" style="--rc:${r.c}">${r.n}</span>`};
+/* ---------- the reveal: a moment for every new species ---------- */
+const REVEALQ=[];let revealOn=false;
+function reveal(kind,id,label,body){
+  if(QUIET)return;if(REVEALQ.length>=3)return;REVEALQ.push({kind,id,label,body});if(!revealOn)nextReveal();
+}
+function nextReveal(){
+  const r=REVEALQ.shift();if(!r){revealOn=false;$('reveal').hidden=true;return}revealOn=true;
+  const d=r.kind==='flora'?FLORA[r.id]:FAUNA[r.id],ri=rarityOf(r.id),R=RARITY[ri],el=$('reveal');
+  el.style.setProperty('--rc',R.c);el.className='rv r'+ri;
+  let sparks='';const n=14+ri*8;for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,dist=120+Math.random()*(160+ri*50);sparks+=`<i style="--dx:${(Math.cos(a)*dist).toFixed(0)}px;--dy:${(Math.sin(a)*dist).toFixed(0)}px;--d:${(Math.random()*.35).toFixed(2)}s;--s:${(.5+Math.random()*1.1).toFixed(2)}"></i>`}
+  el.innerHTML=`<div class="rv-rays"></div><div class="rv-sparks">${sparks}</div>
+    <div class="rv-card" role="status"><div class="rv-tag">${r.label}</div><div class="rv-pic"><img src="${speciesPic(r.id,256)}" alt=""></div>
+      <span class="rv-rar">${R.n}</span><h2>${d.name}</h2><em>${d.latin}</em><p>${r.body}</p>
+      <div class="rv-act"><button class="glink" data-enc="${r.id}">Field guide ›</button><button class="rv-ok">Lovely</button></div></div>`;
+  el.hidden=false;void el.offsetWidth;el.classList.add('in');sfx('reveal',ri);
+  clearTimeout(nextReveal.t);nextReveal.t=setTimeout(closeReveal,2600+ri*600);
+}
+function closeReveal(){const el=$('reveal');if(el.hidden)return;el.classList.remove('in');el.classList.add('out');clearTimeout(nextReveal.t);setTimeout(()=>{el.classList.remove('out');nextReveal()},380)}
+$('reveal').addEventListener('click',e=>{if(e.target.closest('[data-enc]')){closeReveal();return}if(e.target.closest('.rv-card'))closeReveal()});
 
 function start(data){
   if(started)return;started=true;
