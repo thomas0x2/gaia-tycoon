@@ -1940,6 +1940,13 @@ function isoBox(x,y,ex,ey,z,h,cT,cL,cR){
   poly([b,c,[c[0],c[1]-h],[b[0],b[1]-h]],cR);
   poly(P.map(p=>[p[0],p[1]-h]),snowC(cT));
 }
+// a plinth under a building on a slope: its walls reach down to the ground at each corner, never below it
+function plinth(x,y,cx,cy,ex,ey,top,cT,cL,cR){
+  const W=[[cx-ex,cy+ey],[cx+ex,cy+ey],[cx+ex,cy-ey],[cx-ex,cy-ey]];
+  const gnd=([px,py])=>{if(!SPR)return hAt(px,py);const[ox,oy]=vecB(px-x,py-y);return hAt(clamp(x+ox,-.5,N-.5),clamp(y+oy,-.5,N-.5))};
+  const T=W.map(w=>iso(w[0],w[1],top)),G=W.map(w=>iso(w[0],w[1],Math.min(top,gnd(w)))),[l,f,r]=frontOf(T);
+  poly([G[l],G[f],T[f],T[l]],cL);poly([G[f],G[r],T[r],T[f]],cR);poly(T,snowC(cT));
+}
 // lines across the two visible faces of a box (windows, ribbons, storefronts)
 function faceLines(x,y,ex,ey,z,dzs,col,w,dash,alpha,off){
   X.lineWidth=w;X.setLineDash(dash||[]);X.lineDashOffset=off||0;X.strokeStyle=tc(col);X.globalAlpha=alpha??1;X.beginPath();
@@ -2001,7 +2008,7 @@ function drawReclaimed(b,x,y){
 }
 function drawBuilding(t,x,y){
   const b=t.b,v=b.v||0,tint=.93+hash(x,y,9)*.14,cs=corners(x,y),lo=Math.min(...cs),hi=Math.max(...cs);
-  if(hi-lo>.4&&b.k!=='house'&&b.k!=='terrace')isoBox(x,y,.47,.47,lo,hi-lo+.5,'#8d8a82','#7c786f','#67645c');
+  if(hi-lo>.4&&b.k!=='house'&&b.k!=='terrace')plinth(x,y,x,y,.47,.47,hi+.5,'#8d8a82','#7c786f','#67645c');
   const z=hi;
   if(b.k==='tower'){
     const P=TPAL[v%4],Hh=b.h*FL,T3=(c,f)=>shade(c,tint*f);
@@ -2146,7 +2153,7 @@ function drawHouse(b,x,y,lo,hi,tint){
   const wcol=NIGHT>.35&&hash(x,y,31)<.75?'#f6cf7e':'#3c4650';
   const cx=x-.05,cy=y-.07,ex=ter?.43:.25+.04*(v%2),ey=ter?.22:.21,z=hi,wh=b.h*FL*.85+2,zr=z+wh,rh=8;
   // foundation on slopes
-  if(hi-lo>.4)isoBox(cx,cy,ex+.02,ey+.02,lo,hi-lo+.3,'#9a958a','#8a857a','#77736a');
+  if(hi-lo>.4)plinth(x,y,cx,cy,ex+.02,ey+.02,hi+.3,'#9a958a','#8a857a','#77736a');
   isoBox(cx,cy,ex,ey,z,wh,shade(wallC,tint),shade(wallC,tint*.92),shade(wallC,tint*.76));
   // door and windows
   const dc=['#2f5e8c','#7a2e2a','#2f5a3a','#d9a93a'][v];
