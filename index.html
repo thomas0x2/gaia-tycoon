@@ -448,7 +448,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
         <ul>
           <li><b>Start by hand.</b> You have one residential block in the middle of the city. Hit buildings to bring them down (a house takes 3 hits) and break up the paving.</li>
           <li><b>Sow pioneer weeds</b> on the bare soil. They are the first wild plants, and they start your seed income.</li>
-          <li><b>Seeds come from wild plants.</b> Every plant earns its own amount, and many do more: reeds clean the soil, gorse feeds it, scrub shelters seedlings.</li>
+          <li><b>Seeds come from wild plants.</b> They earn seeds by themselves, and grown plants now and then hold up a ripe seed: click it to gather a handful more. Every plant earns its own amount, and many do more: reeds clean the soil, gorse feeds it, scrub shelters seedlings.</li>
         </ul>
       </section>
       <section class="ipage" hidden>
@@ -1846,7 +1846,7 @@ function burst(x,y,kind,n){
 function updateParts(dt){
   if(SEA.aut>.3&&SEA.leaves>.1&&D.treeTiles.length&&parts.length<380&&Math.random()<dt*10*SEA.leaves){const i=D.treeTiles[(Math.random()*D.treeTiles.length)|0],x=i%N,y=(i/N)|0,[sx,sy]=isoG(x,y,12+Math.random()*16);parts.push({k:'fall',x:sx+(Math.random()-.5)*14,y:sy,vx:3+Math.random()*4,vy:7+Math.random()*4,l:0,m:2.4+Math.random(),c:AUT_LEAF[(Math.random()*4)|0],ph:Math.random()*6})}
   if(D.chim.length&&parts.length<220)for(const i of D.chim){if(SEEN[i]&&Math.random()<dt*1.6){const x=i%N,y=(i/N)|0,hi=Math.max(...corners(x,y));let sx,sy;asSprite(x,y,()=>{[sx,sy]=iso(x-.22,y-.22,hi+2*FL+34)});parts.push({k:'smoke',x:sx,y:sy,vx:5+Math.random()*4,vy:-9-Math.random()*5,l:0,m:4+Math.random()*2,r:3})}}
-  for(const p of parts){p.l+=dt;if(p.vx!==undefined){p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.k==='fall')p.x+=Math.sin(p.l*3+p.ph)*12*dt;else if(p.k!=='smoke'&&p.k!=='mist')p.vy+=40*dt}}
+  for(const p of parts){p.l+=dt;if(p.vx!==undefined){p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.k==='fall')p.x+=Math.sin(p.l*3+p.ph)*12*dt;else if(p.k==='fluff')p.vy-=6*dt;else if(p.k!=='smoke'&&p.k!=='mist')p.vy+=40*dt}}
   parts=parts.filter(p=>p.l<p.m);
 }
 
@@ -2919,7 +2919,7 @@ function render(){
   if(s===1){dx=Math.round(dx*DPR)/DPR;dy=Math.round(dy*DPR)/DPR}
   ctx.drawImage(cache,dx,dy,CW*s,CH*s);
   X=ctx;ctx.setTransform(DPR*z,0,0,DPR*z,DPR*(W/2-cam.x*z),DPR*(H/2-cam.y*z));
-  drawMovers();
+  drawMovers();drawPods();
   if(tool.type==='corridors'||tool.type==='guide'||tool.type==='toxview')drawOverlay();
   const hm=hover||pinned;
   if(S.blocks&&hm&&!T(hm[0],hm[1]).u){const b=blockAt(hm[0],hm[1]);if(b>=0){const ok=blockStatus(b).ok;
@@ -2930,6 +2930,7 @@ function render(){
     else if(p.k==='dust'){X.globalAlpha=.6*(1-k);circ(p.x,p.y,p.r*(1+k),'#b3a896')}
     else if(p.k==='splash'){X.globalAlpha=1-k;circ(p.x,p.y,p.r,'#cfeaf2')}
     else if(p.k==='leaf'){X.globalAlpha=1-k;circ(p.x,p.y,p.r,'#a7d26a')}
+    else if(p.k==='fluff'){X.globalAlpha=1-k;circ(p.x,p.y,p.r*.8,'#fffdf2')}
     else if(p.k==='fall'){X.globalAlpha=Math.min(1,(1-k)*2);ell(p.x,p.y,1.7,.9+.6*Math.sin(p.l*6+p.ph),p.c)}
     else if(p.k==='ring'){X.globalAlpha=1-k;X.strokeStyle=tc('#cfdc84');X.lineWidth=1.5;X.beginPath();X.ellipse(p.x,p.y,6+k*22,3+k*11,0,0,Math.PI*2);X.stroke()}
   }
@@ -2978,7 +2979,7 @@ function frame(now){
   if(!$('menu').hidden){last=now;render();return}
   const gap=(now-last)/1000;if(gap>3){last=now;catchUp(gap,gap>60);return}
   if(now-interactAt>1500&&!drag&&!pinch&&now-last<31)return;
-  const dt=Math.min(.1,(now-last)/1000);last=now;time+=dt;soundTick(dt);
+  const dt=Math.min(.1,(now-last)/1000);last=now;time+=dt;soundTick(dt);podTick(dt);
   S.clock=(S.clock||0)+dt*S.speed;updateTime();
   if(S.speed>0){acc+=dt*S.speed;let n=0;while(acc>=1&&n<4){acc-=1;tick();n++}if(acc>1)acc=0}
   updateAnimals(dt*S.speed);updateCars(dt*S.speed);updateParts(dt);updateDecor(dt,dt);updateWeather(dt);updateClockUI();
@@ -4097,6 +4098,8 @@ cv.addEventListener('pointerdown',e=>{
   cv.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:cam.z,cx:cam.x,cy:cam.y,mx:(a.x+b.x)/2,my:(a.y+b.y)/2};drag=null;return}
   const mouse=e.pointerType==='mouse';
+  // a ripe seed under the pointer is gathered before any tool acts
+  if(!mouse||e.button===0){const pd=podAt(e.offsetX,e.offsetY);if(pd){collectPod(pd);drag=null;return}}
   const pan=!mouse||e.button!==0||e.shiftKey||spaceDown||PASSIVE.has(tool.type);
   drag={sx:e.clientX,sy:e.clientY,lx:e.clientX,ly:e.clientY,moved:false,pan,mouse,last:-1};
   if(!pan&&mouse){const tt=screenToTile(e.offsetX,e.offsetY);if(tt){if(!T(tt[0],tt[1]).u){tryUnlock(tt[0],tt[1]);pinned=tt;updateInfo();drag=null;return}apply(tt[0],tt[1]);drag.last=tt[1]*N+tt[0]}}
@@ -4106,6 +4109,7 @@ cv.addEventListener('pointermove',e=>{
   const p=ptrs.get(e.pointerId);if(p){p.x=e.clientX;p.y=e.clientY}
   if(pinch&&ptrs.size===2){zoomAt=performance.now();const[a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);cam.z=clamp(pinch.z*d/pinch.d,.4,3.2);
     const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;cam.x=pinch.cx-(mx-pinch.mx)/cam.z;cam.y=pinch.cy-(my-pinch.my)/cam.z;clampCam();return}
+  if(e.pointerType==='mouse'&&!drag)cv.style.cursor=podAt(e.offsetX,e.offsetY)?'pointer':'';
   if(e.pointerType==='mouse'){mouseIn=true;const tt=screenToTile(e.offsetX,e.offsetY);const ch=!hover||!tt||tt[0]!==hover[0]||tt[1]!==hover[1];hover=tt;if(ch){updateInfo();}updateTip(e.offsetX,e.offsetY)}
   if(!drag)return;
   const dx=e.clientX-drag.lx,dy=e.clientY-drag.ly;
@@ -4304,6 +4308,7 @@ const SFX={
   chime(t,b){tone(t,'sine',784,784,.9,.12,b,-.15);tone(t+.11,'sine',1174.7,1174.7,1.1,.1,b,.15);tone(t+.11,'triangle',2349,2349,.4,.015,b)},
   note(t,b){tone(t,'sine',659.3,659.3,.5,.07,b)},
   bad(t,b){tone(t,'triangle',233,175,.18,.16,b,0,.005,1200)},
+  pop(t,b){tone(t,'sine',620,1240,.09,.22,b);tone(t+.05,'sine',1568,1568,.35,.08,b,.2);nz(t,'bandpass',4200,2,.06,.08,b)},
   levelup(t,b){tone(t,'sine',880,1318.5,.25,.07,b)},
 };
 function sfx(name,arg,vol=1){
@@ -4388,6 +4393,52 @@ document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest
 $('sndBtn').addEventListener('click',sndToggle);
 for(const k of ['fx','amb','mus'])$('vol-'+k).addEventListener('input',e=>{SND.vol[k]=(+e.target.value)/100;sndSave();sndApply()});
 sndApply();
+
+/* ---------- seeds to gather ----------
+   Grown wild plants in view now and then hold up a ripe seed: a dandelion clock, an acorn, a cone, berries,
+   a winged key or a pod, depending on how the plant spreads. Click it to gather a handful of seeds, on top of
+   what the land earns by itself. Ripe seeds drop after a while if nobody picks them. */
+let PODS=[],FLOATS=[],podWait=6;
+const POD_LIFE=45;
+const podMax=()=>Math.min(7,3+Math.floor(Math.sqrt(ownedBlocks())));
+function podKind(k){const m=DISP[k],f=FLORA[k],b=bid(k);
+  if(m==='nut')return 'acorn';if(b==='pine'&&k!=='yew'&&k!=='juniper')return 'cone';if(m==='bird')return 'berry';
+  if(m==='wind'||m==='dust')return f.kind==='tree'?'key':'fluff';return 'pod'}
+function podTick(dt){
+  const now=time;PODS=PODS.filter(p=>now-p.t0<p.life);FLOATS=FLOATS.filter(f=>now-f.t0<1.4);
+  if(document.hidden||PODS.length>=podMax())return;podWait-=dt;if(podWait>0)return;podWait=rnd(9,18);
+  for(let k=0;k<25;k++){const tt=screenToTile(rnd(.08,.92)*W,rnd(.15,.8)*H);if(!tt)continue;const[x,y]=tt,t=T(x,y);
+    if(!t.u||t.b||!t.p||t.p.g<.8)continue;const f=FLORA[t.p.id];if(f.pre||f.managed||f.crop||!DISP[t.p.id])continue;if(PODS.some(p=>p.x===x&&p.y===y))continue;
+    PODS.push({x,y,id:t.p.id,kind:podKind(t.p.id),t0:now,life:POD_LIFE+rnd(-5,10),h:f.kind==='tree'?34+20*t.p.g:f.kind==='shrub'?16:10,ph:Math.random()*6});return}
+}
+const podScreen=p=>{const[wx,wy]=iso(p.x,p.y,hAt(p.x,p.y)+p.h+Math.sin(time*2+p.ph)*2);return [(wx-cam.x)*cam.z+W/2,(wy-cam.y)*cam.z+H/2]};
+function podAt(px,py){const r=Math.max(16,14*cam.z);let best=null,bd=1e9;for(const p of PODS){const[sx,sy]=podScreen(p),d=Math.hypot(sx-px,sy-py);if(d<r&&d<bd){bd=d;best=p}}return best}
+function collectPod(p){
+  PODS=PODS.filter(q=>q!==p);const v=Math.max(3,Math.round(3+D.income*rnd(10,20)));S.seeds+=v;S.gathered=(S.gathered||0)+v;
+  const[wx,wy]=iso(p.x,p.y,hAt(p.x,p.y)+p.h);FLOATS.push({x:wx,y:wy,t0:time,txt:'+'+fmt(v)});burst(wx,wy,p.kind==='fluff'?'fluff':'leaf',p.kind==='fluff'?10:6);sfx('pop');
+  if(!S.flags.pod){S.flags.pod=1;toast('Seeds gathered',`Grown plants now and then hold up ripe seed: ${FLORA[p.id].name.toLowerCase()} here. Click it to gather it before it drops. It pays a handful of seeds, more as your land earns more, on top of what the land makes by itself.`,'unlock')}
+  updateHUD();
+}
+function drawPod(p,a){
+  const[x,y]=iso(p.x,p.y,hAt(p.x,p.y)+p.h+Math.sin(time*2+p.ph)*2),s=Math.max(1,.9/cam.z);
+  X.save();X.translate(x,y);X.scale(s,s);X.globalAlpha=a;
+  const pulse=.5+.5*Math.sin(time*3+p.ph);
+  const g=X.createRadialGradient(0,0,0,0,0,13);g.addColorStop(0,`rgba(246,236,170,${.55+.25*pulse})`);g.addColorStop(1,'rgba(246,236,170,0)');X.fillStyle=g;X.beginPath();X.arc(0,0,13,0,7);X.fill();
+  const k=p.kind;
+  if(k==='fluff'){X.strokeStyle='rgba(255,255,250,.95)';X.lineWidth=.8;X.beginPath();for(let i=0;i<14;i++){const an=i/14*Math.PI*2;X.moveTo(0,0);X.lineTo(Math.cos(an)*6,Math.sin(an)*6)}X.stroke();
+    for(let i=0;i<14;i++){const an=i/14*Math.PI*2;X.fillStyle='#fffdf2';X.beginPath();X.arc(Math.cos(an)*6.3,Math.sin(an)*6.3,1,0,7);X.fill()}X.fillStyle='#8a7a52';X.beginPath();X.arc(0,0,1.4,0,7);X.fill()}
+  else if(k==='acorn'){X.fillStyle='#b7853f';X.beginPath();X.ellipse(0,1.5,3.6,4.6,0,0,7);X.fill();X.fillStyle='#d6a85e';X.beginPath();X.ellipse(-1,.5,1.2,2,0,0,7);X.fill();
+    X.fillStyle='#6e5230';X.beginPath();X.ellipse(0,-2.3,4.4,2.4,0,0,7);X.fill();X.fillRect(-.5,-6,1,2.4)}
+  else if(k==='cone'){X.fillStyle='#7a5532';X.beginPath();X.ellipse(0,0,3.6,5.6,0,0,7);X.fill();X.strokeStyle='#b0855a';X.lineWidth=.8;X.beginPath();for(let i=-2;i<=2;i++){X.moveTo(-3.2,i*2);X.lineTo(0,i*2+1.2);X.lineTo(3.2,i*2)}X.stroke()}
+  else if(k==='berry'){X.fillStyle='#4f7a34';X.beginPath();X.ellipse(2.5,-4.5,3,1.4,-.5,0,7);X.fill();for(const[bx,by]of [[-2.2,1],[2,1.4],[0,-1.6]]){X.fillStyle='#c0303a';X.beginPath();X.arc(bx,by,2.6,0,7);X.fill();X.fillStyle='rgba(255,220,220,.8)';X.beginPath();X.arc(bx-.8,by-.8,.7,0,7);X.fill()}}
+  else if(k==='key'){X.fillStyle='#c9b27a';for(const sg of [-1,1]){X.beginPath();X.ellipse(sg*3.6,-1.5,4.2,1.7,sg*.5,0,7);X.fill()}X.fillStyle='#8a6a3a';X.beginPath();X.arc(0,1,1.8,0,7);X.fill()}
+  else{X.fillStyle='#7aa04a';X.beginPath();X.ellipse(0,0,6,2.6,-.4,0,7);X.fill();X.fillStyle='#c8dc8a';for(let i=-1;i<=1;i++){X.beginPath();X.arc(i*2.6,-i*1,1.2,0,7);X.fill()}}
+  X.restore();X.globalAlpha=1;
+}
+function drawPods(){
+  for(const p of PODS){const age=time-p.t0,a=Math.min(1,age*3)*Math.min(1,(p.life-age)/5);if(a>0)drawPod(p,a)}
+  for(const f of FLOATS){const k=(time-f.t0)/1.4,s=Math.max(1,.9/cam.z);X.save();X.globalAlpha=1-k;X.font=`600 ${Math.round(12*s)}px ui-monospace, monospace`;X.textAlign='center';X.lineWidth=3*s;X.strokeStyle='rgba(20,28,20,.75)';X.strokeText(f.txt,f.x,f.y-10-k*26);X.fillStyle='#e8f0a8';X.fillText(f.txt,f.x,f.y-10-k*26);X.restore()}
+}
 
 function start(data){
   if(started)return;started=true;
