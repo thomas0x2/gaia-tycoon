@@ -3774,9 +3774,13 @@ const guideHidden=k=>(RES[k]&&RES[k].secret&&!secretOk(k)&&!has(k))||(!!VSECRET[
 const guideLocked=k=>(!!RES[k]||!!VBASE[k]||!!ARRIVE[k])&&!has(k);
 // who eats whom, read both ways
 const eatenBy=k=>Object.keys(ENC).filter(a=>(ENC[a].eats||[]).includes(k));
+// a level of a plant shows in the guide only once it, or a richer level of the same line, has grown in the city
+const levelReached=k=>{const at=LINE_AT[k];if(!at)return true;const it=at[0].items;for(let j=at[1];j<it.length;j++)if(S.seen[it[j].id])return true;return false};
+const guideUnreached=k=>!!VBASE[k]&&!guideHidden(k)&&!levelReached(k);
 function guideChip(k){
   if(LESSONS.find(l=>l.id===k)){const L=LESSONS.find(l=>l.id===k);return `<button class="gchip lesson" data-enc="${k}"><img src="${speciesPic(L.pics[0])}" alt="">${L.name}</button>`}
   if(guideHidden(k))return `<span class="gchip hid"><img src="${iconURL('?')}" alt="">Secret</span>`;
+  if(guideUnreached(k))return `<span class="gchip hid"><img src="${iconURL('?')}" alt="">Not yet reached</span>`;
   if(guideLocked(k))return `<button class="gchip lock" data-enc="${k}"><img src="${speciesPic(k)}" alt="">${(FLORA[k]||FAUNA[k]).name}</button>`;
   const n=(FLORA[k]||FAUNA[k]).name;return `<button class="gchip" data-enc="${k}"><img src="${speciesPic(k)}" alt="">${n}</button>`;
 }
@@ -3785,7 +3789,7 @@ function openGuide(k){$('guide').hidden=false;renderGuideNav();showGuide(k||guid
 function renderGuideNav(){
   const q=($('gSearch').value||'').trim().toLowerCase(),match=k=>{if(!q)return true;const d=FLORA[k]||FAUNA[k];return !guideHidden(k)&&(d.name+' '+d.latin).toLowerCase().includes(q)};
   let h=`<div class="gsec">Ecology</div>`+LESSONS.filter(l=>!q||l.name.toLowerCase().includes(q)).map(l=>`<button class="gitem${guideCur===l.id?' on':''}" data-enc="${l.id}"><img src="${speciesPic(l.pics[0])}" alt=""><span>${l.name}</span></button>`).join('');
-  for(const[ln,label]of GUIDE_LANES){const ks=guideKeys().filter(k=>guideLane(k)===ln&&match(k));if(!ks.length)continue;
+  for(const[ln,label]of GUIDE_LANES){const ks=guideKeys().filter(k=>guideLane(k)===ln&&!guideUnreached(k)&&!(VBASE[k]&&guideHidden(k))&&match(k));if(!ks.length)continue;
     h+=`<div class="gsec">${label}</div>`+ks.map(k=>{const hid=guideHidden(k),seen=!!S.seen[k];
       return `<button class="gitem${guideCur===k?' on':''}${hid?' hid':guideLocked(k)?' lock':''}" data-enc="${k}"><img src="${hid?iconURL('?'):speciesPic(k)}" alt=""><span>${hid?'Secret species':(FLORA[k]||FAUNA[k]).name}</span>${seen&&!hid?'<i title="Seen in your city"></i>':''}</button>`}).join('')}
   $('gNav').innerHTML=h;
@@ -3797,6 +3801,9 @@ function showGuide(k){
     const strip=L.pics.map((p,i)=>`${i&&L.arrows?'<span class="garrow">→</span>':''}<figure><img src="${speciesPic(p,160)}" alt=""><figcaption>${(FLORA[p]||FAUNA[p]).name}</figcaption></figure>`).join('');
     pg.innerHTML=`<div class="eyebrow">Ecology lesson</div><h2>${L.name}</h2><div class="gstrip">${strip}</div>${L.text.map(t=>`<p>${t}</p>`).join('')}
       <h3>Meet the species</h3><div class="gchips">${L.pics.map(guideChip).join('')}</div>`;
+  }else if(guideUnreached(k)){const B=FLORA[VBASE[k]];
+    pg.innerHTML=`<div class="eyebrow">Not yet reached</div><h2>A higher level of ${B.name}</h2><div class="ghero"><img class="gbig sil" src="${speciesPic(k,256)}" alt=""></div>
+      <p>Grown ${B.name.toLowerCase()} tiles level up on their own into richer species, as far as each spot allows. This one has not grown in your city yet. Its entry opens the first time a tile reaches this level or a higher one.</p>`;
   }else if(guideLocked(k)){
     const hid=guideHidden(k),d=FLORA[k]||FAUNA[k],r=hid&&RECIPES.find(q=>q.id===(VSECRET[k]||(ARRIVE[k]&&ARRIVE[k].secret)||RES[k].secret)),R0=RES[k];
     pg.innerHTML=`<div class="eyebrow">${hid?'Secret species':ARRIVE[k]?'Not yet seen':VBASE[k]?'Not yet growing':'Not yet researched'}</div><h2>${hid?'Not yet revealed':d.name}</h2><div class="ghero"><img class="gbig sil" src="${speciesPic(k,256)}" alt=""></div>
