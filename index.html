@@ -1580,6 +1580,9 @@ function reedSrc(x,y){
 }
 // what this tile turns into next, how likely per tick, and what it is waiting for
 const STRAY='A little stray seed blows or is carried in from beyond your land, so it will arrive slowly on its own. It spreads much faster next to its own kind, and sowing by hand is fastest.';
+// how much harder scrub finds it to invade a meadow: half again per level, and more once yellow rattle has thinned the grasses
+function meadowResist(k){if(bid(k)!=='meadow')return 1;const lv=levelOf(k),at=LINE_AT[k],ri=at&&!at[0].name?at[0].items.findIndex(v=>v.id==='rattle'):-1;
+  return (1+.5*(lv-1))*(ri>=0&&at[1]>=ri?1.5:1)}
 function succRaw(x,y){
   const i=y*N+x,t=S.tiles[i];
   if(t.b||t.gd!=='soil')return null;
@@ -1606,8 +1609,10 @@ function succRaw(x,y){
     if(t.tox>.45)return {next:'hawthorn',chance:0,need:`Soil is ${pct(t.tox)} toxic; scrub needs under 45%.`};
     const adj=Math.min(2,near(x,y,1,isScrubSrc)+(isEdge(x,y)?1:0)),bird=BIRD[i];
     let ch=.00025*adj+.0002*bird;const stray=!adj&&!bird;if(stray)ch=.00006+.00018*rainOf('hawthorn');
-    const b=BROWSE[i];if(b>.05)return {next:'hawthorn',chance:ch*Math.max(.05,1-.7*b),need:`Grazing animals are nibbling the scrub seedlings back (${b>1.2?'heavy':b>.5?'moderate':'light'} pressure).`};
-    return {next:'hawthorn',chance:ch,need:stray?rainNote('hawthorn'):''};
+    // a species-rich meadow is dense turf that seedlings struggle to break into
+    const rs=meadowResist(p.id),rich=rs>1?` A rich meadow (level ${levelOf(p.id)}): scrub moves in ${Math.round(rs*10)/10}× slower here.`:'';ch/=rs;
+    const b=BROWSE[i];if(b>.05)return {next:'hawthorn',chance:ch*Math.max(.05,1-.7*b),need:`Grazing animals are nibbling the scrub seedlings back (${b>1.2?'heavy':b>.5?'moderate':'light'} pressure).${rich}`};
+    return {next:'hawthorn',chance:ch,need:(stray?rainNote('hawthorn'):'')+rich};
   }
   if(st===3){
     if(t.fert<.4)return {next:'birch',chance:0,need:`Fertility is ${pct(t.fert)}; woodland needs 40%.`};
@@ -3505,7 +3510,7 @@ function webDetail(k){
   let what='',rows=[];
   if(K.cls==='stage'){const f=FLORA[k];what=`<b>Adds a new stage of succession: ${roleOf(k)}.</b> ${f.desc}`;
     rows=[['What it does',`${f.fx} Earns ${f.sps} seeds/s per grown tile.`],['Arrives',f.arrive],['Seed travels',seedTravel(k)],
-      ['Levels',VARIANTS[k]&&VARIANTS[k].length?`Grown tiles level up on their own into richer species of this stage, as far as each spot allows. No research needed.${levelsHtml(k)}`:'']]}
+      ['Levels',VARIANTS[k]&&VARIANTS[k].length?`Grown tiles level up on their own into richer species of this stage, as far as each spot allows. No research needed.${k==='meadow'?' Each level also makes the meadow harder for scrub to invade, and more so from yellow rattle up, so rich meadows last.':''}${levelsHtml(k)}`:'']]}
   else if(K.cls==='upgrade'){const f=FLORA[k],b=FLORA[K.base],v=variantInfo(k);
     what=`<b>An upgrade of ${b.name}</b>, not a new stage: when ${b.name.toLowerCase()} takes hold ${v.where}, about ${Math.round(v.p*100)}% of new patches grow as ${f.name.toLowerCase()} instead (fewer if none grows nearby and its seed rain is weak). Once established it also moves into nearby ${b.name.toLowerCase()} patches. Sowing it by hand works anywhere ${b.name.toLowerCase()} could grow.`;
     rows=[['Earns',`${f.sps} seeds/s per tile, against ${b.sps} for ${b.name.toLowerCase()} (${K.up>0?'+'+K.up+'%':'the same'})`],['Bonus',f.fx],['Same as',`everything ${b.name.toLowerCase()} does in succession: it moves on to the same next stage`],['Seed travels',seedTravel(k)]]}
@@ -4001,7 +4006,7 @@ function plantPanel(k){
     ['Soil',soilText(k)],
     ['Spreads',f.arrive],
     ['Seed travels',seedTravel(k)],
-    ['Levels',VARIANTS[k]&&VARIANTS[k].length?`Grown tiles level up on their own, as far as each spot allows.${levelsHtml(k)}`:''],
+    ['Levels',VARIANTS[k]&&VARIANTS[k].length?`Grown tiles level up on their own, as far as each spot allows.${k==='meadow'?' Richer levels also hold off scrub for longer.':''}${levelsHtml(k)}`:''],
     ['Unlocks',miniChips(opens)],
     ['Habitat for',miniChips(lives)],
   ])+`<button class="glink" data-enc="${k}">Read more in the field guide ›</button>`;
