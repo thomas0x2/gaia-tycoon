@@ -1584,7 +1584,7 @@ function succRaw(x,y){
   const i=y*N+x,t=S.tiles[i];
   if(t.b||t.gd!=='soil')return null;
   const p=t.p,f=p?FLORA[p.id]:null,st=f?f.stage:0;
-  if(f&&f.managed)return {next:null,chance:0,need:f.managed==='mow'?'Mown every week. Unbuild stops the mowing.':f.managed==='graze'?'Grazed by sheep. Unbuild stops the grazing.':'Farmed and sprayed. Unbuild stops the farming.'};
+  if(f&&f.managed)return {next:null,chance:0,need:f.managed==='mow'?'Mown every week. Unbuild stops the mowing. The council also gives up on lawns next to wild land, and Wilder Parks stops it everywhere.':f.managed==='graze'?'Grazed by sheep. Unbuild stops the grazing, or Wilder Parks level 2 everywhere.':'Farmed and sprayed. Unbuild stops the farming, or Wilder Parks level 3 everywhere.'};
   if(f&&f.pre)return {next:null,chance:0,need:'A planted street tree. It never spreads; fell it to let native woodland in.'};
   if(p&&p.g<1)return {next:null,chance:0,need:`Maturing, ${Math.round(p.g*100)}%.${BROWSE[i]>.05&&p.g<.4&&(f.stage>=4||bid(p.id)==='hawthorn')?` Browsing animals may eat it back${f.stage>=4&&near(x,y,1,isP('hawthorn'))>=3?', though the thorny scrub around it gives cover':''}.`:''}`,growing:true};
   if(st===0){
@@ -3147,6 +3147,8 @@ const RES={
     desc:'Sowing costs 20% less per level, and plantings start 15% further grown.'},
   rain:{g:'force',c:2,r:7,req:['meadow'],cost:200,grow:2.6,max:8,name:'Wind & Rain',sub:'+8% succession',
     desc:'Every level makes every natural succession step 8% more likely.'},
+  wildparks:{g:'force',c:2,r:6,req:['meadow'],cost:120,grow:3.2,max:3,name:'Wilder Parks',sub:'Mowing, grazing, then farming stop',
+    desc:'Persuade the city to let go. Level 1: parks and verges stop being mown, a few lawns at a time, as in No Mow May. Level 2: grazed pasture is left too. Level 3: farmland goes fallow, as it did at Knepp in Sussex. Each tile let go turns into grassland (farmland into pioneer weeds) and succession takes it from there.'},
   ivy:{g:'force',c:3,r:6,req:['hawthorn'],cost:150,grow:2.3,max:8,name:'Ivy & Damp',sub:'Wild land topples buildings',
     desc:'Ivy, roots and damp eat away at any building that borders wild land, until it collapses. Each level, and every wild tile you add, makes it faster.'},
   reclaim:{g:'force',c:4,r:5,req:['ivy'],cost:700,grow:2.6,max:3,name:'Reclamation',sub:'Nature repurposes structures',
@@ -3337,8 +3339,22 @@ function nextStage(x,y){
   if(bid(p.id)==='birch')return 'oak';
   return null;
 }
+// managed land let go: by the council next to wild land, or across the city with Wilder Parks
+function letGo(x,y,why){
+  const t=T(x,y),f=FLORA[t.p.id],m=f.managed;
+  t.p=m==='farm'?{id:'weeds',g:.3}:{id:'meadow',g:m==='mow'?.15:.2};
+  if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-4,'leaf',5)}markDirty();
+  const key='letgo_'+why+'_'+m;if(!S.flags[key]){S.flags[key]=1;
+    toast(why==='council'?'The council stopped mowing':m==='mow'?'Wilder Parks: lawns let go':m==='graze'?'Wilder Parks: the sheep have gone':'Wilder Parks: farmland left fallow',
+      why==='council'?'With wild land all around it, a park lawn stopped being mown. Long grass first, then flowers: lawns next to wild ground let go on their own, the faster the wilder their neighbours.'
+      :m==='farm'?'A field was left to go fallow. The seed bank in farm soil wakes at once: poppies and willowherb first, then grassland and scrub.'
+      :'Managed grass is being left to grow long across the city, a few tiles at a time. It turns into meadow and succession takes it from there.','unlock')}
+}
 function naturalForces(){
-  const RT=lvl('roots'),IV=lvl('ivy'),CA=lvl('carriers'),F=D.F,K=TICK_K;
+  const RT=lvl('roots'),IV=lvl('ivy'),CA=lvl('carriers'),WP=lvl('wildparks'),F=D.F,K=TICK_K;
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u||!t.p||t.b)continue;const m=FLORA[t.p.id].managed;if(!m)continue;const x=i%N,y=(i/N)|0;
+    const allow=m==='mow'?WP>=1:m==='graze'?WP>=2:WP>=3,council=m==='mow'?.00035*near4(x,y,isWild):0,policy=allow?.0004*(1+.5*(WP-1)):0;
+    if(council+policy>0&&Math.random()<(council+policy)*K)letGo(x,y,Math.random()*(council+policy)<council?'council':'policy')}
   if(RT||IV)for(let i=0;i<N*N;i++){
     const t=S.tiles[i];if(!t.u)continue;const x=i%N,y=(i/N)|0;
     if(t.b){if(!IV||t.b.rp)continue;const nv=near4(x,y,isWild);if(nv&&Math.random()<.0012*IV*nv*F*K){if(REP[t.b.k]&&has('reclaim'))reclaim(x,y);else hitBuilding(x,y,1,'nature')}}
@@ -3425,6 +3441,8 @@ function drawForceIcon(cvs,k){
   switch(k){
     case 'hands':L([[18,44],[40,18]],'#8a6a44',4);F([[34,12],[48,24],[44,28],[30,16]],'#9aa0a6');F([[30,16],[44,28],[42,30],[28,18]],'#6e747a');break;
     case 'grant':for(let i=0;i<4;i++){E(30,42-i*5,11,4,'#b8902a');E(30,40-i*5,11,4,'#e2bc4a')}leaf(44,18,7,-.6,'#6aa84a');L([[40,24],[36,30]],'#4a7a34',1.5);break;
+    case 'wildparks':F([[8,38],[32,26],[56,38],[32,50]],'#7aa04a');for(let i=0;i<5;i++)L([[14+i*4,40-i*2],[16+i*4,37-i*2]],'#a8c878',1);
+      for(let i=0;i<7;i++){const x=34+i*3,y=40-(i%3)*3;L([[x,y],[x+1,y-12-(i%2)*4]],'#5d8a3c',1.4)}E(38,26,2.4,2.4,'#f2d03a');E(46,24,2.4,2.4,'#d8a6e0');E(52,30,2.2,2.2,'#f6f2e6');break;
     case 'roots':F([[10,34],[30,24],[54,34],[34,44]],'#8d8e88');L([[30,24],[28,32],[33,37],[31,44]],'#3a3a36',1.4);L([[28,32],[20,34]],'#3a3a36',1);
       L([[31,30],[31,18]],'#5a8a3a',1.6);leaf(27,18,4,-.8,'#7ab04e');leaf(35,16,4,.7,'#6aa040');L([[33,37],[40,44],[46,42]],'#7a5a3a',1.4);break;
     case 'deep':F([[8,22],[56,22],[56,48],[8,48]],'#5e4632');F([[8,22],[56,22],[56,26],[8,26]],'#6aa040');L([[32,24],[32,34],[24,42]],'#d8c8a0',1.4);L([[32,34],[40,44]],'#d8c8a0',1.2);L([[32,30],[18,34]],'#d8c8a0',1);L([[32,30],[46,32]],'#d8c8a0',1);break;
@@ -4556,7 +4574,7 @@ function renderCensus(){
     if(!pl.length)h+=`<p class="cempty">No wild plants yet. Sow pioneer weeds on bare soil to begin.</p>`;
     for(const[g,label]of CSTAGE){const ks=pl.filter(k=>cGroup(k)===g).sort((a,b)=>c.fl[b]-c.fl[a]);if(!ks.length)continue;
       h+=`<h4>${label} <em>${ks.reduce((n,k)=>n+c.fl[k],0)} tiles</em></h4><ol class="clist">${ks.map(k=>row(k,true)).join('')}</ol>`}
-    const cu=c.cult;if(cu.lawn+cu.crop+cu.street)h+=`<p class="cnote">Also on your land, still managed by people: ${[cu.lawn&&`${cu.lawn} mown lawn or grazed tiles`,cu.crop&&`${cu.crop} farmed fields`,cu.street&&`${cu.street} planted street trees`].filter(Boolean).join(', ')}.</p>`;
+    const cu=c.cult;if(cu.lawn+cu.crop+cu.street)h+=`<p class="cnote">Also on your land, still managed by people: ${[cu.lawn&&`${cu.lawn} mown lawn or grazed tiles`,cu.crop&&`${cu.crop} farmed fields`,cu.street&&`${cu.street} planted street trees`].filter(Boolean).join(', ')}. Unbuild lets a tile go now; lawns next to wild land and the Wilder Parks force let them go over time.</p>`;
     h+=`</section>`}
   if(censusTab!=='plants'){h+=`<section><h3>Animals</h3>`;
     if(!an.length)h+=`<p class="cempty">No animals yet. Research them in the Wood Wide Web and release them where they have habitat.</p>`;
