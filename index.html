@@ -58,6 +58,8 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .ctrl{display:flex;align-items:center;padding:4px;gap:2px}
 .ctrl button{padding:8px 10px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
 .rotgrp{display:flex;gap:2px}.ctrl .rotgrp button{font-size:15px;line-height:1;padding:6px 8px;font-family:inherit}
+.sndset{border:1px solid var(--line);border-radius:10px;padding:8px 12px 10px;margin:4px 0 0;display:grid;gap:6px}.sndset legend{padding:0 6px;color:var(--ink-dim);font-size:12px;font-family:var(--mono)}
+.sndset label{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:10px;font-size:13px;color:var(--ink-dim)}.sndset input{width:100%;accent-color:var(--lichen)}
 .ctrl button:hover{background:rgba(255,255,255,.06);color:var(--ink)}
 .ctrl button[aria-pressed="true"]{background:var(--lichen);color:#1d2614}
 .ctrl .sep{width:1px;align-self:stretch;background:var(--line);margin:4px 4px}
@@ -399,6 +401,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
     <div class="ctrl panel" role="group" aria-label="Game speed">
       <button id="menuBtn" title="Save slots and new games">Menu</button>
       <button id="dnBtn" aria-pressed="true" title="Turn the day and night cycle on or off">Day/night</button>
+      <button id="sndBtn" aria-pressed="true" title="Sound on or off (M). Volumes are in the Menu.">Sound</button>
       <span class="rotgrp" role="group" aria-label="Rotate view"><button id="rotL" title="Rotate the view left (Q)" aria-label="Rotate view left">⟲</button><button id="rotR" title="Rotate the view right (E)" aria-label="Rotate view right">⟳</button></span>
       <button id="webBtn" title="Research: unlock plants, animals and forces of nature">Wood Wide Web</button>
       <button id="charterBtn" title="Milestones">Milestones</button>
@@ -495,6 +498,11 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <ol id="slotList"></ol>
       <p class="note" id="menuNote"></p>
       <div class="row"><button class="btn primary" id="menuNew">New game</button></div>
+      <fieldset class="sndset"><legend>Sound</legend>
+        <label>Effects<input type="range" id="vol-fx" min="0" max="100" step="5"></label>
+        <label>Nature<input type="range" id="vol-amb" min="0" max="100" step="5"></label>
+        <label>Music<input type="range" id="vol-mus" min="0" max="100" step="5"></label>
+      </fieldset>
     </div>
   </div>
   <div id="guide" class="veil" hidden>
@@ -1211,7 +1219,7 @@ function tryUnlock(x,y){
   const st=blockStatus(b),B=S.blocks[b];
   if(!st.ok){say(st.msg,'bad');return true}
   if(S.seeds<st.cost){say(`Not enough seeds. ${B.name} costs ${fmt(st.cost)}.`,'bad');return true}
-  S.seeds-=st.cost;B.u=true;refreshUnlock();computeDerived();
+  S.seeds-=st.cost;B.u=true;sfx('unlock');refreshUnlock();computeDerived();
   toast(`Unlocked: ${B.name}`,BT[B.t].desc,'unlock');say(`${B.name} is yours to rewild. The map grows.`,'good');
   updateHUD();updateInfo();refreshCards();markDirty();save();return true;
 }
@@ -1592,18 +1600,18 @@ function apply(x,y,quiet){
         else if(f.managed==='graze'){t.p={id:'meadow',g:.2}}
         else if(f.crop){t.p={id:'weeds',g:.3};if(!S.flags.farm){S.flags.farm=1;toast('Field left fallow','The seed bank in farm soil wakes up at once: poppies and willowherb first. Rewilded farms like Knepp in Sussex turned to scrub, wood pasture and wetland within twenty years.')}}
         else t.p=null;
-        burst(sx,sy-4,'leaf',6)}
-      else if(t.gd==='water'){unWater(x,y);t.tox=Math.min(t.tox,.15);t.fert=Math.max(t.fert,.3);computeMoist()}
+        burst(sx,sy-4,'leaf',6);sfx('compost')}
+      else if(t.gd==='water'){unWater(x,y);sfx('compost');t.tox=Math.min(t.tox,.15);t.fert=Math.max(t.fert,.3);computeMoist()}
       else hitGround(x,y,power(),'hand');
       break;
-    case 'dig':t.p=null;makeWater(x,y);S.dug++;computeMoist();burst(sx,sy,'splash',10);break;
-    case 'compost':t.tox=Math.max(0,t.tox-.25);t.fert=Math.min(1,t.fert+.15);burst(sx,sy-2,'dust',5);break;
-    case 'sow':t.p={id:tool.id,g:SOWN_G()};S.sown=(S.sown||0)+1;discover('flora',tool.id);burst(sx,sy-4,'leaf',8);break;
+    case 'dig':t.p=null;makeWater(x,y);S.dug++;computeMoist();burst(sx,sy,'splash',10);sfx('splash');break;
+    case 'compost':t.tox=Math.max(0,t.tox-.25);t.fert=Math.min(1,t.fert+.15);burst(sx,sy-2,'dust',5);sfx('compost');break;
+    case 'sow':t.p={id:tool.id,g:SOWN_G()};S.sown=(S.sown||0)+1;sfx('sow');discover('flora',tool.id);burst(sx,sy-4,'leaf',8);break;
     case 'reintro':{
       const F=FAUNA[tool.id];
       S.an.push({id:S.nid++,sp:tool.id,x,y,hx:x,hy:y,tx:x,ty:y,w:.5,f:1,bad:0,m:0,rel:1});
       if(e.warn&&!quiet)say(`Released, but: ${e.warn}`,'bad');
-      burst(sx,sy-6,'ring',1);discover('fauna',tool.id,`${F.name} reintroduced`);
+      burst(sx,sy-6,'ring',1);sfx('release',F.cls);discover('fauna',tool.id,`${F.name} reintroduced`);
       break;
     }
   }
@@ -2970,7 +2978,7 @@ function frame(now){
   if(!$('menu').hidden){last=now;render();return}
   const gap=(now-last)/1000;if(gap>3){last=now;catchUp(gap,gap>60);return}
   if(now-interactAt>1500&&!drag&&!pinch&&now-last<31)return;
-  const dt=Math.min(.1,(now-last)/1000);last=now;time+=dt;
+  const dt=Math.min(.1,(now-last)/1000);last=now;time+=dt;soundTick(dt);
   S.clock=(S.clock||0)+dt*S.speed;updateTime();
   if(S.speed>0){acc+=dt*S.speed;let n=0;while(acc>=1&&n<4){acc-=1;tick();n++}if(acc>1)acc=0}
   updateAnimals(dt*S.speed);updateCars(dt*S.speed);updateParts(dt);updateDecor(dt,dt);updateWeather(dt);updateClockUI();
@@ -3193,7 +3201,7 @@ function buyRes(k){
   if(R0.max?lvl(k)>=R0.max:has(k))return webSay(`${n} is fully grown.`);
   if(!resOpen(k))return webSay(webWhy(k),'bad');
   if(S.seeds<c)return webSay(`Not enough seeds. ${n} costs ${fmt(c)}.`,'bad');
-  S.seeds-=c;S.res[k]=lvl(k)+1;
+  S.seeds-=c;S.res[k]=lvl(k)+1;sfx('grow');
   webSay(R0.g==='force'?`${n} is now level ${lvl(k)}.`:R0.g==='plant'?`${n} can now take hold, and you can sow it.`:`${n} can now find its way into the city.`,'good');
   computeDerived();updateHUD();updateInfo();refreshCards();renderWeb();webDetail(webSel||k);save();
 }
@@ -3202,10 +3210,13 @@ function buyRes(k){
 function BHP(b){switch(b.k){case 'garage':return 2*b.h+2;case 'mast':return 5;case 'house':return 3;case 'terrace':return 4;case 'shop':return 3*b.h;case 'block':case 'office':case 'tower':return 2*b.h+(b.spire?6:0);
   case 'warehouse':return 6;case 'factory':return 10;case 'mall':return 8;case 'farm':return 5;case 'greenhouse':return 3;case 'flyover':return 12;case 'terminal':return 15;case 'ctower':return 12;default:return 3}}
 const GHP=t=>t.hw||t.rw?4:({road:2,pave:2,rubble:1,path:1,garden:1}[t.gd]||1);
+// is a tile in view right now
+function onScreen(x,y){const[sx,sy]=iso(x,y,hAt(x,y)),px=(sx-cam.x)*cam.z+W/2,py=(sy-cam.y)*cam.z+H/2;return px>-40&&px<W+40&&py>-40&&py<H+40}
 function hitBuilding(x,y,dmg,src){
   const t=T(x,y),b=t.b;if(b.hp==null)b.hp=BHP(b);b.hp-=dmg;if(src==='nature')b.ivy=Math.min(1,(b.ivy||0)+.2);
   const[sx,sy]=isoG(x,y);
-  if(b.hp>0){burst(sx,sy-Math.min(bTop(b),60)*.5,'dust',src==='hand'?5:2);markDirty();return}
+  if(b.hp>0){burst(sx,sy-Math.min(bTop(b),60)*.5,'dust',src==='hand'?5:2);if(src==='hand')sfx('hit');markDirty();return}
+  if(src==='hand')sfx('collapse');else if(onScreen(x,y))sfx('collapse',0,.3);
   const was=b.k,h=b.h;t.b=null;t.gd='rubble';t.hp=null;S.demolished++;
   // salvage: the Trust pays a small bounty for every building you bring down by hand, so a city is never stuck without seeds
   const sal=src==='hand'?Math.round(3+2*Math.min(h,8)):0;S.seeds+=sal;if(sal&&!QUIET)say(`${bName({k:was,h,v:b.v})} down. Salvage: +${sal} seeds.`,'good');burst(sx,sy-h*FL*.5,'dust',14+h*2);
@@ -3215,7 +3226,8 @@ function hitBuilding(x,y,dmg,src){
 }
 function hitGround(x,y,dmg,src){
   const t=T(x,y);if(t.hp==null)t.hp=GHP(t);t.hp-=dmg;const[sx,sy]=isoG(x,y);
-  if(t.hp>0){burst(sx,sy,'dust',3);markDirty();return}
+  if(t.hp>0){burst(sx,sy,'dust',3);if(src==='hand')sfx('crack');markDirty();return}
+  if(src==='hand'||t.cul)sfx(t.cul?'splash':'crack');
   t.hp=null;
   if(t.cul){makeWater(x,y);t.cul=false;t.tox*=.5;S.daylit++;computeMoist();burst(sx,sy,'splash',12);
     if(!S.flags.stream){S.flags.stream=1;toast('The stream sees daylight','You broke into the old culvert. Daylight it all the way to the west edge and the countryside’s river life can swim in.','unlock')}}
@@ -3291,7 +3303,7 @@ function sowRule(id,x,y){
 }
 
 /* ---------- the Wood Wide Web panel ---------- */
-function webSay(m,k){const el=$('webMsg');el.textContent=m;el.className='msg '+(k||'')}
+function webSay(m,k){const el=$('webMsg');el.textContent=m;el.className='msg '+(k||'');if(k==='bad')sfx('bad')}
 // the web is laid out in lanes (plants, insects, birds, mammals, water life, forces), each node one column right of what it needs
 const LANES=[['plant','Plants'],['insect','Insects'],['bird','Birds'],['mammal','Mammals'],['water','Water life'],['force','Forces of nature']];
 const laneOf=k=>RES[k].g==='animal'?FAUNA[k].cls:RES[k].g;
@@ -3851,9 +3863,10 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-enc]');if(
 
 /* ---------- UI ---------- */
 let tab='land';const newDot={flora:0,fauna:0};
-function say(m,kind){const el=$('msg');el.textContent=m;el.className=kind||''}
+function say(m,kind){const el=$('msg');el.textContent=m;el.className=kind||'';if(kind==='bad')sfx('bad')}
 function toast(title,body,kind){
   if(QUIET){if(offLog)offLog.push({t:title,b:body,k:kind});return}
+  sfx(kind==='unlock'?'chime':'note');
   const box=$('toasts');const el=document.createElement('div');el.className='toast '+(kind||'');el.innerHTML=`<b>${title}</b><p>${body}</p>`;
   box.appendChild(el);while(box.children.length>3)box.firstChild.remove();
   setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),450)},kind==='unlock'?6500:4500);
@@ -4125,6 +4138,7 @@ window.addEventListener('keydown',e=>{
   else if(e.key==='Escape')selectTool({type:'inspect',id:'inspect'});
   else if(e.key==='+'||e.key==='=')cam.z=clamp(cam.z*1.15,.4,3.2);
   else if(e.key==='-')cam.z=clamp(cam.z/1.15,.4,3.2);
+  else if(e.key==='m'||e.key==='M'){sndToggle();return}
   else if(e.key==='q'||e.key==='Q'){rotateView(-1);return}
   else if(e.key==='e'||e.key==='E'){rotateView(1);return}
   keys.add(e.key.toLowerCase());interactAt=zoomAt=performance.now();
@@ -4239,6 +4253,142 @@ function boot(state){
   renderGoals();setTab(tab);selectTool(tool);updateHUD();updateInfo();
 }
 let started=false;
+/* ---------- sound ----------
+   Everything is synthesised with the Web Audio API: no files. Three layers, each with its own volume:
+   the soundscape of whatever part of the city is on screen (traffic, wind in leaves, water, birdsong, bees,
+   crickets, owls, frogs), effects for what you do, and a slow generative tune. Audio starts on the first click. */
+const SND={on:true,vol:{fx:.8,amb:.7,mus:.35},ctx:null,bus:{},noise:null,brown:null,beds:{},lvl:{},t:0,musT:0,lastFx:{}};
+try{const v=JSON.parse(ls.get('idle-nature-sound')||'null');if(v){SND.on=v.on!==false;Object.assign(SND.vol,v.vol||{})}}catch(e){}
+const sndSave=()=>ls.set('idle-nature-sound',JSON.stringify({on:SND.on,vol:SND.vol}));
+function audioInit(){
+  if(SND.ctx||!SND.on)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  let c;try{c=SND.ctx=new AC()}catch(e){return}
+  const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.connect(c.destination);
+  const master=c.createGain();master.gain.value=1;master.connect(comp);SND.bus.master=master;
+  for(const k of ['fx','amb','mus']){const g=c.createGain();g.gain.value=SND.vol[k];g.connect(master);SND.bus[k]=g}
+  const len=c.sampleRate*3,wb=c.createBuffer(1,len,c.sampleRate),bb=c.createBuffer(1,len,c.sampleRate),w=wb.getChannelData(0),b=bb.getChannelData(0);let last=0;
+  for(let i=0;i<len;i++){w[i]=Math.random()*2-1;last=(last+.02*(Math.random()*2-1))/1.02;b[i]=last*3.5}
+  SND.noise=wb;SND.brown=bb;
+  const bed=(buf,type,f,q)=>{const s=c.createBufferSource();s.buffer=buf;s.loop=true;const fl=c.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;
+    const g=c.createGain();g.gain.value=0;s.connect(fl);fl.connect(g);g.connect(SND.bus.amb);s.start(0,Math.random()*2.5);return {g,fl}};
+  SND.beds={city:bed(bb,'lowpass',320,.6),wind:bed(wb,'bandpass',700,.5),water:bed(wb,'bandpass',2300,1.4),drone:null};
+  // a soft drone under the music
+  const dg=c.createGain();dg.gain.value=0;dg.connect(SND.bus.mus);
+  for(const f of [73.4,110.0,146.8]){const o=c.createOscillator();o.type='sine';o.frequency.value=f*(1+(Math.random()-.5)*.004);const og=c.createGain();og.gain.value=f<100?.5:.25;o.connect(og);og.connect(dg);o.start()}
+  SND.beds.drone={g:dg};
+  if(document.hidden)c.suspend();
+}
+// an output for one sound, panned left or right
+function sOut(bus,pan){const c=SND.ctx;if(!pan||!c.createStereoPanner)return bus;const p=c.createStereoPanner();p.pan.value=Math.max(-1,Math.min(1,pan));p.connect(bus);return p}
+function tone(t0,type,f0,f1,dur,vol,bus,pan,att=.01,filt){const c=SND.ctx,o=c.createOscillator(),g=c.createGain();o.type=type;o.frequency.setValueAtTime(f0,t0);
+  if(f1!==f0)o.frequency.exponentialRampToValueAtTime(Math.max(20,f1),t0+dur);g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+att);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+  let n=o;if(filt){const fl=c.createBiquadFilter();fl.type='lowpass';fl.frequency.value=filt;o.connect(fl);n=fl}n.connect(g);g.connect(sOut(bus,pan));o.start(t0);o.stop(t0+dur+.05);return o}
+function nz(t0,type,f,q,dur,vol,bus,pan,brown,att=.004){const c=SND.ctx,s=c.createBufferSource();s.buffer=brown?SND.brown:SND.noise;const fl=c.createBiquadFilter();fl.type=type;fl.frequency.value=f;fl.Q.value=q;
+  const g=c.createGain();g.gain.setValueAtTime(.0001,t0);g.gain.exponentialRampToValueAtTime(vol,t0+att);g.gain.exponentialRampToValueAtTime(.0001,t0+dur);s.connect(fl);fl.connect(g);g.connect(sOut(bus,pan));s.start(t0,Math.random()*2);s.stop(t0+dur+.05);return fl}
+const rnd=(a,b)=>a+Math.random()*(b-a);
+// ---- effects for what the player does ----
+const SFX={
+  click(t,b){nz(t,'highpass',3500,.7,.03,.05,b)},
+  hit(t,b){nz(t,'lowpass',1100,.8,.2,.45,b);tone(t,'triangle',110,55,.16,.35,b);nz(t+.03,'bandpass',2400,1.5,.09,.12,b)},
+  collapse(t,b){nz(t,'lowpass',260,.7,1.5,.9,b,0,true,.03);for(let i=0;i<6;i++)nz(t+i*.13+rnd(0,.06),'bandpass',rnd(700,2200),1.2,.18,.22,b,rnd(-.4,.4));tone(t,'sine',70,38,.9,.4,b)},
+  crack(t,b){nz(t,'highpass',2400,.7,.07,.3,b);nz(t+.02,'bandpass',700,1,.14,.25,b);tone(t,'triangle',180,90,.08,.15,b)},
+  splash(t,b){nz(t,'bandpass',1300,.7,.45,.35,b,0,false,.02);for(let i=0;i<5;i++)tone(t+.05+i*.06,'sine',rnd(500,700),rnd(800,1200),.07,.08,b,rnd(-.3,.3))},
+  sow(t,b){nz(t,'bandpass',3200,.9,.22,.14,b);tone(t+.04,'sine',523,784,.14,.1,b);tone(t+.1,'sine',784,1046,.16,.07,b)},
+  compost(t,b){nz(t,'lowpass',600,.7,.35,.3,b,0,true);nz(t+.08,'bandpass',1800,1,.2,.1,b)},
+  release(t,b,k){if(k==='insect'){const o=tone(t,'sawtooth',210,240,.5,.07,b,0,.08,900);}
+    else if(k==='bird'){tone(t,'sine',2800,4200,.08,.12,b,.2);tone(t+.12,'sine',3200,4600,.09,.1,b,-.2)}
+    else{nz(t,'bandpass',900,1,.25,.18,b);tone(t+.05,'sine',330,440,.12,.08,b)}
+    tone(t+.18,'sine',659,659,.5,.08,b);tone(t+.26,'sine',988,988,.6,.06,b)},
+  grow(t,b){[523.3,659.3,784,1046.5].forEach((f,i)=>{tone(t+i*.08,'sine',f,f,1.1,.16,b,(i-1.5)*.15,.01);tone(t+i*.08,'triangle',f*2,f*2,.5,.03,b)})},
+  unlock(t,b){[392,523.3,659.3,784,1046.5].forEach((f,i)=>tone(t+i*.1,'sine',f,f,1.6,.15,b,(i-2)*.15,.02));nz(t,'lowpass',400,.7,1.2,.15,b,0,true,.4)},
+  chime(t,b){tone(t,'sine',784,784,.9,.12,b,-.15);tone(t+.11,'sine',1174.7,1174.7,1.1,.1,b,.15);tone(t+.11,'triangle',2349,2349,.4,.015,b)},
+  note(t,b){tone(t,'sine',659.3,659.3,.5,.07,b)},
+  bad(t,b){tone(t,'triangle',233,175,.18,.16,b,0,.005,1200)},
+  levelup(t,b){tone(t,'sine',880,1318.5,.25,.07,b)},
+};
+function sfx(name,arg,vol=1){
+  if(!SND.on||QUIET||!SND.ctx||SND.ctx.state!=='running')return;const now=performance.now();
+  if(now-(SND.lastFx[name]||0)<(name==='click'?30:70))return;
+  // a message chime right after the sound of the action that caused it would just be noise
+  if((name==='chime'||name==='note')&&now-(SND.lastAny||0)<600)return;if(name!=='click')SND.lastAny=now;SND.lastFx[name]=now;
+  const c=SND.ctx;let b=SND.bus.fx;if(vol!==1){const g=c.createGain();g.gain.value=vol;g.connect(b);b=g}
+  try{SFX[name](c.currentTime+.01,b,arg)}catch(e){}
+}
+// ---- the soundscape of the part of the city on screen ----
+function listen(){
+  const m=screenToTile(W/2,H/2)||[RC,RC],r=Math.round(Math.max(4,Math.min(16,9/cam.z))),o={area:0,conc:0,trees:0,leafy:0,flowers:0,grass:0,water:0,road:0};
+  for(let y=m[1]-r;y<=m[1]+r;y++)for(let x=m[0]-r;x<=m[0]+r;x++){if(!inb(x,y)||!SEEN[y*N+x])continue;const t=T(x,y);o.area++;
+    if(t.b&&!t.b.rp)o.conc+=1+Math.min(4,t.b.h||1)*.15;else if(t.gd==='road'){o.conc+=.8;o.road++}else if(t.gd==='pave'||t.gd==='rubble')o.conc+=.4;
+    if(t.gd==='water')o.water++;
+    if(t.p&&t.p.g>=.4&&!FLORA[t.p.id].pre){const f=FLORA[t.p.id];if(f.kind==='tree'){o.trees++;o.leafy++}else if(f.kind==='shrub')o.leafy+=.6;else if(f.stage>=1)o.grass++;if(f.flower)o.flowers++}}
+  const an={};for(const a of S.an)if(Math.abs(a.x-m[0])<=r+2&&Math.abs(a.y-m[1])<=r+2){const F=FAUNA[a.sp];an[a.sp]=(an[a.sp]||0)+1;an['@'+F.cls]=(an['@'+F.cls]||0)+1}
+  o.an=an;o.A=Math.max(1,o.area);return o;
+}
+// how loud each wildlife sound is against the steady beds
+const AMBV={bird:2.6,bee:2.2,cricket:3,owl:1.6,frog:2.4,woodpecker:3,swift:6,car:1.2};
+const BIRDSONG=['chip','warble','flute','tit','thrush'];
+function birdSong(t,b,pan,kind){
+  if(kind==='chip'){for(let i=0;i<2+(Math.random()*3|0);i++)tone(t+i*.12,'sine',rnd(5000,6200),rnd(3400,4200),.05,.05,b,pan)}
+  else if(kind==='warble'){let tt=t;for(let i=0;i<6+(Math.random()*6|0);i++){const d=rnd(.05,.09),f=rnd(2600,6000);tone(tt,'sine',f,f*rnd(.8,1.25),d,.045,b,pan);tt+=d+rnd(.01,.04)}}
+  else if(kind==='flute'){let tt=t;for(let i=0;i<4+(Math.random()*3|0);i++){const d=rnd(.12,.22),f=rnd(1300,2700);tone(tt,'sine',f,f*rnd(.85,1.2),d,.05,b,pan,.03);tt+=d+rnd(.02,.06)}}
+  else if(kind==='tit'){for(let i=0;i<3;i++){tone(t+i*.3,'sine',5200,5000,.1,.04,b,pan);tone(t+i*.3+.13,'sine',4100,3900,.1,.04,b,pan)}}
+  else{const ph=[rnd(2000,3500),rnd(2500,4500),rnd(1800,3000)];for(let rep=0;rep<2;rep++)ph.forEach((f,i)=>tone(t+rep*.55+i*.15,'sine',f,f*1.1,.11,.05,b,pan))}
+}
+const SOUNDS={
+  bird(t,b,pan,o){const k=o.an.thrush&&Math.random()<.4?'thrush':o.an.skylark&&Math.random()<.4?'warble':BIRDSONG[Math.random()*BIRDSONG.length|0];birdSong(t,b,pan,k)},
+  bee(t,b,pan){const c=SND.ctx,o=c.createOscillator(),lfo=c.createOscillator(),lg=c.createGain(),fl=c.createBiquadFilter(),g=c.createGain(),d=rnd(1.2,2.2);
+    o.type='sawtooth';o.frequency.value=rnd(170,230);lfo.frequency.value=rnd(5,9);lg.gain.value=8;lfo.connect(lg);lg.connect(o.frequency);fl.type='lowpass';fl.frequency.value=800;
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.035,t+d*.4);g.gain.exponentialRampToValueAtTime(.0001,t+d);
+    const p=c.createStereoPanner?c.createStereoPanner():null;o.connect(fl);fl.connect(g);if(p){p.pan.setValueAtTime(pan,t);p.pan.linearRampToValueAtTime(-pan,t+d);g.connect(p);p.connect(b)}else g.connect(b);
+    o.start(t);lfo.start(t);o.stop(t+d+.05);lfo.stop(t+d+.05)},
+  cricket(t,b,pan){const f=rnd(4300,4900);for(let k=0;k<3;k++)for(let i=0;i<4;i++)tone(t+k*.32+i*.035,'sine',f,f,.022,.025,b,pan,.003)},
+  owl(t,b,pan){tone(t,'sine',410,390,.38,.08,b,pan,.08,900);tone(t+.6,'sine',405,385,.22,.06,b,pan,.05,900);tone(t+.95,'sine',415,370,.75,.07,b,pan,.1,900)},
+  frog(t,b,pan){const f=rnd(95,140);for(let i=0;i<5;i++)tone(t+i*.07,'square',f,f*.9,.05,.035,b,pan,.004,600)},
+  woodpecker(t,b,pan){for(let i=0;i<14;i++)nz(t+i*.045,'bandpass',1600,3,.02,.12*(1-i/18),b,pan)},
+  swift(t,b,pan){for(let i=0;i<3;i++)tone(t+i*.1,'sawtooth',rnd(5500,6500),rnd(6500,7500),.08,.012,b,pan,.004,8000)},
+  car(t,b,pan){const fl=nz(t,'lowpass',500,.8,2.2,.05,b,pan,true,.9);fl.frequency.linearRampToValueAtTime(900,t+1.1);fl.frequency.linearRampToValueAtTime(400,t+2.2)},
+};
+// slow pentatonic notes over the drone; lower and sparser at night, brighter as the city turns green
+const MUS=[293.7,329.6,370,440,493.9,587.3,659.3,740,880,987.8];
+function music(t,wild){const b=SND.bus.mus,lo=NIGHT>.5?0:2,i=lo+(Math.random()*(MUS.length-lo-(NIGHT>.5?3:0))|0),f=MUS[i];
+  tone(t,'sine',f,f,rnd(2.5,4),.1,b,rnd(-.5,.5),.25);tone(t,'triangle',f,f,1.5,.012,b,0,.3);
+  if(Math.random()<.25+wild*.3){const g=MUS[Math.min(MUS.length-1,i+2)];tone(t+rnd(.4,.9),'sine',g,g,rnd(2,3),.05,b,rnd(-.5,.5),.2)}}
+function soundTick(dt){
+  if(!SND.ctx||!SND.on||SND.ctx.state!=='running')return;SND.t+=dt;if(SND.t<.5)return;const step=SND.t;SND.t=0;
+  const c=SND.ctx,now=c.currentTime,o=listen(),A=o.A,day=DAYL,spring=SEA.idx===0?1:0,summer=SEA.idx===1?1:0,winter=SEA.idx===3?1:0;
+  const set=(bed,v,tc=1.2)=>{bed.g.gain.setTargetAtTime(Math.max(0,v),now,tc)};
+  const city=Math.min(1,o.conc/A),green=Math.min(1,(o.trees+o.grass*.5)/A);
+  set(SND.beds.city,city*.32*(.45+.55*day)*(1-.35*green));
+  const gust=.6+.4*Math.sin(now*.13)+.25*Math.sin(now*.37+1);
+  set(SND.beds.wind,(.05+.45*Math.min(1,o.leafy/A)*(winter?.4:1)+.08*winter)*gust*.55,2);SND.beds.wind.fl.frequency.setTargetAtTime(winter?1400:650+300*Math.sin(now*.2),now,2);
+  set(SND.beds.water,Math.min(1,o.water/(A*.12))*.16*(.75+.25*Math.random()),.3);
+  set(SND.beds.drone,SND.vol.mus>0?.05:0,3);
+  const ev=(name,rate)=>{if(rate>0&&Math.random()<1-Math.exp(-rate*step)){try{const g=c.createGain();g.gain.value=AMBV[name]||1;g.connect(SND.bus.amb);SOUNDS[name](now+rnd(0,.4),g,rnd(-.7,.7),o)}catch(e){}}};
+  const seasonBirds=spring?1.5:summer?1:SEA.idx===2?.5:.25,dawn=Math.max(0,1-Math.abs(dayPhase()-.27)*8);
+  ev('bird',((o.an['@bird']||0)*.12+Math.min(1,o.leafy/A)*1.1)*day*seasonBirds*(1+2*dawn));
+  ev('bee',(o.an.bee||0)*.15*SEA.bloom*day*(winter?0:1));
+  ev('cricket',Math.min(1,o.grass/A)*(summer?1.4:spring?.3:SEA.idx===2?.6:0)*(.3+NIGHT));
+  ev('owl',((o.an.owl||0)+(o.an.barnowl||0))*.12*NIGHT);
+  ev('frog',(o.an.frog||0)*.18*(spring?1:summer?.6:0)*(.3+NIGHT));
+  ev('woodpecker',(o.an.woodpecker||0)*.06*day*(winter?.3:1));
+  ev('swift',(o.an.swift||0)*.2*day*summer);
+  ev('car',city*o.road/A*1.2*(.3+.7*day));
+  SND.musT-=step;if(SND.musT<=0&&SND.vol.mus>0){music(now+.05,Math.min(1,D.W/400));SND.musT=rnd(2.5,5.5)*(NIGHT>.5?1.5:1)}
+}
+function sndApply(){
+  const b=$('sndBtn');if(b){b.setAttribute('aria-pressed',String(SND.on));b.textContent=SND.on?'Sound':'Muted'}
+  for(const k of ['fx','amb','mus']){const r=$('vol-'+k);if(r)r.value=Math.round(SND.vol[k]*100);if(SND.bus[k])SND.bus[k].gain.setTargetAtTime(SND.vol[k],SND.ctx.currentTime,.05)}
+  if(SND.on){audioInit();if(SND.ctx&&SND.ctx.state!=='running'&&!document.hidden)SND.ctx.resume()}else if(SND.ctx)SND.ctx.suspend();
+}
+function sndToggle(){SND.on=!SND.on;sndSave();sndApply();if(SND.on)setTimeout(()=>sfx('chime'),60)}
+// browsers only allow audio after a click or key press
+for(const ev of ['pointerdown','keydown'])window.addEventListener(ev,()=>{if(!SND.on)return;audioInit();if(SND.ctx&&SND.ctx.state!=='running'&&!document.hidden)SND.ctx.resume()},{capture:true});
+document.addEventListener('visibilitychange',()=>{if(!SND.ctx)return;if(document.hidden)SND.ctx.suspend();else if(SND.on)SND.ctx.resume()});
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b&&b.id!=='sndBtn')sfx('click')},true);
+$('sndBtn').addEventListener('click',sndToggle);
+for(const k of ['fx','amb','mus'])$('vol-'+k).addEventListener('input',e=>{SND.vol[k]=(+e.target.value)/100;sndSave();sndApply()});
+sndApply();
+
 function start(data){
   if(started)return;started=true;
   if(ls.get('idle-nature-dock')==='1')setDock(true);
