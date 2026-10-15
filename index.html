@@ -65,6 +65,19 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .ctrl .sep{width:1px;align-self:stretch;background:var(--line);margin:4px 4px}
 
 /* Charter (objectives) */
+.dialog.cpanel{max-width:1060px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.csum{display:flex;flex-wrap:wrap;gap:8px}.csum div{flex:1 1 120px;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.04)}.csum b{display:block;font-family:var(--mono);font-size:18px;font-weight:500;color:var(--lichen)}.csum span{font-size:12px;color:var(--ink-dim)}
+.ctabs{display:flex;gap:4px}.ctabs button{padding:6px 12px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);background:rgba(255,255,255,.04)}.ctabs button[aria-pressed="true"]{background:var(--lichen);color:#1d2614}
+.cbody{overflow-y:auto;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;align-items:start}.cbody.plants,.cbody.animals{grid-template-columns:1fr}
+.cbody h3{margin:4px 0 2px;font-family:'Young Serif',serif;font-weight:400;font-size:19px}.cbody h4{margin:12px 0 4px;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-dim);font-weight:600;display:flex;justify-content:space-between}.cbody h4 em{font-style:normal;font-family:var(--mono);letter-spacing:0;text-transform:none}
+.clist{list-style:none;margin:0;padding:0;display:grid;gap:4px}.clist li{display:grid;grid-template-columns:1fr auto;gap:4px;align-items:stretch}
+.crow{display:grid;grid-template-columns:40px 1fr auto;grid-template-rows:auto 5px;column-gap:10px;row-gap:5px;align-items:center;padding:6px 10px 8px;border-radius:9px;background:rgba(255,255,255,.04);text-align:left;color:var(--ink);width:100%}
+.crow:hover{background:rgba(255,255,255,.08)}.crow img{width:40px;height:32px;grid-row:1/3;object-fit:contain}.cn{display:flex;flex-direction:column;min-width:0}.cn b{font-weight:600;font-size:13px}.cn small{font-size:11.5px;color:var(--ink-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cq{display:flex;flex-direction:column;align-items:flex-end;font-family:var(--mono)}.cq b{font-size:15px;font-weight:500}.ctr{font-size:10.5px}.ctr.up{color:#8fd06a}.ctr.down{color:#f09080}.ctr.flat{color:var(--ink-dim)}
+.cbar{grid-column:2/4;height:5px;border-radius:3px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}.cbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:rgba(207,220,132,.4)}.cbar i.g{background:var(--lichen)}.cbar i.over{background:#e2a76c}
+.cloc{width:34px;border-radius:9px;background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:16px}.cloc:hover{background:rgba(255,255,255,.1);color:var(--ink)}
+.cempty,.cnote{font-size:12.5px;color:var(--ink-dim);margin:6px 0}
+@media (max-width:760px){.cbody{grid-template-columns:1fr}.csum div{flex-basis:90px}.csum b{font-size:15px}}
 .dialog.gopanel{max-width:760px;display:flex;flex-direction:column;gap:10px;overflow:hidden}
 #goalList{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:6px;overflow-y:auto;min-height:0}
 #goalList li{display:grid;grid-template-columns:18px 1fr auto;gap:10px;align-items:start;padding:9px 12px;border-radius:9px;background:rgba(255,255,255,.04);font-size:13px;line-height:1.4;color:var(--ink)}
@@ -405,6 +418,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <span class="rotgrp" role="group" aria-label="Rotate view"><button id="rotL" title="Rotate the view left (Q)" aria-label="Rotate view left">⟲</button><button id="rotR" title="Rotate the view right (E)" aria-label="Rotate view right">⟳</button></span>
       <button id="webBtn" title="Research: unlock plants, animals and forces of nature">Wood Wide Web</button>
       <button id="charterBtn" title="Milestones">Milestones</button>
+      <button id="censusBtn" title="Census: every plant and animal in the city, and how many">Census</button>
       <button id="recBtn" title="Ecosystems you have discovered">Ecosystems</button>
       <button id="guideBtn" title="Field guide: every plant and animal, and how ecosystems work">Field guide</button>
       <button id="newBtn" title="Move on to the next city" hidden>Next city</button>
@@ -503,6 +517,16 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
         <label>Nature<input type="range" id="vol-amb" min="0" max="100" step="5"></label>
         <label>Music<input type="range" id="vol-mus" min="0" max="100" step="5"></label>
       </fieldset>
+    </div>
+  </div>
+  <div id="census" class="veil" hidden>
+    <div class="dialog panel cpanel" role="dialog" aria-labelledby="cTitle">
+      <header class="webhead"><div><div class="eyebrow">Who lives here</div><h2 id="cTitle">Census</h2>
+        <p class="websub">Every wild plant and animal on your land, and how many. Arrows show the change over the last few minutes. Click a species for its field guide entry, or ◎ to find it on the map.</p></div>
+        <button class="btn" id="cClose">Close</button></header>
+      <div class="csum" id="cSum"></div>
+      <div class="ctabs" id="censusTabs" role="group" aria-label="Show"><button data-ct="all">All</button><button data-ct="plants">Plants</button><button data-ct="animals">Animals</button></div>
+      <div class="cbody" id="cBody"></div>
     </div>
   </div>
   <div id="guide" class="veil" hidden>
@@ -1629,7 +1653,7 @@ function tick(){
   IN_TICK=true;try{tick0()}finally{IN_TICK=false}
 }
 function tick0(){
-  S.t++;if(S.t%5===0)evalRecipes();
+  S.t++;if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();
   const cascade=D.fa.wolf>0?1.25:1,smogF=1-.3*S.smog;
   for(let i=0;i<N*N;i++){
     const t=S.tiles[i];if(!t.u)continue;
@@ -2919,7 +2943,7 @@ function render(){
   if(s===1){dx=Math.round(dx*DPR)/DPR;dy=Math.round(dy*DPR)/DPR}
   ctx.drawImage(cache,dx,dy,CW*s,CH*s);
   X=ctx;ctx.setTransform(DPR*z,0,0,DPR*z,DPR*(W/2-cam.x*z),DPR*(H/2-cam.y*z));
-  drawMovers();drawPods();
+  drawMovers();drawPods();drawHighlight();
   if(tool.type==='corridors'||tool.type==='guide'||tool.type==='toxview')drawOverlay();
   const hm=hover||pinned;
   if(S.blocks&&hm&&!T(hm[0],hm[1]).u){const b=blockAt(hm[0],hm[1]);if(b>=0){const ok=blockStatus(b).ok;
@@ -4250,7 +4274,7 @@ function legacyCarry(){let c=null;for(const k of [KEY,OLD_KEY,...slots().map(m=>
 function boot(state){
   S=state;worldDirty=true;ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
-  RACT={};for(const k in RMISS)delete RMISS[k];TGROW.fill(1);TBRW.fill(1);if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
+  RACT={};for(const k in RMISS)delete RMISS[k];TGROW.fill(1);TBRW.fill(1);CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;updateTime();cars=[];parts=[];
   S.rec=S.rec||{};refreshUnlock();computeMoist();computeDerived();evalRecipes();computeDerived();
   S.speed=1;if(!S.res){S.res={weeds:1};for(const t of S.tiles)if(t.p&&RES[t.p.id])S.res[t.p.id]=1;for(const a of S.an)if(RES[a.sp])S.res[a.sp]=1}S.myc=S.myc||0;S.cities=S.cities||0;S.name=S.name||CITY_NAMES[S.cities%CITY_NAMES.length];$('cityName').textContent=S.name;
@@ -4439,6 +4463,77 @@ function drawPods(){
   for(const p of PODS){const age=time-p.t0,a=Math.min(1,age*3)*Math.min(1,(p.life-age)/5);if(a>0)drawPod(p,a)}
   for(const f of FLOATS){const k=(time-f.t0)/1.4,s=Math.max(1,.9/cam.z);X.save();X.globalAlpha=1-k;X.font=`600 ${Math.round(12*s)}px ui-monospace, monospace`;X.textAlign='center';X.lineWidth=3*s;X.strokeStyle='rgba(20,28,20,.75)';X.strokeText(f.txt,f.x,f.y-10-k*26);X.fillStyle='#e8f0a8';X.fillText(f.txt,f.x,f.y-10-k*26);X.restore()}
 }
+
+/* ---------- census: who lives in the city, and how many ---------- */
+let CENSUS_H=[],HL=null,censusTab='all';
+function censusCount(){
+  const fl={},grown={},earn={},cult={lawn:0,crop:0,street:0},fa={};
+  const mult=(1+.15*lvl('grant'))*mycMult()*INCOME_K;
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u||!t.p)continue;const f=FLORA[t.p.id];
+    if(f.pre){cult.street++;continue}if(f.managed==='mow'||f.managed==='graze'){cult.lawn++;continue}if(f.crop){cult.crop++;continue}
+    const k=t.p.id;fl[k]=(fl[k]||0)+1;if(t.p.g>=.6)grown[k]=(grown[k]||0)+1;earn[k]=(earn[k]||0)+(f.sps||0)*t.p.g*(FS[i]?1.5:1)*mult}
+  for(const a of S.an)fa[a.sp]=(fa[a.sp]||0)+1;
+  return {fl,grown,earn,cult,fa};
+}
+// a snapshot every half minute, so the census can show what is rising and what is falling
+function censusSample(){const c=censusCount();CENSUS_H.push({t:S.t,fl:c.fl,fa:c.fa});if(CENSUS_H.length>21)CENSUS_H.shift()}
+function trendOf(kind,k,now){const h=CENSUS_H.length>1?CENSUS_H[Math.max(0,CENSUS_H.length-11)]:null;if(!h)return '';const was=(h[kind][k]||0),d=now-was;
+  if(!d)return '<span class="ctr flat" title="No change in the last few minutes">·</span>';const up=d>0;return `<span class="ctr ${up?'up':'down'}" title="${up?'+':''}${d} in the last ${Math.max(1,Math.round((S.t-h.t)/60))} min">${up?'▲':'▼'} ${Math.abs(d)}</span>`}
+const CSTAGE=[['weeds','Pioneer weeds'],['meadow','Grassland'],['floor','Woodland floor'],['reed','Reed bed'],['lily','Open water'],['hawthorn','Scrub'],['birch','Young woodland'],['willow','Wet woodland'],['pine','Pine woodland'],['oak','Climax woodland']];
+const cGroup=k=>{const at=LINE_AT[k];return at&&at[0].name==='Woodland floor'?'floor':bid(k)};
+const CCLS=[['insect','Insects'],['bird','Birds'],['mammal','Mammals'],['water','Water life']];
+function renderCensus(){
+  const c=censusCount(),pl=Object.keys(c.fl),an=Object.keys(c.fa),tiles=pl.reduce((n,k)=>n+c.fl[k],0),maxFl=Math.max(1,...pl.map(k=>c.fl[k])),earnAll=pl.reduce((n,k)=>n+c.earn[k],0);
+  $('cSum').innerHTML=[[pl.length,'plant species'],[tiles,'wild plant tiles'],[an.length,'animal species'],[S.an.length,'animals'],[(earnAll<100?earnAll.toFixed(1):fmt(earnAll))+'/s','seeds a second from plants']].map(([v,l])=>`<div><b>${typeof v==='number'?fmt(v):v}</b><span>${l}</span></div>`).join('');
+  const row=(k,isF)=>{const d=isF?FLORA[k]:FAUNA[k],n=isF?c.fl[k]:c.fa[k];
+    let bar,sub;
+    if(isF){const g=c.grown[k]||0;bar=`<i style="width:${Math.max(3,n/maxFl*100)}%"></i><i class="g" style="width:${Math.max(0,g/maxFl*100)}%"></i>`;
+      sub=`${g} grown${n-g?`, ${n-g} young`:''} · ${c.earn[k]>=.1?c.earn[k].toFixed(1):c.earn[k].toFixed(2)} seeds/s${VBASE[k]?` · level ${levelOf(k)}`:''}`}
+    else{const cap=capOf(k),pct2=cap?Math.min(1,n/cap):1;bar=`<i class="${n>cap?'over':''}" style="width:${Math.max(3,pct2*100)}%"></i>`;
+      sub=`${n} of room for ${cap}${n>cap?' · over capacity: some will leave':n>=cap?' · the land is full':''}`}
+    return `<li><button class="crow" data-enc="${k}" title="Field guide: ${d.name}"><img src="${speciesPic(k,64)}" alt=""><span class="cn"><b>${d.name}</b><small>${sub}</small></span><span class="cq"><b>${fmt(n)}</b>${trendOf(isF?'fl':'fa',k,n)}</span><span class="cbar">${bar}</span></button><button class="cloc" data-loc="${k}" title="Show on the map" aria-label="Show ${d.name} on the map">◎</button></li>`};
+  let h='';
+  if(censusTab!=='animals'){h+=`<section><h3>Plants</h3>`;
+    if(!pl.length)h+=`<p class="cempty">No wild plants yet. Sow pioneer weeds on bare soil to begin.</p>`;
+    for(const[g,label]of CSTAGE){const ks=pl.filter(k=>cGroup(k)===g).sort((a,b)=>c.fl[b]-c.fl[a]);if(!ks.length)continue;
+      h+=`<h4>${label} <em>${ks.reduce((n,k)=>n+c.fl[k],0)} tiles</em></h4><ol class="clist">${ks.map(k=>row(k,true)).join('')}</ol>`}
+    const cu=c.cult;if(cu.lawn+cu.crop+cu.street)h+=`<p class="cnote">Also on your land, still managed by people: ${[cu.lawn&&`${cu.lawn} mown lawn or grazed tiles`,cu.crop&&`${cu.crop} farmed fields`,cu.street&&`${cu.street} planted street trees`].filter(Boolean).join(', ')}.</p>`;
+    h+=`</section>`}
+  if(censusTab!=='plants'){h+=`<section><h3>Animals</h3>`;
+    if(!an.length)h+=`<p class="cempty">No animals yet. Research them in the Wood Wide Web and release them where they have habitat.</p>`;
+    for(const[cl,label]of CCLS){const ks=an.filter(k=>FAUNA[k].cls===cl).sort((a,b)=>c.fa[b]-c.fa[a]);if(!ks.length)continue;
+      h+=`<h4>${label} <em>${ks.reduce((n,k)=>n+c.fa[k],0)}</em></h4><ol class="clist">${ks.map(k=>row(k,false)).join('')}</ol>`}
+    // researched animals that are not living here right now
+    const gone=Object.keys(FAUNA).filter(k=>!c.fa[k]&&RES[k]&&has(k));if(gone.length)h+=`<p class="cnote">Researched but not living in the city right now: ${gone.map(k=>FAUNA[k].name).join(', ')}.</p>`;
+    h+=`</section>`}
+  $('cBody').innerHTML=h;$('cBody').className='cbody '+censusTab;
+  for(const b of document.querySelectorAll('#censusTabs button'))b.setAttribute('aria-pressed',String(b.dataset.ct===censusTab));
+}
+// light up every tile (or animal) of a species on the map for a few seconds
+function locateSpecies(k){
+  const isF=!!FLORA[k];let pts=[];
+  if(isF){for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.u&&t.p&&t.p.id===k)pts.push([i%N,(i/N)|0])}}else pts=S.an.filter(a=>a.sp===k).map(a=>[a.x,a.y]);
+  if(!pts.length)return;$('census').hidden=true;
+  const m=screenToTile(W/2,H/2)||[RC,RC];pts.sort((a,b)=>Math.hypot(a[0]-m[0],a[1]-m[1])-Math.hypot(b[0]-m[0],b[1]-m[1]));
+  const[x,y]=pts[0],[sx,sy]=iso(x,y,hAt(x,y));cam.x=sx;cam.y=sy;cam.z=Math.max(cam.z,1.4);clampCam();markDirty();interactAt=performance.now();
+  HL={k,isF,pts:isF?pts:null,until:time+4};
+  say(`${(FLORA[k]||FAUNA[k]).name}: ${pts.length} ${isF?'tile'+(pts.length>1?'s':''):'in the city'}, the nearest in the middle of the screen.`,'good');
+}
+function drawHighlight(){
+  if(!HL||time>HL.until){HL=null;return}const a=Math.min(1,(HL.until-time)/1)*(.55+.35*Math.sin(time*7));
+  X.save();X.globalAlpha=a;X.strokeStyle='#f6eca0';X.lineWidth=2/cam.z;X.fillStyle='rgba(246,236,160,.22)';
+  const pts=HL.isF?HL.pts:S.an.filter(q=>q.sp===HL.k).map(q=>[q.x,q.y]);
+  for(const[x,y]of pts){if(HL.isF){const q=quad(Math.round(x),Math.round(y),.5);X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let i=1;i<4;i++)X.lineTo(q[i][0],q[i][1]);X.closePath();X.fill();X.stroke()}
+    else{const[sx,sy]=isoG(x,y);X.beginPath();X.ellipse(sx,sy,14,7,0,0,7);X.stroke();X.beginPath();X.ellipse(sx,sy,20+6*Math.sin(time*5),10+3*Math.sin(time*5),0,0,7);X.stroke()}}
+  X.restore();
+}
+let censusTimer=null;
+function openCensus(){renderCensus();$('census').hidden=false;$('cClose').focus();clearInterval(censusTimer);censusTimer=setInterval(()=>{if($('census').hidden){clearInterval(censusTimer);return}renderCensus()},2000)}
+$('censusBtn').addEventListener('click',openCensus);
+$('cClose').addEventListener('click',()=>{$('census').hidden=true});
+$('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').hidden=true;return}const l=e.target.closest('[data-loc]');if(l){locateSpecies(l.dataset.loc);return}
+  const t=e.target.closest('[data-ct]');if(t){censusTab=t.dataset.ct;renderCensus()}});
+$('census').addEventListener('keydown',e=>{if(e.key==='Escape')$('census').hidden=true});
 
 function start(data){
   if(started)return;started=true;
