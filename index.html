@@ -2794,11 +2794,10 @@ function renderStatic(){
   const SHOWN=i=>SEEN[i],edgeAt=(x,y,du,dv)=>{const[ox,oy]=vecB(du,dv),nx=x+ox,ny=y+oy;return !inb(nx,ny)||!SHOWN(ny*N+nx)},edgeY=(x,y)=>edgeAt(x,y,0,1),edgeX=(x,y)=>edgeAt(x,y,1,0);
   FOG=0;
   const visT=(x,y)=>{if(!SHOWN(y*N+x))return false;const[sx,sy]=iso(x,y,hAt(x,y));return sx>=vx0&&sx<=vx1&&sy>=vy0&&sy-200<=vy1};
-  // interleaved: ground of diagonal d, then objects of diagonal d-1
-  for(let d=0;d<2*N;d++){
-    if(d<2*N-1)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];const t=T(x,y);if(edgeY(x,y))sideF(t,x,y,0);if(edgeX(x,y))sideF(t,x,y,1);drawGround(t,x,y,0,wc);FOG=0}}
-    if(d>=1){const e=d-1;for(let u=Math.max(0,e-N+1);u<=Math.min(N-1,e);u++){const[x,y]=toWorld(u,e-u);if(visT(x,y)){FOG=FOGL[y*N+x];drawTileObjects(x,y);FOG=0}}}
-  }
+  // all the ground first, then buildings and plants from back to front: ground rising in front of a
+  // building on a slope must never slice into its walls
+  for(let d=0;d<2*N-1;d++)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];const t=T(x,y);if(edgeY(x,y))sideF(t,x,y,0);if(edgeX(x,y))sideF(t,x,y,1);drawGround(t,x,y,0,wc);FOG=0}}
+  for(let d=0;d<2*N-1;d++)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];drawTileObjects(x,y);FOG=0}}
   if(S.blocks)drawPlots();
   CS={x:cam.x,y:cam.y,z,lkey:LKEY,w:W,h:H};worldDirty=false;softDirty=false;X=ctx;
   const tn=performance.now();staticCost=staticCost*.6+(tn-t0)*.4;lastStatic=tn;
