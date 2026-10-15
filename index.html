@@ -867,7 +867,8 @@ const NEWP={
 const PLANT_LINES=[
   {base:'weeds',cost:40,grow:1.6,bio:15,step:12,items:[
     {id:'dandelion',p:.4,ok:t=>t.fert<=.45,where:'on ordinary soil (fertility up to 45%)'},
-    {id:'nettle',p:.35,ok:t=>t.fert>.45,where:'on fertile soil (fertility over 45%)'},
+    // nettle beds are clones: they come in clumps, on the richest ground only
+    {id:'nettle',p:.35,ok:(t,x,y)=>t.fert>.6&&hash(x>>1,y>>1,77)<.32,where:'in clumps on rich soil (fertility over 60%), where nutrients have built up'},
     {id:'poppy',p:.5,ok:t=>!!t.fm,where:'on old farm fields'},
     {id:'ragwort',p:.35,ok:t=>t.fert<.4,where:'on dry, poor soil (fertility under 40%)'},
     {id:'teasel',p:.3,ok:t=>t.tox<.4,where:'on disturbed ground with toxicity under 40%'},
@@ -1600,7 +1601,7 @@ function succRaw(x,y){
     if((t.stony||0)>.35)return {next:'meadow',chance:0,need:`Stony ground (${pct(t.stony)} crushed rubble): only pioneers can root here until their roots and the frost break the stones down. Remediate Soil clears them.`};
     if(t.tox>.55)return {next:'meadow',chance:0,need:`Soil is ${pct(t.tox)} toxic; grassland needs under 55%. The weeds are cleaning it slowly. Remediate Soil speeds it up.`};
     if(t.fert<.22)return {next:'meadow',chance:0,need:`Fertility is ${pct(t.fert)}; grassland needs 22%.`};
-    const n=Math.min(3,near(x,y,1,isGrassSrc)),nb=p.id==='nettle'?4:1,nn=nb>1?' A nettle bed: its mat of roots holds grassland off 4× longer.':'';
+    const n=Math.min(3,near(x,y,1,isGrassSrc)),nb=p.id==='nettle'?2.5:1,nn=nb>1?' A nettle bed: its mat of roots holds grassland off 2.5× longer.':'';
     if(!n)return {next:'meadow',chance:(.00004+.0003*rainOf('meadow'))*(POL[i]?1.5:1)/nb,need:rainNote('meadow')+nn};
     return {next:'meadow',chance:.0005*n*(POL[i]?1.5:1)/nb,need:nn.trim()};
   }
