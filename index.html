@@ -4217,7 +4217,9 @@ function valid(s){return s&&s.v===4&&Array.isArray(s.tiles)&&s.tiles.length===N*
 function legacyCarry(){let c=null;for(const k of [KEY,OLD_KEY,...slots().map(m=>SLOT_PRE+m.id)]){try{const s=JSON.parse(ls.get(k));if(s&&(s.myc||s.cities)){c={myc:s.myc||0,cities:s.cities||0,seen:s.seen||{},dayNight:s.dayNight!==false};break}}catch(e){}}return c}
 
 function boot(state){
-  S=state;worldDirty=true;ROT=S.rot||0;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
+  S=state;worldDirty=true;ROT=S.rot||0;
+  // ecosystems belong to the city they grew in: forget the last city's before this one is judged
+  RACT={};for(const k in RMISS)delete RMISS[k];TGROW.fill(1);TBRW.fill(1);if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;updateTime();cars=[];parts=[];
   S.rec=S.rec||{};refreshUnlock();computeMoist();computeDerived();evalRecipes();computeDerived();
   S.speed=1;if(!S.res){S.res={weeds:1};for(const t of S.tiles)if(t.p&&RES[t.p.id])S.res[t.p.id]=1;for(const a of S.an)if(RES[a.sp])S.res[a.sp]=1}S.myc=S.myc||0;S.cities=S.cities||0;S.name=S.name||CITY_NAMES[S.cities%CITY_NAMES.length];$('cityName').textContent=S.name;
