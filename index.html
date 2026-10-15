@@ -866,7 +866,7 @@ const NEWP={
 // the lines: base stage, then its upgrades in order. p: share of new patches it takes where it suits; ok: where it suits
 const PLANT_LINES=[
   {base:'weeds',cost:40,grow:1.6,bio:15,step:12,items:[
-    {id:'dandelion',p:.4,where:'anywhere weeds grow'},
+    {id:'dandelion',p:.4,ok:t=>t.fert<=.45,where:'on ordinary soil (fertility up to 45%)'},
     {id:'nettle',p:.35,ok:t=>t.fert>.45,where:'on fertile soil (fertility over 45%)'},
     {id:'poppy',p:.5,ok:t=>!!t.fm,where:'on old farm fields'},
     {id:'ragwort',p:.35,ok:t=>t.fert<.4,where:'on dry, poor soil (fertility under 40%)'},
@@ -1597,11 +1597,12 @@ function succRaw(x,y){
     return {next:'weeds',chance:(w?.0005*Math.min(3,w):.0001+.0004*rainOf('weeds'))*(t.fm?2:1)*(1-t.tox*.5),need:w?'':rainNote('weeds')};
   }
   if(st===1){
+    if((t.stony||0)>.35)return {next:'meadow',chance:0,need:`Stony ground (${pct(t.stony)} crushed rubble): only pioneers can root here until their roots and the frost break the stones down. Remediate Soil clears them.`};
     if(t.tox>.55)return {next:'meadow',chance:0,need:`Soil is ${pct(t.tox)} toxic; grassland needs under 55%. The weeds are cleaning it slowly. Remediate Soil speeds it up.`};
     if(t.fert<.22)return {next:'meadow',chance:0,need:`Fertility is ${pct(t.fert)}; grassland needs 22%.`};
-    const n=Math.min(3,near(x,y,1,isGrassSrc));
-    if(!n)return {next:'meadow',chance:(.00004+.0003*rainOf('meadow'))*(POL[i]?1.5:1),need:rainNote('meadow')};
-    return {next:'meadow',chance:.0005*n*(POL[i]?1.5:1),need:''};
+    const n=Math.min(3,near(x,y,1,isGrassSrc)),nb=p.id==='nettle'?4:1,nn=nb>1?' A nettle bed: its mat of roots holds grassland off 4× longer.':'';
+    if(!n)return {next:'meadow',chance:(.00004+.0003*rainOf('meadow'))*(POL[i]?1.5:1)/nb,need:rainNote('meadow')+nn};
+    return {next:'meadow',chance:.0005*n*(POL[i]?1.5:1)/nb,need:nn.trim()};
   }
   if(bid(p.id)==='reed'){const f0=seedField('willow',i),s=Math.max(.08+.5*rainOf('willow'),f0);return {next:'willow',chance:.0003*s,need:f0<.1?rainNote('willow'):''}}
   if(st===2){
@@ -1650,7 +1651,7 @@ function evaluate(x,y){
       return {ok:true,cost:20,label:t.p?`Dig pond (clears ${FLORA[t.p.id].name.toLowerCase()})`:'Dig pond'};
     case 'compost':
       if(t.b||t.gd!=='soil')return {ok:false,msg:'Remediate soil tiles only.'};
-      if(t.tox<.02&&t.fert>.95)return {ok:false,msg:'This soil is already healthy.'};
+      if(t.tox<.02&&t.fert>.95&&!t.stony)return {ok:false,msg:'This soil is already healthy.'};
       return {ok:true,cost:10,label:'Spread compost and biochar'};
     case 'sow':{const m=sowRule(tool.id,x,y);if(m)return {ok:false,msg:m};return {ok:true,cost:sowCost(tool.id),label:t.p?`Replace ${FLORA[t.p.id].name.toLowerCase()} with ${FLORA[tool.id].name.toLowerCase()}`:`Sow ${FLORA[tool.id].name}`}}
     case 'reintro':{
@@ -1687,7 +1688,7 @@ function apply(x,y,quiet){
       else hitGround(x,y,power(),'hand');
       break;
     case 'dig':t.p=null;makeWater(x,y);S.dug++;computeMoist();burst(sx,sy,'splash',10);sfx('splash');break;
-    case 'compost':t.tox=Math.max(0,t.tox-.25);t.fert=Math.min(1,t.fert+.15);burst(sx,sy-2,'dust',5);sfx('compost');break;
+    case 'compost':t.tox=Math.max(0,t.tox-.25);t.fert=Math.min(1,t.fert+.15);t.stony=0;burst(sx,sy-2,'dust',5);sfx('compost');break;
     case 'sow':t.p={id:tool.id,g:SOWN_G()};S.sown=(S.sown||0)+1;sfx('sow');discover('flora',tool.id);burst(sx,sy-4,'leaf',8);break;
     case 'reintro':{
       const F=FAUNA[tool.id];
@@ -1730,10 +1731,12 @@ function tick0(){
       }
       const g=t.p.g;
       // the work of each stage on the soil
-      const K=TICK_K;if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K*(1+.5*lvl('deep')));t.fert=Math.min(1,t.fert+.004*g*K)}
+      const K=TICK_K;if(t.stony)t.stony=Math.max(0,t.stony-(f.stage===1?.00025*g:.0001)*K*(1+.3*lvl('roots')));
+      // crushed rubble holds few nutrients: stony ground stays poor until the stones break down
+      if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K*(1+.5*lvl('deep')));const cap=1-.75*(t.stony||0);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.004*g*K)}
       else if(!f.crop){t.tox=Math.max(0,t.tox-.002*g*K*(f.stage===2?1+.5*lvl('deep'):1));t.fert=Math.min(1,t.fert+(f.kind==='tree'?.002*(FS[i]?2:1):f.kind==='shrub'?.003:.0015)*g*K)}
       if(t.gd==='soil')t.gr=Math.min(1,t.gr+.006*g*K);
-    }else if(t.gd==='soil'&&!t.b){t.gr=Math.min(1,t.gr+.003*(1-t.tox)*(.3+t.fert)*TICK_K)}
+    }else if(t.gd==='soil'&&!t.b){t.gr=Math.min(1,t.gr+.003*(1-t.tox)*(.3+t.fert)*TICK_K);if(t.stony)t.stony=Math.max(0,t.stony-.00005*TICK_K*(1+.3*lvl('roots')))}
   }
   // runoff: sprayed fields and working factories leak poison into the soil around them
   {const K=TICK_K;for(let i=0;i<N*N;i++){const t=S.tiles[i],src=t.p&&FLORA[t.p.id].crop?[.0003,.6]:t.b&&t.b.k==='factory'?[.0008,.95]:null;if(!src)continue;const x=i%N,y=(i/N)|0;
@@ -2712,6 +2715,8 @@ function drawGround(t,x,y,tm,wc){
   if(t.p&&t.p.id==='lawn'){ // mower stripes
     X.strokeStyle=tc('rgba(255,255,255,.09)');X.lineWidth=4;X.beginPath();for(let k=-1;k<=1;k+=2){const p=isoG(x+k*.22,y-.45),r=isoG(x+k*.22,y+.45);X.moveTo(p[0],p[1]);X.lineTo(r[0],r[1])}X.stroke()}
   if(t.gd==='pave'||t.gd==='road'){X.strokeStyle=tc('rgba(0,0,0,.12)');X.lineWidth=.6;X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let i=1;i<4;i++)X.lineTo(q[i][0],q[i][1]);X.closePath();X.stroke()}
+  if(t.gd==='soil'&&t.stony>.05){const[sx,sy]=isoG(x,y),n=Math.round(3+t.stony*9);for(let k=0;k<n;k++){const u=(hash(x,y,k+40)-.5)*.8,v=(hash(y,x,k+40)-.5)*.8,px=sx+(u-v)*HW,py=sy+(u+v)*HH,r=1+hash(x,k,y)*1.6;
+    ell(px,py,r*1.3,r*.8,k%3?'#a49c90':'#8a847a');ell(px-.4,py-.4,r*.6,r*.35,'#c4bdb0')}}
   if(t.gd==='road'&&t.hw){X.setLineDash([3,4]);for(const o of [-.25,0,.25]){const p=isoG(x-.5,y+o,.2),r=isoG(x+.5,y+o,.2);seg(p[0],p[1],r[0],r[1],o?'rgba(240,240,230,.55)':'#d8c76e',o?.8:1)}X.setLineDash([])}
   else if(t.gd==='road'){
     const vx=isRoadLine(x),vy=isRoadLine(y);
@@ -3316,7 +3321,10 @@ function hitGround(x,y,dmg,src){
   t.hp=null;
   if(t.cul){makeWater(x,y);t.cul=false;t.tox*=.5;S.daylit++;computeMoist();burst(sx,sy,'splash',12);
     if(!S.flags.stream){S.flags.stream=1;toast('The stream sees daylight','You broke into the old culvert. Daylight it all the way to the west edge and the countryside’s river life can swim in.','unlock')}}
-  else{t.gd='soil';t.plane=0;t.hw=0;t.rw=0;burst(sx,sy,'dust',6)}
+  else{const was=t.gd;t.gd='soil';t.plane=0;t.hw=0;t.rw=0;burst(sx,sy,'dust',6);
+    // crushed concrete and stone: only pioneers can root in it until roots and frost break it down
+    t.stony=was==='rubble'?1:was==='road'||was==='pave'?.6:was==='path'?.3:0;
+    if(t.stony>.5&&!S.flags.stony){S.flags.stony=1;toast('Stony ground','Broken rubble leaves crushed concrete and stone, not soil. Only pioneer weeds can root in it, so they hold on here for a long time, until their roots and the frost break the stones down. Brownfield like this, an "open mosaic" of bare ground and pioneers, is one of the richest habitats in British cities. Remediate Soil clears the stones at once.','unlock')}}
   if(src==='nature'){S.natCracked=(S.natCracked||0)+1;if(!S.flags.rootcrack){S.flags.rootcrack=1;toast('Roots broke the paving','Nobody touched it: frost and roots split it open. The more green around hard ground, the faster it goes.','unlock')}}
   markDirty();
 }
@@ -3396,6 +3404,7 @@ function sowRule(id,x,y){
   const b0=bid(id);
   if(b0==='reed'&&!near(x,y,1,isWater))return `${f.name} must stand beside water.`;
   if(b0==='willow'&&MO[y*N+x]<.4)return `${f.name} needs water within 2 tiles.`;
+  if(b0!=='weeds'&&b0!=='lily'&&(t.stony||0)>.35)return `Too stony for ${f.name.toLowerCase()}: only pioneer weeds root in crushed rubble. Remediate Soil clears the stones.`;
   const lim=SOIL_LIM[b0];
   if(lim){if(t.tox>lim[0])return `Soil is ${pct(t.tox)} toxic; ${f.name.toLowerCase()} needs under ${pct(lim[0])}.`;if(t.fert<lim[1])return `Fertility is ${pct(t.fert)}; ${f.name.toLowerCase()} needs ${pct(lim[1])}.`}
   return '';
@@ -3847,6 +3856,7 @@ const LESSONS=[
   {id:'soil',name:'Soil and pollution',pics:['weeds','reed','iris','gorse','alder'],
     text:['Healthy soil is alive: a teaspoon can hold more microbes than there are people on Earth. Old industrial land is often poisoned with metals and chemicals.',
       'Some plants clean polluted ground and water. This is called phytoremediation, and reeds and irises are among the best at it. Others, such as gorse and alder, have bacteria in their roots that capture nitrogen from the air and feed the soil.',
+      'Brownfield land can be surprisingly rich. Crushed rubble and stony ground stay open for years: pioneer flowers, nettle beds and the insects that need bare, warm ground thrive there long before grass takes over. In the game, soil broken out of rubble is stony at first, and only pioneers root in it until roots and frost break it down.',
       'In the game: weeds, reeds and irises clean toxic soil; gorse, alder and nettles enrich it. The Toxicity view shows where the problem is.']},
   {id:'farming',name:'Farming and pesticides',pics:['poppy','bee','skylark'],
     text:['Modern farming feeds billions, but herbicides kill wildflowers in and around fields, and insecticides kill bees and other insects along with the pests. Fewer insects mean fewer birds and bats.',
