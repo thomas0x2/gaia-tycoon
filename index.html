@@ -551,7 +551,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   <div id="web" class="veil" hidden>
     <div class="dialog panel webpanel" role="dialog" aria-labelledby="webTitle">
       <header class="webhead"><div><div class="eyebrow">Research</div><h2 id="webTitle">Wood Wide Web</h2>
-        <p class="websub">Under every wood runs a web of fungal threads linking the roots. Grow it with seeds. New plants and animals also need the city to be alive enough to hold them: each asks for a level of biodiversity (BIO). Only what adds something new to the game is here: each stage of succession, each animal and each force of nature. Richer plants need no research: grown tiles level up on their own. Each plant or animal you grow makes the rest 14% dearer. Golden nodes are secrets. Drag to explore; click a node to see what it adds.</p></div>
+        <p class="websub">Under every wood runs a web of fungal threads linking the roots. Grow it with seeds. New plants and animals also need the city to be alive enough to hold them: each asks for a level of biodiversity (BIO). Only what adds something new to the game is here: each stage of succession, each animal and each force of nature. Richer plants need no research: grown tiles level up on their own. Each plant or animal you grow makes the rest 12% dearer, and species that need a richer city cost far more. Golden nodes are secrets. Drag to explore; click a node to see what it adds.</p></div>
         <div class="webseeds"><span id="webSeeds"></span><span class="bio" id="webBio"></span><button class="btn" id="webClose">Close</button></div></header>
       <div class="webbody"><div class="webscroll" id="webScroll"><div id="webGrid"><svg id="webLines"></svg></div></div>
         <aside id="webSide"><div id="webInfo"></div><p id="webMsg" class="msg"></p></aside></div>
@@ -1118,12 +1118,14 @@ const TOOLS = {
     need:'<b style="color:#f09080">Red</b> toxic soil · <b style="color:#c89ae8">Purple</b> herbicide drift · <b style="color:#e2b86c">Dotted</b> insecticide drift'},
   dig:{name:'Dig Pond',latin:'Soil → open water',cost:20,desc:'Excavates soil into open water. The bare banks around it are where reed beds can colonise.',need:'Needs soil without a building.'},
   compost:{name:'Remediate Soil',latin:'Compost & biochar',cost:10,desc:'Works compost and biochar into a soil tile: toxicity −25%, fertility +15%. It speeds up the slow work of the pioneer weeds.',need:'Needs a soil tile.'},
-  beaver:{name:'Reintroduce Beavers',latin:'Castor fiber',cost:150,stage:3,desc:'A keystone species you may bring back by hand. Beaver dams flood bare ground into new wetland, and reeds, insects and birds follow.',need:'Needs wet woodland within 2 tiles and water beside it. Grow Eurasian Beaver in the Wood Wide Web first.'},
-  bison:{name:'Reintroduce Bison',latin:'Bison bonasus',cost:200,stage:2,desc:'Large grazers turn closing woodland into wood pasture: a shifting mosaic of glades, thorny scrub and groves. Bison eat grass, browse saplings and strip bark.',need:'Needs 6+ grassland tiles and 3+ scrub or trees within 3. Grow European Bison in the Wood Wide Web first.'},
-  wolf:{name:'Reintroduce Wolves',latin:'Canis lupus',cost:250,stage:4,desc:'An apex predator. Wolves keep deer moving, so saplings escape browsing and woodland spreads faster.',need:'Needs a forest of 16+ trees and 3+ red deer. Grow Grey Wolf in the Wood Wide Web first.'},
+  beaver:{name:'Eurasian Beaver',latin:'Castor fiber',cost:150,stage:3,desc:'A keystone species you may bring back by hand. Beaver dams flood bare ground into new wetland, and reeds, insects and birds follow.',need:'Needs wet woodland within 2 tiles and water beside it. Grow Eurasian Beaver in the Wood Wide Web first.'},
+  bison:{name:'European Bison',latin:'Bison bonasus',cost:200,stage:2,desc:'Large grazers turn closing woodland into wood pasture: a shifting mosaic of glades, thorny scrub and groves. Bison eat grass, browse saplings and strip bark.',need:'Needs 6+ grassland tiles and 3+ scrub or trees within 3. Grow European Bison in the Wood Wide Web first.'},
+  wolf:{name:'Grey Wolf',latin:'Canis lupus',cost:250,stage:4,desc:'An apex predator. Wolves keep deer moving, so saplings escape browsing and woodland spreads faster.',need:'Needs a forest of 16+ trees and 3+ red deer. Grow Grey Wolf in the Wood Wide Web first.'},
 };
 // every researched animal can be released by hand; that is the only way a species first reaches the city
-const relCost=sp=>Math.max(25,Math.round((RES[sp]?RES[sp].cost:100)*.3));
+// releasing rare animals costs far more: by rarity, and by how much life they need around them
+const REL_RAR=[1,1.5,3,8,25];
+const relCost=sp=>{const R=RES[sp],c=(R?R.cost:100)*.3*REL_RAR[rarityOf(sp)]*(1+Math.pow((R&&R.bio||0)/150,2));return Math.max(25,c<1000?Math.round(c/5)*5:Math.round(c/100)*100)};
 const PASSIVE=new Set(['inspect','corridors','guide','toxview']);
 const STAGES=[{n:'Megacity',b:0},{n:'Pocket Parks',b:40},{n:'Green Corridors',b:120},{n:'Wetland City',b:280},{n:'Rewilded',b:520},{n:'Gaia',b:850}];
 const GNAME={road:'road',pave:'pavement',rubble:'rubble',soil:'soil',water:'water',path:'gravel path',garden:'garden'};
@@ -1619,7 +1621,7 @@ function succRaw(x,y){
   if(st===3){
     if(t.fert<.4)return {next:'birch',chance:0,need:`Fertility is ${pct(t.fert)}; woodland needs 40%.`};
     const type=MO[i]>=.4?'willow':hAt(x,y)>=HILL?'pine':'birch',f0=seedField(type,i),s=Math.max(.03+.5*rainOf(type),f0);
-    const b=BROWSE[i];if(b>.05)return {next:type,chance:.0003*s*Math.max(.3,1-.3*b),need:'Browsing slows it, but thorny scrub shelters the seedlings.'};
+    const b=BROWSE[i];if(b>.05)return {next:type,chance:.0003*s*Math.max(.08,1-.5*b),need:`Browsing animals eat most tree seedlings here (${b>1.2?'heavy':b>.5?'moderate':'light'} pressure); thorny scrub shelters a few.`};
     return {next:type,chance:.0003*s,need:f0<=.03?rainNote(type):''};
   }
   if(bid(p.id)==='birch'){
@@ -1709,6 +1711,20 @@ function discover(kind,id,title){
 }
 
 /* ---------- simulation ---------- */
+// how rich the soil on a tile can ever get: crushed rubble and the thin soils of the high ground stay poor
+const soilCap=(t,x,y)=>Math.min(1-.75*(t.stony||0),hAt(x,y)>=HILL?.55:1);
+// trees grow old: pioneer trees live short lives, oaks long ones; each tile has its own span
+const LIFE={birch:7200,willow:7200,pine:10800,oak:18000};
+const treeLife=(k,i)=>(LIFE[bid(k)]||7200)*(.75+.5*hash(i,7,3));
+function fallTree(x,y,why){
+  const t=T(x,y);if(!t.p)return;const name=FLORA[t.p.id].name;t.p={id:'weeds',g:.35};t.dw=1;t.fert=Math.min(1,t.fert+.1);
+  if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-10,'leaf',8);burst(sx,sy,'dust',4)}markDirty();
+  const key='fall_'+why;if(why!=='browse'&&!S.flags[key]){S.flags[key]=1;
+    toast(why==='storm'?'A storm brought trees down':why==='beaver'?'Beavers felled a tree':`An old ${name.toLowerCase()} fell`,
+      why==='storm'?'Wind tore a gap in the wood. Gaps like this are how a forest renews itself: light reaches the floor, flowers and scrub move in, then young trees.'
+      :why==='beaver'?'Beavers fell trees by the water for food and dam wood, opening the wet woodland to light: reeds, flowers and willow shoots follow.'
+      :'Trees grow old and die. The fallen trunk rots back into the soil, feeding beetles and fungi, and the gap fills with willowherb and woodland flowers, then scrub and young trees. Grazers keep such glades open for longer.','unlock')}
+}
 function tick(){
   IN_TICK=true;try{tick0()}finally{IN_TICK=false}
 }
@@ -1717,6 +1733,8 @@ function tick0(){
   const cascade=D.fa.wolf>0?1.25:1,smogF=1-.3*S.smog;
   for(let i=0;i<N*N;i++){
     const t=S.tiles[i];if(!t.u)continue;
+    // a fallen trunk rots away in about twenty-five minutes, feeding the soil
+    if(t.dw){t.dw=Math.max(0,t.dw-.0007*TICK_K);if(t.fert<1)t.fert=Math.min(1,t.fert+.0006*TICK_K);if(t.dw<=0){delete t.dw;markDirty()}}
     if(t.p){
       const f=FLORA[t.p.id],x=i%N,y=(i/N)|0;
       if(t.p.g<1&&f.grow){
@@ -1734,9 +1752,10 @@ function tick0(){
       // the work of each stage on the soil
       const K=TICK_K;if(t.stony)t.stony=Math.max(0,t.stony-(f.stage===1?.00025*g:.0001)*K*(1+.3*lvl('roots')));
       // crushed rubble holds few nutrients: stony ground stays poor until the stones break down
-      if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K*(1+.5*lvl('deep')));const cap=1-.75*(t.stony||0);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.004*g*K)}
-      else if(!f.crop){t.tox=Math.max(0,t.tox-.002*g*K*(f.stage===2?1+.5*lvl('deep'):1));t.fert=Math.min(1,t.fert+(f.kind==='tree'?.002*(FS[i]?2:1):f.kind==='shrub'?.003:.0015)*g*K)}
+      if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K*(1+.5*lvl('deep')));const cap=soilCap(t,x,y);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.004*g*K)}
+      else if(!f.crop){t.tox=Math.max(0,t.tox-.002*g*K*(f.stage===2?1+.5*lvl('deep'):1));const cap=soilCap(t,x,y);if(t.fert<cap)t.fert=Math.min(cap,t.fert+(f.kind==='tree'?.002*(FS[i]?2:1):f.kind==='shrub'?.003:.0015)*g*K)}
       if(t.gd==='soil')t.gr=Math.min(1,t.gr+.006*g*K);
+      if(f.kind==='tree'&&!f.pre&&g>=1){if(t.p.age==null)t.p.age=Math.random()*treeLife(t.p.id,i)*.9;t.p.age+=K;if(t.p.age>treeLife(t.p.id,i)&&Math.random()<.0006*K){fallTree(x,y,'age');continue}}
     }else if(t.gd==='soil'&&!t.b){t.gr=Math.min(1,t.gr+.003*(1-t.tox)*(.3+t.fert)*TICK_K);if(t.stony)t.stony=Math.max(0,t.stony-.00005*TICK_K*(1+.3*lvl('roots')))}
   }
   // runoff: sprayed fields and working factories leak poison into the soil around them
@@ -1754,7 +1773,7 @@ function tick0(){
     if(f.stage>=4&&t.p.g<.4){const cover=near(x,y,1,isP('hawthorn'))>=3;
       if(Math.random()<.012*b*(cover?.2:1)*TICK_K){t.p=cover?{id:'hawthorn',g:.7}:{id:'meadow',g:.8};eaten++}}
     else if(bid(t.p.id)==='hawthorn'&&t.p.g<.4){if(Math.random()<.006*b*TICK_K){t.p={id:'meadow',g:.8};eaten++}}
-    else if(f.stage===4&&t.p.g>=1&&b>=1.5&&Math.random()<.0006*b*TICK_K){t.p={id:'meadow',g:.5};glades++}
+    else if(f.kind==='tree'&&t.p.g>=1&&b>=1&&Math.random()<.0005*b*TICK_K){fallTree(x,y,'browse');t.p={id:'meadow',g:.5};glades++}
   }
   if(eaten&&!S.flags.browse){S.flags.browse=1;toast('Saplings eaten back','Grazers and browsers are eating young trees and scrub back to grass. Thorny scrub shelters seedlings; foxes and wolves keep the grazers in check.','warn')}
   if(glades&&!S.flags.glade){S.flags.glade=1;toast('A glade opens','Heavy browsing and bark-stripping killed a stand of young woodland. Sunny glades like this are where meadow flowers, butterflies and new scrub return.')}
@@ -1775,6 +1794,13 @@ function tick0(){
     const nb=near(x,y,1,n=>!!n.p&&atLeast(n.p.id,v.id));if(Math.random()>(1+Math.min(3,nb))/4)continue;
     if(!S.flags.levelup){S.flags.levelup=1;toast(`Level up: ${FLORA[v.id].name}`,`A grown patch of ${f.name.toLowerCase()} has become ${FLORA[v.id].name.toLowerCase()}, which earns more seeds. Every grown plant slowly levels up into richer species of its own stage, as far as its spot allows: the soil, the height, the damp and shade, and the pollinators and partner animals living nearby. Survey a plant to see its next level and what it waits for.`,'unlock')}
     t.p.id=v.id;discover('flora',v.id);markDirty()}
+  // now and then a storm tears a gap in a big wood
+  if(D.forests&&D.forests.length&&Math.random()<.00025*TICK_K){const big=D.forests.map((f,fi)=>[f,fi]).filter(([f])=>f.size>=12);
+    if(big.length){const[,fi]=big[(Math.random()*big.length)|0],tiles=[];for(let i=0;i<N*N;i++)if(FID[i]===fi)tiles.push(i);
+      const c=tiles[(Math.random()*tiles.length)|0],cx=c%N,cy=(c/N)|0;let n=0;
+      for(const[dx,dy]of [[0,0],...N8])if(Math.random()<(dx||dy?.45:1)){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.u&&t.p&&FLORA[t.p.id].kind==='tree'&&!FLORA[t.p.id].pre){fallTree(x,y,'storm');n++}}}}
+  for(const a of S.an)if(a.sp==='beaver'&&Math.random()<.0015*TICK_K){const cx=Math.round(a.hx),cy=Math.round(a.hy);
+    for(const[dx,dy]of N8){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.u&&t.p&&t.p.g>=.6&&['willow','birch'].includes(bid(t.p.id))&&FLORA[t.p.id].kind==='tree'){fallTree(x,y,'beaver');break}}}
   // beavers dam and flood bare soil
   let flooded=false;
   for(const a of S.an)if(a.sp==='beaver'&&Math.random()<.03*TICK_K&&D.water<N*N*.3){
@@ -2751,7 +2777,17 @@ function drawPlane(x,y){
   poly([iso(x-.42,y-.15,z+6),iso(x-.34,y-.15,z+6),iso(x-.34,y+.15,z+6),iso(x-.42,y+.15,z+6)],'#d8d8d2');
   for(const o of [-.25,.25]){const[e0,e1]=iso(x+.08,y+o,z+3);ell(e0,e1,2.4,1.6,'#8d8e8a')}
 }
+function drawDeadwood(t,x,y){
+  const z=hAt(x,y),a=hash(x,y,61)<.5,d=t.dw,len=.34+.08*hash(y,x,62),P=(u,h)=>a?iso(x+u,y+.08,z+h):iso(x+.08,y+u,z+h);
+  const bark=d>.5?'#6b5640':'#7d6f5c',side=d>.5?'#4e3e2e':'#5f5446';
+  for(let k=0;k<5;k++){const u=-len+k*len/2,p=P(u,3),q=P(u+len/2,3);seg(p[0],p[1]+1.5,q[0],q[1]+1.5,side,6.5);seg(p[0],p[1],q[0],q[1],bark,5)}
+  const e=P(len,3);ell(e[0],e[1],3.2,2.6,'#c9a77a');ell(e[0],e[1],1.6,1.2,'#a8835a');
+  if(d>.3)for(let k=0;k<3;k++){const p=P(-len*.6+k*len*.45,5);ell(p[0]+2,p[1],2.4,1,k%2?'#d8b878':'#c7a066')}
+  if(d<.7)for(let k=0;k<4;k++){const p=P(-len+k*len*.5,4.5);ell(p[0],p[1],2.4,1.2,'rgba(110,150,70,.85)')}
+  if(d>.6){const s0=iso(x-.18,y-.2,z),top=8+10*d;isoBox(x-.18,y-.2,.07,.07,z,top,'#8a7458','#5a4836','#463828')}
+}
 function drawGroundExtras(t,x,y){
+  if(t.dw&&!t.b&&t.gd==='soil')drawDeadwood(t,x,y);
   if(t.gd==='water'&&(t.dam||t.lodge)){const[sx,sy]=isoG(x,y);
     if(t.dam){ // a wall of sticks and mud across the channel
       const wx=(inb(x-1,y)&&T(x-1,y).gd==='water')+(inb(x+1,y)&&T(x+1,y).gd==='water'),wy=(inb(x,y-1)&&T(x,y-1).gd==='water')+(inb(x,y+1)&&T(x,y+1).gd==='water');
@@ -3176,10 +3212,11 @@ const lvl=k=>(S.res&&S.res[k])||0;
 // a level of a plant is known as soon as its stage is researched (secret levels also need their ecosystem)
 const has=k=>lvl(k)>0||(!!VBASE[k]&&lvl(VBASE[k])>0&&(!VSECRET[k]||!!(S.rec&&S.rec[VSECRET[k]])))||(!!ARRIVE[k]&&!!S.seen&&!!S.seen[k]);
 // every plant or animal already in the web makes the next one dearer: the web grows slower as it grows bigger
-const RES_INFL=1.14,RES_BASE=2.5;
+// later species also cost more the more life they need around them: (BIO/150)^2 on top
+const RES_INFL=1.12,RES_BASE=2.5,depthMult=k=>1+Math.pow(bioNeed(k)/150,2);
 const resDone=()=>{let n=0;for(const k in S.res||{})if(RES[k]&&RES[k].g!=='force'&&k!=='weeds'&&S.res[k])n++;return n};
 const resInfl=k=>Math.pow(RES_INFL,resDone());
-const resCost=k=>{const b=RES[k].grow?RES[k].cost*Math.pow(RES[k].grow,lvl(k)):RES[k].cost,c=b*RES_BASE*resInfl(k);return c<1000?Math.round(c/5)*5:Math.round(c/Math.pow(10,Math.floor(Math.log10(c))-2))*Math.pow(10,Math.floor(Math.log10(c))-2)};
+const resCost=k=>{const b=RES[k].grow?RES[k].cost*Math.pow(RES[k].grow,lvl(k)):RES[k].cost,c=b*RES_BASE*resInfl(k)*depthMult(k);return c<1000?Math.round(c/5)*5:Math.round(c/Math.pow(10,Math.floor(Math.log10(c))-2))*Math.pow(10,Math.floor(Math.log10(c))-2)};
 // seeds come slowly; milestones pay half of what they used to
 const INCOME_K=1,GOAL_K=.35;
 // new plants and animals also need the city to be alive enough to hold them: a biodiversity threshold (the highest reached counts)
@@ -3865,7 +3902,8 @@ const LESSONS=[
       'In the game: sprayed fields drift herbicide two tiles and insecticide three tiles around them. Stop the farming and the poison fades.']},
   {id:'deadwood',name:'Dead wood and decay',pics:['oak','stagbeetle','woodpecker'],
     text:['A dead tree is not the end of life but the start of a new community. Fungi, beetles and other decomposers break it down, returning nutrients to the soil.',
-      'Woodpeckers dig out beetle larvae and leave holes that owls, bats and tits use for nests. About a fifth of woodland species depend on dead or dying wood.']},
+      'Woodpeckers dig out beetle larvae and leave holes that owls, bats and tits use for nests. About a fifth of woodland species depend on dead or dying wood.',
+      'In the game: trees grow old and fall, storms tear gaps in big woods, and beavers fell trees by the water. Each fallen trunk rots back into rich soil while the gap fills with willowherb, flowers, scrub and then young trees. Where deer, boar or bison graze, the glades stay open: a shifting mosaic instead of one closed forest.']},
   {id:'rewilding',name:'Rewilding',pics:['bison','beaver','stork'],
     text:['Rewilding means restoring natural processes and letting nature take care of itself, rather than managing every detail. It often means bringing back missing species, removing barriers like dams and drains, and stepping back.',
       'At the Knepp estate in Sussex, former farmland left to rewild since 2001 now holds nightingales, turtle doves, purple emperor butterflies and the first breeding white storks in Britain for centuries.',
@@ -4086,6 +4124,7 @@ function updateInfo(){
     notes+=`<p class="note" style="color:var(--ink)"><b style="color:var(--lichen);font-weight:600">${STAGE_NAMES[Math.min(5,now)]}.</b> ${line}</p>`;
     if(sc.next){const pc=pollCount();notes+=`<p class="note">${pc?`${pc} pollinator${pc>1?'s':''} in the city: wild plants everywhere spread ${Math.round((POLX()-1)*100)}% faster${POLX()>=1+POLL_MAX?' (the most they can add)':''}.`:'No pollinators in the city yet. Each bumblebee, hoverfly, butterfly or moth makes wild plants everywhere spread 5% faster.'}</p>`}
   }
+  if(t.dw)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#c9a77a;font-weight:600">Dead wood.</b> A fallen trunk is rotting here (${Math.round(t.dw*100)}% left). Beetles and fungi are turning it back into rich soil while flowers and young growth fill the gap.</p>`;
   if(t.p&&!t.b&&DISP[t.p.id]){const up=upgradeNote(t,x,y,i);if(up)notes+=`<p class="note">${up}</p>`}
   if(passable(t))notes+=`<p class="note">${TCONN[TCOMP[i]]?'Part of a large, connected habitat patch.':'A small habitat patch, cut off by roads or buildings.'}</p>`;
   else if(t.gd==='water')notes+=`<p class="note">${WCONN[WCOMP[i]]?'Part of a stretch of 15+ connected water tiles.':'A small, isolated pond.'}</p>`;
@@ -4590,6 +4629,7 @@ function renderCensus(){
     if(!pl.length)h+=`<p class="cempty">No wild plants yet. Sow pioneer weeds on bare soil to begin.</p>`;
     for(const[g,label]of CSTAGE){const ks=pl.filter(k=>cGroup(k)===g).sort((a,b)=>c.fl[b]-c.fl[a]);if(!ks.length)continue;
       h+=`<h4>${label} <em>${ks.reduce((n,k)=>n+c.fl[k],0)} tiles</em></h4><ol class="clist">${ks.map(k=>row(k,true)).join('')}</ol>`}
+    {let dw=0;for(const q of S.tiles)if(q.u&&q.dw)dw++;if(dw)h+=`<p class="cnote">Dead wood: ${dw} fallen tree${dw>1?'s':''} rotting back into the soil, each a gap where the forest starts again.</p>`}
     const cu=c.cult;if(cu.lawn+cu.crop+cu.street)h+=`<p class="cnote">Also on your land, still managed by people: ${[cu.lawn&&`${cu.lawn} mown lawn or grazed tiles`,cu.crop&&`${cu.crop} farmed fields`,cu.street&&`${cu.street} planted street trees`].filter(Boolean).join(', ')}. Unbuild lets a tile go now; lawns next to wild land and the Wilder Parks force let them go over time.</p>`;
     h+=`</section>`}
   if(censusTab!=='plants'){h+=`<section><h3>Animals</h3>`;
