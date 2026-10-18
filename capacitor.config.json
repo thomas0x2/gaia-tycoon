@@ -1,0 +1,11 @@
+{
+  "appId": "io.github.thomas0x2.idlenature",
+  "appName": "Idle Nature",
+  "webDir": "www",
+  "backgroundColor": "#1c2320",
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#1c2320",
+    "scrollEnabled": false
+  }
+}
