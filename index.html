@@ -1,3 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1c2320">
+<meta name="description" content="An isometric idle game about rewilding a British city.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Idle Nature">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <title>Idle Nature</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,8 +37,9 @@
   --r:10px;
 }
 *,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
 html,body{height:100%}
-body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:14px;overflow:hidden;-webkit-user-select:none;user-select:none}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:14px;overflow:hidden;overscroll-behavior:none;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 #app{position:relative;height:100%;overflow:hidden}
 #world{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 #world.pan{cursor:grab}
@@ -33,7 +48,7 @@ button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 
 /* HUD */
-#hud{position:absolute;top:0;left:0;right:0;padding-top:12px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;pointer-events:none}
+#hud{position:absolute;top:0;left:0;right:0;padding-top:max(12px, env(safe-area-inset-top, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;pointer-events:none}
 #hud>*{pointer-events:auto}
 .brand{padding:10px 14px;display:flex;flex-direction:column;gap:6px;min-width:210px}
 .brand h1{margin:0;font-family:var(--display);font-weight:400;font-size:22px;letter-spacing:.01em;line-height:1}
@@ -72,6 +87,8 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 /* the reveal */
 #reveal{position:fixed;inset:0;z-index:90;display:grid;place-items:center;pointer-events:none;overflow:hidden}
 #reveal[hidden]{display:none}
+.hint.touch{display:none}
+@media (hover: none) and (pointer: coarse){.hint:not(.touch){display:none}.hint.touch{display:inline}}
 .rv::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(10,16,12,.55),rgba(10,16,12,.15) 60%,transparent 80%);opacity:0;transition:opacity .35s}
 .rv.in::before{opacity:1}
 .rv-rays{position:absolute;left:50%;top:50%;width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;border-radius:50%;opacity:0;
@@ -139,7 +156,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 #goalList li em{font-style:normal;font-family:var(--mono);font-size:11.5px;color:var(--lichen);white-space:nowrap}
 
 /* Toasts */
-#toasts{position:absolute;left:50%;transform:translateX(-50%);top:112px;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(420px, calc(100% - 32px))}
+#toasts{position:absolute;left:50%;transform:translateX(-50%);top:calc(112px + env(safe-area-inset-top, 0px));display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none;width:min(420px, calc(100% - 32px))}
 .toast{padding:10px 14px;border-radius:var(--r);background:var(--panel-hi);border:1px solid var(--line);box-shadow:0 8px 24px rgba(0,0,0,.3);width:100%;animation:tin .35s ease-out}
 .toast b{display:block;font-family:var(--display);font-weight:400;font-size:15px;margin-bottom:2px}
 .toast p{margin:0;font-size:12.5px;color:var(--ink-dim);line-height:1.4}
@@ -151,7 +168,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 @keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 
 /* Dock */
-#dock{position:absolute;left:0;right:0;bottom:0;padding-bottom:12px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:8px;align-items:flex-start;pointer-events:none}
+#dock{position:absolute;left:0;right:0;bottom:0;padding-bottom:max(12px, env(safe-area-inset-bottom, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:8px;align-items:flex-start;pointer-events:none}
 #dock>*{pointer-events:auto}
 #info{width:min(380px,100%);padding:12px 14px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .tool-head{display:grid;grid-template-columns:44px 1fr auto auto;gap:10px;align-items:center}
@@ -395,7 +412,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   #stats{flex:1 1 100%}
   .ctrl{flex:1 1 100%;justify-content:flex-start;overflow-x:auto;scrollbar-width:none;min-width:0}
   .ctrl button{padding:8px 8px;flex:0 0 auto;font-size:11.5px}
-  #toasts{top:188px}
+  #toasts{top:calc(188px + env(safe-area-inset-top, 0px))}
   #toolDesc,#toolNeed{display:none}
   #info.open #toolDesc,#info.open #toolNeed{display:block}
   #info .tool-head{cursor:pointer}
@@ -413,6 +430,14 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .dialog.webpanel{padding:14px 12px}
   .tabs #dockHide{margin-left:auto}
   .card{flex-basis:80px}
+  /* phones: tighter top bar and toolbar so more of the city shows */
+  #hud{padding-top:max(8px, env(safe-area-inset-top, 0px));gap:6px}
+  .brand{flex-direction:row;flex-wrap:wrap;align-items:baseline;column-gap:12px;row-gap:4px;padding:7px 12px}
+  .brand h1{font-size:19px}.brand .clock{margin-left:auto}.brand .stage{flex:1 1 100%}
+  .stat{padding:3px 10px}.stat span{font-size:14px}
+  .ctrl button{padding:6px 8px}
+  .tray{padding:4px 6px 6px}.tabs{padding:0 0 4px}.tabs button{padding:5px 10px}
+  .card{flex-basis:74px;padding:4px 2px 5px}.card canvas{width:50px;height:40px}.card .nm{font-size:11px;min-height:2.2em}
 }
 @media (max-width: 1280px){#stats .stat.opt{display:none}}
 @media (max-width: 1060px){#stats .stat.opt2{display:none}}
@@ -431,16 +456,21 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .brand{padding:6px 10px;gap:3px;min-width:0}.brand .stage{display:none}.brand h1{font-size:18px}
   #stats .stat:not(.keep){display:none}.stat{padding:3px 10px}.stat span{font-size:13px}
   .ctrl button{padding:5px 8px;font-size:11px}
-  #hud{padding-top:6px;gap:6px}
+  #hud{padding-top:max(6px, env(safe-area-inset-top, 0px));gap:6px}
   .tabs .hint{display:none}.tray{padding:4px 6px 6px}.card{flex-basis:72px;padding:4px 2px 5px}.card canvas{width:46px;height:37px}.card .nm{font-size:10.5px;min-height:2.2em}
   #info .tool-head canvas{width:44px;height:36px}#info h2{font-size:16px}
+}
+/* phone on its side: stats and controls share one row so the toolbar does not cover them */
+@media (max-height: 520px) and (orientation: landscape){
+  #stats{flex:0 1 auto}.ctrl{flex:1 1 200px}
 }
 @media (prefers-reduced-motion: reduce){
   .toast{animation:none}
   .bar i{transition:none}
 }
 </style>
-
+</head>
+<body>
 <div id="app">
   <canvas id="world" aria-label="Isometric map of the city of Meridian"></canvas>
 
@@ -493,7 +523,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
         <button role="tab" id="tab-land" data-tab="land" aria-selected="true">Tools</button>
         <button role="tab" id="tab-flora" data-tab="flora" aria-selected="false">Plants</button>
         <button role="tab" id="tab-fauna" data-tab="fauna" aria-selected="false">Animals</button>
-        <span class="hint">Nature works while you’re away · click buildings to hit them · right-drag or Shift to pan · scroll to zoom</span>
+        <span class="hint">Nature works while you’re away · click buildings to hit them · right-drag or Shift to pan · scroll to zoom</span><span class="hint touch">Nature works while you’re away · tap to act · drag to pan · pinch to zoom</span>
         <button id="dockHide" class="dockbtn" title="Hide the toolbar">Hide ▾</button>
       </div>
       <div id="cards"></div>
@@ -4762,3 +4792,10 @@ window.claude?.hot?.snapshot?.(()=>({S}));
 window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
 })();
 </script>
+<script>
+// Installable web app: cache the game for offline play once it is served over http(s)
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)&&!window.claude)
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+</script>
+</body>
+</html>
