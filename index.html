@@ -195,7 +195,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .meter .bar{height:4px;margin-top:3px}
 .meter.tox .bar i{background:var(--smog)}
 .meter.moi .bar i{background:var(--water)}
-.meter.lit .bar i{background:#e8d27a}.meter.grz .bar i{background:#c8783c}.meter.dst .bar i{background:#a8784a}.meter.hum .bar i{background:#e05a96}.meter.stn .bar i{background:#9a9aaa}
+.meter.lit .bar i{background:#e8d27a}.meter.grz .bar i{background:#c8783c}.meter.dst .bar i{background:#a8784a}.meter.hum .bar i{background:#e05a96}.meter.stn .bar i{background:#9a9aaa}.meter.phv label span{text-transform:none}.meter.phv .bar{background:linear-gradient(90deg,rgba(226,112,54,.25),rgba(232,222,170,.25),rgba(90,138,224,.25))}
 .note{font-size:12px;color:var(--water);margin:0}
 #msg{margin:0;font-size:12.5px;min-height:1em;color:var(--ink-dim)}
 #msg.bad{color:var(--bad)}
@@ -565,18 +565,19 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .card .nm{display:none}
   .card .cs{font-size:10.5px}
   /* collapsed Survey: rows of four condition icons with a bar each, numbers one tap away */
-  #info:not(.open) #tileInfo .meters{grid-template-columns:repeat(4,1fr);gap:9px 16px}
+  #info:not(.open) #tileInfo .meters{grid-template-columns:repeat(5,1fr);gap:9px 10px}
   #info:not(.open) .meter label{font-size:0;justify-content:center}
   #info:not(.open) .meter label span{display:none}
   #info:not(.open) .meter label::before{content:'';width:15px;height:15px;background:currentColor;-webkit-mask:var(--mi) center/contain no-repeat;mask:var(--mi) center/contain no-repeat}
   #info:not(.open) .meter .bar{height:3px}
   #info:not(.open) .tspp .mchip,#info:not(.open) .tspp .mchip img{width:30px;height:25px}
-  #info:not(.open) .meter.moi label{color:var(--water)}#info:not(.open) .meter.lit label{color:#e8d27a}#info:not(.open) .meter.grz label{color:#c8783c}#info:not(.open) .meter.dst label{color:#a8784a}#info:not(.open) .meter.hum label{color:#e05a96}#info:not(.open) .meter.stn label{color:#9a9aaa}#info:not(.open) .meter.tox label{color:var(--smog)}
+  #info:not(.open) .meter.moi label{color:var(--water)}#info:not(.open) .meter.lit label{color:#e8d27a}#info:not(.open) .meter.grz label{color:#c8783c}#info:not(.open) .meter.dst label{color:#a8784a}#info:not(.open) .meter.hum label{color:#e05a96}#info:not(.open) .meter.stn label{color:#9a9aaa}#info:not(.open) .meter.phv label{color:#8fb0e8}#info:not(.open) .meter.tox label{color:var(--smog)}
   .meter{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%225%22/%3E%3C/svg%3E")}
   .meter.moi{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203c4%205%206%208%206%2011a6%206%200%200%201-12%200c0-3%202-6%206-11z%22/%3E%3C/svg%3E")}
   .meter.lit{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%224%22/%3E%3Cpath%20d%3D%22M12%202v2M12%2020v2M2%2012h2M20%2012h2M4.9%204.9l1.4%201.4M17.7%2017.7l1.4%201.4M4.9%2019.1l1.4-1.4M17.7%206.3l1.4-1.4%22/%3E%3C/svg%3E")}
   .meter.soi{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2020h18%22/%3E%3Cpath%20d%3D%22M4%2016c3-3%2013-3%2016%200%22/%3E%3Cpath%20d%3D%22M12%2013V5%22/%3E%3Cpath%20d%3D%22M12%208c0-2%202-3%204-3%200%202-2%203-4%203z%22/%3E%3C/svg%3E")}
   .meter.stn{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2019l3-6%205-1%203%203%201%204z%22/%3E%3Cpath%20d%3D%22M14%2019l3-5%203%201%201%204z%22/%3E%3C/svg%3E")}
+  .meter.phv{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%203h6M10%203v6l-5%209a2%202%200%200%200%202%203h10a2%202%200%200%200%202-3l-5-9V3%22/%3E%3Cpath%20d%3D%22M7.5%2015h9%22/%3E%3C/svg%3E")}
   .meter.grz{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2020c1-4%201-8%200-12M9%2020c0-5%201-9%203-13M15%2020c0-4%202-7%205-9%22/%3E%3Cpath%20d%3D%22M2%2020h20%22/%3E%3C/svg%3E")}
   .meter.dst{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2017l4-4%203%203%204-6%203%204%204-5%22/%3E%3Cpath%20d%3D%22M3%2021h18%22/%3E%3C/svg%3E")}
   .meter.hum{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%226%22%20r%3D%222.5%22/%3E%3Cpath%20d%3D%22M12%209v6M8%2012h8M12%2015l-3%206M12%2015l3%206%22/%3E%3C/svg%3E")}
@@ -992,7 +993,7 @@ function upgradeNote(t,x,y,i){
 const PLANT_LINES=[
   // the meadow branches by its ground: over-rich soil coarsens it, poor dry soil, middling soil and wet soil each lead their own way
   {base:'meadow',items:[
-    {id:'meadowR',from:['meadow','meadow2','meadow3','meadowD','meadowW'],name:'Rank Grassland',art:'nettle',down:1,ok:t=>t.fert>.7,keep:t=>t.fert>.6,where:'on over-rich soil (richness over 70%)',
+    {id:'meadowR',from:['meadow','meadow2','meadow3','meadowD','meadowW','meadowA'],name:'Rank Grassland',art:'nettle',down:1,ok:t=>t.fert>.7,keep:t=>t.fert>.6,where:'on over-rich soil (richness over 70%)',
       desc:'Nettles, docks and coarse grass swamp the wildflowers on over-rich soil: little nectar, but more food for grazers. Grazers that strip the nutrients away, or heather and pine nearby, bring the flowers back.'},
     {id:'meadow2',from:'meadow',name:'Flowering Meadow',art:'oxeye',ok:t=>t.fert<=.7,keep:(t,x,y,i)=>BROWSE[i]<1.4,where:'on soil that is not over-rich (richness up to 70%)',
       desc:'The grass has thinned and oxeye daisies, knapweed and clover flower through the summer.'},
@@ -1002,11 +1003,13 @@ const PLANT_LINES=[
       desc:'Meadowsweet and tall sedges over a spongy peat that soaks up water and holds it: the ground around it stays wet.'},
     {id:'meadowD',from:'meadow2',name:'Dry Grassland',art:'trefoil',ok:(t,x,y,i)=>t.fert<.35&&WET[i]<.5,keep:t=>t.fert<.45,where:'on poor, dry soil (richness under 35%, water under 50%)',
       desc:'Short, sparse turf of bird’s-foot trefoil, wild thyme and grasses on sand and rubble.'},
-    {id:'meadowO',from:'meadowD',name:'Orchid Grassland',art:'orchid',ok:t=>t.fert<.3&&t.tox<.2,keep:t=>t.fert<.38,where:'on clean, very poor soil (richness under 30%, toxicity under 20%)',
-      desc:'Orchids only grow where the soil has stayed poor for a long time. Its thin turf keeps the ground around it poor.'},
+    {id:'meadowO',from:'meadowD',name:'Orchid Grassland',art:'orchid',ok:t=>t.fert<.3&&t.tox<.2&&phOf(t)>=7,keep:t=>t.fert<.38&&phOf(t)>=6.5,where:'on clean, very poor, lime-rich soil (richness under 30%, toxicity under 20%, pH 7 or more)',
+      desc:'Orchids only grow where lime-rich soil has stayed poor for a long time. Its thin turf keeps the ground around it poor.'},
+    {id:'meadowA',from:'meadowD',name:'Acid Grassland',art:'sorrel',ok:t=>phOf(t)<5.5,keep:t=>phOf(t)<6,where:'on acid soil (pH under 5.5)',
+      desc:'Sheep’s sorrel, heath bedstraw, tormentil and wavy hair-grass on sour, sandy ground, turning rusty red in early summer.'},
     {id:'meadow3',from:'meadow2',name:'Herb-rich Meadow',art:'scabious',ok:t=>t.fert>=.35&&t.fert<=.65,keep:(t,x,y,i)=>BROWSE[i]<1.2&&t.fert<=.7,where:'on soil of middling richness (35 to 65%)',
       desc:'Scabious, sage, bird’s-foot trefoil and dozens of other herbs: rich nectar for bees within reach.'},
-    {id:'meadow4',from:'meadow3',name:'Ancient Meadow',art:'cowslip',ok:t=>t.tox<.2&&t.fert<.55,keep:(t,x,y,i)=>BROWSE[i]<1.2&&t.fert<.6,where:'on clean soil that was never fertilised (toxicity under 20%, richness under 55%)',
+    {id:'meadow4',from:'meadow3',name:'Ancient Meadow',art:'cowslip',ok:t=>t.tox<.2&&t.fert<.55&&phOf(t)>=5.5,keep:(t,x,y,i)=>BROWSE[i]<1.2&&t.fert<.6,where:'on clean soil that was never fertilised and is not acid (toxicity under 20%, richness under 55%, pH 5.5 or more)',
       desc:'Old, never-ploughed grassland with cowslips and orchids, the richest nectar of all. Its dense turf keeps scrub out for a long time.'}]},
   {base:'heath',items:[
     {id:'heath2',from:'heath',name:'Flowering Heath',art:'heathBloom',where:'anywhere heather grows',
@@ -1058,27 +1061,28 @@ const PLANT_LINES=[
       desc:'A towering old beech with a smooth grey trunk and a closed canopy above.'}]},
 ];
 // what each plant does beyond seeds, on its tile and the 8 around it (radius 1).
-// fe: feeds the soil · po: keeps it poor (pf: no poorer than this) · dt: cleans it · pol: nectar for bees · berry: brings birds that spread scrub · boost: wildflowers next to it grow faster
+// fe: feeds the soil · po: keeps it poor (pf: no poorer than this) · ac: makes it acid (pH per tick on its own tile, half next door) · dt: cleans it · pol: nectar for bees · berry: brings birds that spread scrub · boost: wildflowers next to it grow faster
 const EFF={weeds:{dt:.0003},broom:{fe:.0008},broom2:{fe:.001,pol:1},birch:{fe:.0002},birch2:{fe:.0003},
-  heath:{po:.0003},heath2:{po:.0004,pol:1},heath3:{po:.0005,pol:1},pine:{po:.0002},pine2:{po:.0002},pine3:{po:.0003},
+  heath:{po:.0003,ac:.0002},heath2:{po:.0004,pol:1,ac:.00025},heath3:{po:.0005,pol:1,ac:.0003},pine:{po:.0002,ac:.00012},pine2:{po:.0002,ac:.00015},pine3:{po:.0003,ac:.0002},
   reed:{dt:.0006},reed2:{dt:.0009,wt:.5},reed3:{dt:.0016,wt:1},reedR:{dt:.0014},willow:{dt:.0006,cat:1},willow2:{dt:.001,cat:1,wt:.5},
   meadow3:{pol:1},meadow4:{pol:1,boost:1},meadowD:{po:.00006,pf:.3},meadowO:{po:.0001,pf:.25,pol:1},meadowW:{wt:.4},meadowF:{wt:1},
   hawthorn2:{berry:1},hawthorn3:{berry:1,pol:1},hawthorn4:{berry:1,pol:1},hawthornS:{nurse:1},oak3:{acorn:2}};
 const EFF_TEXT={fe:'Feeds the soil: soil richness rises around it.',po:'Keeps the soil poor: its litter locks nutrients away, so richness falls around it.',dt:'Cleans the soil: toxicity falls around it.',pol:'Rich in nectar: flowers within 1 tile are pollinated, so they grow and spread faster.',
   berry:'Its fruit brings birds, which drop scrub seed within 2 tiles.',boost:'Lets wildflowers thrive: grassland next to it grows 40% faster.',
   wt:'Holds water: the ground around it stays wetter.',cat:'Early catkins: nectar for bees within 1 tile in spring.',nurse:'Hands its ground to trees: tree seedlings take hold here twice as fast, sheltered from browsers.',
-  acorn:'Drops twice the acorns: jays, deer and boar find food within 2 tiles.'};
+  acorn:'Drops twice the acorns: jays, deer and boar find food within 2 tiles.',
+  ac:'Makes the soil acid: its needles and litter rot into sour humus, so the pH falls on its tile and the 8 around it. Lime-rich rubble holds out longest.'};
 
 /* ---------- discovery: what a species does is revealed once it has happened in your city ----------
    Every effect has a key. Until it is seen the field guide gives a hint; the first time it happens
    it is announced, the tile flashes, and the guide fills in. While an effect works on a tile a small
    sign floats up over it (cause): water, light, soil, graze, dig or bloom. */
 const EFF_VERB={fe:'feeds the soil',po:'keeps the soil poor',dt:'cleans the soil',pol:'feeds the bees',berry:'brings in berry birds',boost:'helps the wildflowers beside it',
-  wt:'holds water in the ground',cat:'feeds bees in early spring',nurse:'shelters young trees',acorn:'drops a feast of acorns'};
+  wt:'holds water in the ground',cat:'feeds bees in early spring',nurse:'shelters young trees',acorn:'drops a feast of acorns',ac:'makes the soil acid'};
 const EFF_HINT={fe:'Watch the soil richness on the tiles around it with the Lens.',po:'Watch the soil richness on the tiles around it with the Lens.',dt:'Watch the toxicity of the soil around it with the Lens.',
   pol:'Watch what comes to its flowers.',berry:'Watch which birds visit it in autumn, and what grows where they rest.',boost:'Watch the grassland right next to it.',
-  wt:'Watch the water in the ground around it with the Lens.',cat:'Watch it early in spring.',nurse:'Watch what sprouts inside it where nothing grazes.',acorn:'Watch what comes up around it.'};
-const EFF_CAUSE={fe:'soil',po:'soil',dt:'soil',pol:'bloom',berry:'bloom',boost:'bloom',wt:'water',cat:'bloom',nurse:'leaf',acorn:'leaf'};
+  wt:'Watch the water in the ground around it with the Lens.',cat:'Watch it early in spring.',nurse:'Watch what sprouts inside it where nothing grazes.',acorn:'Watch what comes up around it.',ac:'Watch the acidity of the soil around it with the Lens.'};
+const EFF_CAUSE={fe:'soil',po:'soil',dt:'soil',pol:'bloom',berry:'bloom',boost:'bloom',wt:'water',cat:'bloom',nurse:'leaf',acorn:'leaf',ac:'soil'};
 const FX={
   shade:{sp:['birch','willow','pine','oak','beech'],cause:'light',name:'Trees shade out the meadow',hint:'Watch the meadow at the edge of a growing wood.',
     text:'Shade adds up inside a wood. Where the canopy around a patch of meadow, heather or willowherb closes, it fades to bare woodland floor; its levels go first. Grazers, storms and boar keep glades open.'},
@@ -1092,6 +1096,10 @@ const FX={
     text:'Grazers crop the rank grass and carry its nutrients off to where they rest. The soil grows poorer and the flowers return.'},
   graze:{sp:['rabbit','deer','boar'],cause:'graze',name:'Grazers make the meadow poorer',hint:'Watch the soil richness under grazed grassland.',
     text:'Cropping the sward carries nutrients away, so soil richness falls on grazed grassland and it stays flowery.'},
+  'heath:acid':{sp:['heath','meadow'],cause:'soil',name:'Heather takes the acid grassland',hint:'Watch sour grassland next to heather.',
+    text:'Where the soil has turned sour (under pH 5), heather seeds into the acid grassland beside it and takes it over. Its own litter makes the ground sourer still, so a heath spreads itself.'},
+  'lime:orchid':{sp:['meadow'],cause:'soil',name:'Orchids on lime',hint:'Watch poor, dry grassland on old rubble.',
+    text:'Orchid grassland needs poor soil that is lime-rich (pH 7 or more). Crushed concrete, mortar and road stone are full of lime, so old building sites are where orchids turn up first. On acid ground the same dry grassland turns into acid grassland instead.'},
   browse:{sp:['rabbit','deer','boar'],cause:'graze',name:'Saplings eaten back',hint:'Watch young trees where grazers feed.',
     text:'Grazers and browsers eat young trees and scrub back to grass. Thorny scrub shelters seedlings, and foxes and wolves keep the grazers moving.'},
   glade:{sp:['deer','boar'],cause:'graze',name:'Browsers open a glade',hint:'Watch a young wood with many grazers.',
@@ -1297,8 +1305,8 @@ const FAUNA = {
 
   // small life: the food web starts here
   earthworm:{cls:'insect',name:'Common Earthworm',pl:'earthworms',latin:'Lumbricus terrestris',mv:'land',spd:.15,range:1,yield:.08,
-    need:'3+ grown plants within 1 tile, on soil under 50% toxicity.',desc:'Drags dead leaves down into its burrows at night. Darwin spent forty years studying it.',
-    ok:(x,y)=>T(x,y).tox<.5&&near(x,y,1,t=>!!t.p&&!FLORA[t.p.id].crop&&t.p.g>=.4)>=3,cap:()=>1+Math.floor(D.grown/15)},
+    need:'3+ grown plants within 1 tile, on soil under 50% toxicity that is not too acid (pH 5 or more).',desc:'Drags dead leaves down into its burrows at night. Darwin spent forty years studying it.',
+    ok:(x,y)=>T(x,y).tox<.5&&phOf(T(x,y))>=5&&near(x,y,1,t=>!!t.p&&!FLORA[t.p.id].crop&&t.p.g>=.4)>=3,cap:()=>1+Math.floor(D.grown/15)},
   butterfly:{cls:'insect',name:'Peacock Butterfly',pl:'peacock butterflies',latin:'Aglais io',mv:'fly',reach:6,spd:1.3,range:2,yield:.15,
     need:'2+ nettle patches within 3 tiles for its caterpillars, and 3+ flowering plants within 2.',desc:'Its caterpillars eat only stinging nettles; the adults drink nectar and pollinate flowers within 2 tiles.',
     ok:(x,y)=>near(x,y,3,isP('nettle'))>=2&&near(x,y,2,isFlower)>=3,cap:()=>1+Math.floor(D.gw.nettle/3)},
@@ -1409,6 +1417,7 @@ const LENS=[
   ['light','Light','Deep shade to open sky. Every canopy shades its own tile and adds a third as much to each of the 8 around it, so shade builds up inside a wood: light under birch and pine, deep under oak, deepest under beech. Meadow, heather and pioneers fade below about half light; only beech seedlings grow up in deep shade.',i=>LIGHT[i],[30,40,60],[250,232,150]],
   ['soil','Soil richness','Poor sand to rich earth. Broom, dead wood and salmon feed it; heather and pine keep it poor; rubble, old downtown and the hilltops stay poor. Heather wants it poor, beech rich.',i=>S.tiles[i].fert,[236,222,180],[80,52,26]],
   ['stony','Stony','Deep soil to bare stone. Broken roads and rubble leave crushed stone that drains dry and holds few nutrients; pioneer roots and frost wear it down. Grass and hawthorn cannot root above 35%, but heather, broom, pine and birch can.',i=>stonyOf(S.tiles[i]),null,[150,150,165]],
+  ['ph','Acidity','Soil pH, from sour (orange, about 4) through neutral (pale, 6.5) to lime-rich (blue, 8). Old parkland on sand starts acid; concrete, mortar and rubble are full of lime, so broken ground and old building sites are lime-rich. Heather and broom need acid soil; orchid grassland and cowslips need lime or at least not acid; earthworms leave soil under pH 5.',i=>(phOf(S.tiles[i])-4)/5,[226,112,54],[70,120,220],[232,222,170]],
   ['graze','Grazing','How hard rabbits, deer and boar browse each tile. Light grazing keeps meadows open and poor; heavy grazing crops them bare and eats every seedling. Hawthorn thorns halve it next door; rabbits keep 3 tiles clear of foxes, deer and boar 5 tiles clear of wolves.',i=>grazeOf(i),null,[200,120,60]],
   ['dist','Disturbance','Fresh bare earth from unbuilding, fallen trees, boar rooting and rabbit scrapes, healing over about a season. Pioneers and acorns sprout faster on it; beech seedlings struggle.',i=>S.tiles[i].ds||0,null,[170,110,60]],
   ['human','Human pressure','Standing buildings and busy roads, felt up to 2 tiles away. Deer and herons only settle under 60%, wolves under 40%. Bring buildings down and break up roads to quieten the land.',i=>HUM[i],null,[240,90,150]],
@@ -1419,7 +1428,8 @@ const stonyOf=t=>t.gd==='rubble'?1:t.gd==='soil'?t.stony||0:0;
 // what can root in crushed stone: pioneers, and the plants of poor, rocky ground
 const STONE_OK=new Set(['weeds','heath','broom','pine','birch']);
 const lensNeed=()=>`<span class="lchips">${LENS.map((L,i)=>`<button class="lchip${i===lensI?' on':''}" data-lens="${i}">${L[1]}</button>`).join('')}</span>`+
-  (LENS[lensI][0]==='tox'?'<b style="color:#f09080">Red</b> toxic soil · <b style="color:#c89ae8">Purple</b> herbicide drift · <b style="color:#e2b86c">Dotted</b> insecticide drift':LENS[lensI][4]?`Tap the Lens again for the next condition. Colours run from <b style="color:rgb(${LENS[lensI][4]})">low</b> to <b style="color:rgb(${LENS[lensI][5]})">high</b>.`:`Tap the Lens again for the next condition. The stronger the <b style="color:rgb(${LENS[lensI][5]})">colour</b>, the higher it is.`);
+  (LENS[lensI][0]==='tox'?'<b style="color:#f09080">Red</b> toxic soil · <b style="color:#c89ae8">Purple</b> herbicide drift · <b style="color:#e2b86c">Dotted</b> insecticide drift':
+   LENS[lensI][0]==='ph'?'Tap the Lens again for the next condition. <b style="color:rgb(226,112,54)">Orange</b> acid · <b style="color:rgb(232,222,170)">Pale</b> neutral · <b style="color:rgb(110,150,235)">Blue</b> lime-rich':LENS[lensI][4]?`Tap the Lens again for the next condition. Colours run from <b style="color:rgb(${LENS[lensI][4]})">low</b> to <b style="color:rgb(${LENS[lensI][5]})">high</b>.`:`Tap the Lens again for the next condition. The stronger the <b style="color:rgb(${LENS[lensI][5]})">colour</b>, the higher it is.`);
 const STAGES=[{n:'Megacity',b:0},{n:'Pocket Parks',b:40},{n:'Green Corridors',b:120},{n:'Wetland City',b:280},{n:'Rewilded',b:520},{n:'Gaia',b:850}];
 const GNAME={road:'road',pave:'pavement',rubble:'rubble',soil:'soil',water:'water',path:'gravel path',garden:'garden'};
 const SHOPS=['Corner café','Grocer','Pharmacy','Bakery'];
@@ -1813,6 +1823,22 @@ function newGame(seed,carry){
    the sealed ground of downtown, shops, motorways and the airport is crushed rubble and sand that stays poor and dry,
    industry leaves poison. Tiles near a block's edge take on some of the ground next door, so neighbours shape each other. */
 const POOR={downtown:.5,commercial:.45,highway:.4,airport:.35,industrial:.3};
+/* Soil acidity as pH: around 4 is sour heath sand, 7 neutral, 8 crushed concrete and limestone. Old parkland on sand starts acid,
+   gardens and fields in between, and the concrete, mortar and rubble of the centre lime-rich. Breaking up hard ground adds lime. */
+const PH0={park:5.4,residential:6,agricultural:6.6,commercial:7.2,downtown:7.5,industrial:7.1,highway:7.3,airport:6.8};
+const phOf=t=>t.ph??6.5;
+// litter that sours the soil works slowly on lime-rich ground: the lime has to be washed out first
+function acidify(t,a){const p=phOf(t);t.ph=Math.max(3.8,p-a*(p>7?.3:1)*(1-.5*(t.stony||0)))}
+function startPh(old){
+  const P=new Float32Array(N*N);
+  for(let i=0;i<N*N;i++){const b=blockOf(i%N,(i/N)|0);P[i]=(b<0?7.3:PH0[S.blocks[b].t]??6.5)+(hash(S.seed,i,91)-.5)}
+  // blocks fade into each other at their edges
+  for(let i=0;i<N*N;i++){const x=i%N,y=(i/N)|0;let s=0,n=0;for(const[dx,dy]of N4)if(inb(x+dx,y+dy)){s+=P[(y+dy)*N+x+dx];n++}
+    const t=S.tiles[i];let v=lerp(P[i],s/n,.4);
+    // saves from before acidity: broken rubble is lime-rich, and heather and pine have soured their own ground
+    if(old){if(t.stony)v=Math.max(v,6.6+1.4*t.stony);if(t.gd==='rubble')v=Math.max(v,7.8);const b0=t.p&&bid(t.p.id);if(b0==='heath')v=Math.min(v,5);else if(b0==='pine')v=Math.min(v,5.6)}
+    t.ph=Math.round(v*100)/100}
+}
 function startGround(){
   const mean=S.blocks.map(()=>({f:0,t:0,n:0}));
   for(let i=0;i<N*N;i++){const x=i%N,y=(i/N)|0,b=blockOf(x,y);if(b<0)continue;const t=S.tiles[i],m=mean[b];m.f+=t.fert;m.t+=t.tox;m.n++;t.poor=POOR[S.blocks[b].t]||0}
@@ -1821,6 +1847,7 @@ function startGround(){
     const nb=[];if(lx===0&&bx>0)nb.push(b-1);if(lx===4&&bx<NB-1)nb.push(b+1);if(ly===0&&by>0)nb.push(b-NB);if(ly===4&&by<NB-1)nb.push(b+NB);
     for(const o of nb){t.fert=lerp(t.fert,mean[o].f,.2/nb.length);t.tox=lerp(t.tox,mean[o].t,.2/nb.length)}
     t.fert=Math.min(t.fert,1-.5*t.poor)}
+  startPh();
 }
 function computeMoist(){
   const dist=new Int16Array(N*N).fill(99),q=[];
@@ -1940,7 +1967,7 @@ const WATERLOG={beech:.6,oak:.66,pine:.66,heath:.7,broom:.7,hawthorn:.8,birch:.8
 // in a drought these dry out where the ground holds less water than this; lush meadow levels slip back below 20%
 const DRY_MIN={beech:.12,willow:.3,reed:.35},DRY_LEVEL=new Set(['meadow2','meadow3','meadowR','meadowW','meadowF']);
 // plants of dry ground that drought does not slow
-const HARDY=new Set(['weeds','heath','broom','pine','meadowD','meadowO']);
+const HARDY=new Set(['weeds','heath','broom','pine','meadowD','meadowO','meadowA']);
 const dryMin=k=>DRY_MIN[bid(k)]??(DRY_LEVEL.has(k)?.2:0);
 // the most toxic soil each stage of plant can stand before it starts to die back
 const TOX_MAX=f=>f.stage<=1?1:bid(f.id||'')==='oak'||bid(f.id||'')==='beech'?.4:f.stage===2?.65:f.stage===3?.55:.7;
@@ -2053,19 +2080,20 @@ function succRaw(x,y){
     if(near(x,y,1,isWater)&&t.tox<.8){const s=near(x,y,3,isP('reed'))?1:.04+.6*rainOf('reed');
       return {next:'reed',chance:.001*s*(1+2*WX.wet),need:(s<1?rainNote('reed'):'')+(WX.wet>.2?' The water is high: reeds spread fast along the flooded banks.':'')}}
     // the floor of a closed wood: only beech seedlings grow up in deep shade
-    if(LIGHT[i]<.5&&has('beech')&&t.fert>=.55&&WET[i]<.6&&t.tox<=.3){const sb=seedField('beech',i);if(sb>.05)return {next:'beech',chance:.00015*sb,need:`Deep shade (light ${pct(LIGHT[i])}): only beech seedlings grow up here.`}}
+    if(LIGHT[i]<.5&&has('beech')&&t.fert>=.55&&WET[i]<.6&&t.tox<=.3&&phOf(t)>=5){const sb=seedField('beech',i);if(sb>.05)return {next:'beech',chance:.00015*sb,need:`Deep shade (light ${pct(LIGHT[i])}): only beech seedlings grow up here.`}}
     const w=near(x,y,2,isP('weeds')),lf=Math.min(1,LIGHT[i]/.5);
     return {next:'weeds',chance:(w?.0005*Math.min(3,w):.0001+.0004*rainOf('weeds'))*(t.fm?2:1)*(1-t.tox*.5)*(1+2*ds)*lf,
       need:[lf<1?`Shaded (light ${pct(LIGHT[i])}): pioneers need sun, so they hardly take hold under the trees around it.`:'',w?'':rainNote('weeds'),ds>.1?'Freshly disturbed ground: pioneers take hold here up to 3× faster.':''].filter(Boolean).join(' ')};
   }
   if(st===1){
-    const sn=t.stony||0;
+    const sn=t.stony||0,acid=phOf(t)<=6;
+    if(sn>.35&&has('heath')&&!acid&&WET[i]<.7&&t.tox<=.6)return {next:'heath',chance:0,need:`Stony, lime-rich ground (${pct(sn)} crushed stone, pH ${phOf(t).toFixed(1)}): grass cannot root among the stones, and heather needs acid soil (pH 6 or lower). Pioneer roots and frost break the stones down. Remediate Soil clears them.`};
     if(sn>.35&&!(has('heath')&&WET[i]<.7&&t.tox<=.6))return {next:'meadow',chance:0,need:`Stony ground (${pct(sn)} crushed stone): grass cannot root here until pioneer roots and the frost break the stones down.${has('heath')?'':' Heather could: grow it in the Wood Wide Web.'} Remediate Soil clears them.`};
     if(t.tox>.55)return {next:'meadow',chance:0,need:`Soil is ${pct(t.tox)} toxic; grassland needs under 55%. The willowherb is cleaning it slowly. Remediate Soil speeds it up.`};
     // poor, dry ground goes to heather rather than grass
-    if((t.fert<.3||sn>.2)&&has('heath')&&WET[i]<.6+.1*(sn>.35)){const n=Math.min(3,near(x,y,2,isP('heath'))),s=n?n/3:.04+.6*rainOf('heath');
+    if((t.fert<.3||sn>.2)&&has('heath')&&acid&&WET[i]<.6+.1*(sn>.35)){const n=Math.min(3,near(x,y,2,isP('heath'))),s=n?n/3:.04+.6*rainOf('heath');
       return {next:'heath',chance:.0004*s,need:`${sn>.2?`Stony ground (${pct(sn)} crushed stone)`:`Poor soil (richness ${pct(t.fert)})`}: heather takes it, not grass.${n?'':' '+rainNote('heath')}`}}
-    if(t.fert<.22)return {next:'meadow',chance:0,need:`Soil richness is ${pct(t.fert)}; grassland needs 22%.${has('heath')?' Heather grows on poorer ground, but only where it is dry.':''}`};
+    if(t.fert<.22)return {next:'meadow',chance:0,need:`Soil richness is ${pct(t.fert)}; grassland needs 22%.${has('heath')?` Heather grows on poorer ground, but only where it is dry${acid?'':' and acid'}.`:''}`};
     const n=Math.min(3,near(x,y,1,isGrassSrc));
     if(!n)return {next:'meadow',chance:(.00004+.0003*rainOf('meadow'))*(POL[i]?1.5:1),need:rainNote('meadow')};
     return {next:'meadow',chance:.0005*n*(POL[i]?1.5:1),need:''};
@@ -2081,6 +2109,7 @@ function succRaw(x,y){
     const rs=meadowResist(p.id),rich=rs>1?` An old meadow (level ${levelOf(p.id)}): scrub moves in ${Math.round(rs*10)/10}× slower here.`:'';
     const sn=t.stony||0;
     if(t.fert<.35||sn>.2){const why=sn>.2?`Stony ground (${pct(sn)} crushed stone)`:`Poor soil (richness ${pct(t.fert)})`;
+      if(phOf(t)>6.8)return {next:'broom',chance:0,need:`${why} that is lime-rich (pH ${phOf(t).toFixed(1)}): broom needs acid soil and hawthorn richer ground, so the grassland stays open.${rich}`};
       if(!has('broom'))return {next:'hawthorn',chance:0,need:sn>.2?`${why}: hawthorn cannot root among the stones. Broom can.`:`Soil richness is ${pct(t.fert)}; hawthorn needs 35%. Broom can take poorer ground.`};
       const s=seedOr('broom',i,.03);return {next:'broom',chance:.00015*s/rs*Math.max(.05,1-.7*b),need:`${why}: broom moves in, not hawthorn.${seedField('broom',i)<.05?' '+rainNote('broom'):''}${rich}`};
     }
@@ -2221,7 +2250,7 @@ function levelDown(t,x,y,k,to){
    Wet ground, water, roads and bare ground stop it. What burns leaves ash: richer soil, disturbed ground where fireweed and
    birch move in first; heather and broom sprout again from the seed in the ground; veteran oaks and old pines survive.
    S.burning lists the tiles on fire, t.fire how much fuel each has left, t.ash the burnt ground fading over two seasons. */
-const FLAM={heath:.9,heath3:1,pine:.75,pine3:.8,broom:.8,meadowD:.7,meadowO:.6,weeds:.5,meadow:.5,meadow2:.45,meadow3:.4,meadow4:.4,meadowR:.35,
+const FLAM={heath:.9,heath3:1,pine:.75,pine3:.8,broom:.8,meadowD:.7,meadowO:.6,meadowA:.65,weeds:.5,meadow:.5,meadow2:.45,meadow3:.4,meadow4:.4,meadowR:.35,
   birch:.45,hawthorn:.35,oak:.15,beech:.12,willow:.05,reed:.08,meadowW:.04,meadowF:0,reed3:0,willow2:0};
 const FIRE_CAP=45; // a fire burns at most this many tiles before it dies down
 const flam=(t,i)=>{if(!t.p||!t.u||t.b||t.gd!=='soil'||t.fire||t.p.g<.3)return 0;const f=FLORA[t.p.id];if(f.pre||f.crop||f.managed)return 0;
@@ -2247,7 +2276,7 @@ function fireTick(){
   if(!S.burning.length){S.fireAt=S.t;if(S.fireLast)seeFx('fire:out',S.fireLast[0],S.fireLast[1])}
 }
 function burnOut(x,y){
-  const t=T(x,y),i=y*N+x;delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);
+  const t=T(x,y),i=y*N+x;delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);t.ph=Math.min(8,phOf(t)+.3);
   if(t.p){const k=t.p.id,b=bid(k),f=FLORA[k];
     if(k==='oak3'||k==='pine3'){seeFx('bark:fire',x,y)}
     else if(b==='heath'||b==='broom'){t.p={id:b,g:.12};seeFx('renew:fire',x,y)}
@@ -2320,16 +2349,18 @@ function tick0(){
     for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=T(nx,ny);if((n.gd==='soil'||n.gd==='water')&&n.tox<src[1])n.tox=Math.min(src[1],n.tox+src[0]*K)}}}
   // what plants do for the 8 tiles around them (at half strength, as effects fade to half at the edge of radius 1):
   // broom feeds the soil, heather and pine keep it poor, reeds, willows and willowherb filter it
-  {const K=TICK_K*.5;for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.p||!t.u||t.p.g<.4)continue;const E=EFF[t.p.id];if(!E||(!E.fe&&!E.dt&&!E.po))continue;const x=i%N,y=(i/N)|0,b0=bid(t.p.id);
+  {const K=TICK_K*.5;for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.p||!t.u||t.p.g<.4)continue;const E=EFF[t.p.id];if(!E||(!E.fe&&!E.dt&&!E.po&&!E.ac))continue;const x=i%N,y=(i/N)|0,b0=bid(t.p.id);
+    if(E.ac&&t.gd==='soil')acidify(t,E.ac*t.p.g*TICK_K);
     for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=T(nx,ny);if(n.gd!=='soil'&&n.gd!=='water')continue;
       if(E.fe){const v=n.fert;n.fert=Math.min(soilCap(n,nx,ny),n.fert+E.fe*t.p.g*K);if(n.fert>v)fxAdd('fe:'+b0,n.fert-v,.3,nx,ny,.006)}
       if(E.po&&n.fert>(E.pf||.12)){const v=n.fert;n.fert=Math.max(E.pf||.12,n.fert-E.po*t.p.g*K);fxAdd('po:'+b0,v-n.fert,.15,nx,ny,.006)}
-      if(E.dt&&n.tox>0){const v=n.tox;n.tox=Math.max(0,n.tox-E.dt*t.p.g*K);fxAdd('dt:'+b0,v-n.tox,.15,nx,ny,.006)}}}}
+      if(E.dt&&n.tox>0){const v=n.tox;n.tox=Math.max(0,n.tox-E.dt*t.p.g*K);fxAdd('dt:'+b0,v-n.tox,.15,nx,ny,.006)}
+      if(E.ac&&n.gd==='soil'){const v=phOf(n);acidify(n,E.ac*t.p.g*K);fxAdd('ac:'+b0,v-n.ph,.4,nx,ny,.006)}}}}
   // earthworms mix the soil and speed up cleaning; boar root it up; rabbits scrape it; spawned-out salmon feed the banks in autumn
   {const K=TICK_K;for(const a of S.an){const cx=Math.round(a.hx),cy=Math.round(a.hy);
-    if(a.sp==='earthworm'){let sum=0,n=0;for(const[dx,dy]of [[0,0],...N8]){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;sum+=t.fert;n++}
-      const avg=n?sum/n:0;for(const[dx,dy]of [[0,0],...N8]){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;const w=dx||dy?.5:1;
-        t.tox=Math.max(0,t.tox-.0012*w*K);t.fert+=(avg-t.fert)*Math.min(1,.004*w*K)}fxAdd('mix:earthworm',1,200,cx,cy,.01)}
+    if(a.sp==='earthworm'){let sum=0,sp=0,n=0;for(const[dx,dy]of [[0,0],...N8]){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;sum+=t.fert;sp+=phOf(t);n++}
+      const avg=n?sum/n:0,aph=n?sp/n:6.5;for(const[dx,dy]of [[0,0],...N8]){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;const w=dx||dy?.5:1;
+        t.tox=Math.max(0,t.tox-.0012*w*K);t.fert+=(avg-t.fert)*Math.min(1,.004*w*K);t.ph=phOf(t)+(aph-phOf(t))*Math.min(1,.002*w*K)}fxAdd('mix:earthworm',1,200,cx,cy,.01)}
     else if((a.sp==='boar'&&Math.random()<.05*K)||(a.sp==='rabbit'&&Math.random()<.02*K)){const x=cx+((Math.random()*3)|0)-1,y=cy+((Math.random()*3)|0)-1;
       if(inb(x,y)){const t=T(x,y);if(t.u&&t.gd==='soil'&&!t.b&&(!t.p||FLORA[t.p.id].kind!=='tree')){t.ds=Math.max(t.ds||0,a.sp==='boar'?.7:.35);fxAdd(a.sp==='boar'?'root:boar':'scrape:rabbit',1,a.sp==='boar'?15:25,x,y,.3);
         if(a.sp==='boar'&&t.p&&t.p.g>.3&&FLORA[t.p.id].stage===2)t.p.g=Math.max(.3,t.p.g-.2)}}}
@@ -2363,13 +2394,16 @@ function tick0(){
   // grown patches level up into the next level that suits the spot, switch branch, or slip back when the ground no longer suits them
   const ck=LV_RATE*4*SUCC()*TICK_K;
   for(let i=0;i<N*N;i++){if(Math.random()>ck)continue;const t=S.tiles[i];if(!t.u||t.b||!t.p||t.p.g<.95)continue;
-    const k=t.p.id,f=FLORA[k];if(f.pre||f.managed||f.crop||!DISP[k])continue;const x=i%N,y=(i/N)|0,v=nextLevel(t,x,y,i);
+    const k=t.p.id,f=FLORA[k];if(f.pre||f.managed||f.crop||!DISP[k])continue;const x=i%N,y=(i/N)|0;
+    // on sour enough ground, heather seeds into acid grassland beside it and takes it over
+    if(k==='meadowA'&&has('heath')&&phOf(t)<5&&near(x,y,1,n=>!!n.p&&bid(n.p.id)==='heath'&&n.p.g>=.6)&&Math.random()<.5){t.p={id:'heath',g:.3};seeFx('heath:acid',x,y);markDirty();continue}
+    const v=nextLevel(t,x,y,i);
     if(!v){if(!levelKeeps(k,t,x,y,i))levelDown(t,x,y,k,PARENT[k]);continue}
     const up=DEPTH[v.id]>levelOf(k);
     if(up){const nb=near(x,y,1,n=>!!n.p&&atLeast(n.p.id,v.id));if(Math.random()>(1+Math.min(3,nb))/4)continue}
     else{levelDown(t,x,y,k,v.id);continue}
     if(!S.flags.levelup){S.flags.levelup=1;toast(`Level up: ${FLORA[v.id].name}`,`A grown patch of ${f.name.toLowerCase()} has matured into ${FLORA[v.id].name.toLowerCase()}, which earns more seeds and often does more for the land around it. Every plant slowly matures up its own level tree, and the branch it takes depends on its ground: soil, water, light and grazing. Survey a plant to see its next level and what it waits for.`,'unlock')}
-    if(POLLINATED.has(v.id))seeFx('poll',x,y);t.p.id=v.id;discover('flora',v.id);markDirty()}
+    if(POLLINATED.has(v.id))seeFx('poll',x,y);if(v.id==='meadowO')seeFx('lime:orchid',x,y);t.p.id=v.id;discover('flora',v.id);markDirty()}
   // now and then a storm tears a gap in a big wood
   if(D.forests&&D.forests.length&&Math.random()<.00025*TICK_K){const big=D.forests.map((f,fi)=>[f,fi]).filter(([f])=>f.size>=12);
     if(big.length){const[,fi]=big[(Math.random()*big.length)|0],tiles=[];for(let i=0;i<N*N;i++)if(FID[i]===fi)tiles.push(i);
@@ -3386,6 +3420,7 @@ Object.assign(FDRAW,{
   bugloss:mkHerb({style:'spire',c1:'#3f6ad8',c2:'#c06ab8',h:14,n:6,stem:'#5a7a4a'}),
   oxeye:mkHerb({base:'grass',style:'disc',c1:'#f7f4ea',c2:'#f2c21a',h:10,n:7,r:2}),
   trefoil:mkHerb({base:'grass',style:'pea',c1:'#f2c21a',c2:'#e06a2a',h:4,n:6}),
+  sorrel:mkHerb({base:'grass',style:'spire',c1:'#b8402e',c2:'#d8743e',h:9,n:7,stem:'#7a5a3a'}),
   scabious:mkHerb({base:'grass',style:'disc',c1:'#b498d8',c2:'#d8c8f0',h:12,n:6,r:1.9}),
   cowslip:mkHerb({base:'grass',style:'bell',c1:'#f2cf3a',c2:'#e8b81a',h:8,n:6,season:[.1,1.1]}),
   rattle:mkHerb({base:'grass',style:'rattle',c1:'#f2d24a',h:9,n:7}),
@@ -4323,7 +4358,8 @@ function drawOverlay(){
   const fillQ=(x,y,c)=>{const q=quad(x,y,.5);X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let k=1;k<4;k++)X.lineTo(q[k][0],q[k][1]);X.closePath();X.fillStyle=c;X.fill()};
   if(tool.type==='lens'&&LENS[lensI][0]!=='tox'){const[,, ,val,c0,c1]=LENS[lensI];
     for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u)continue;const v=clamp(val(i),0,1),x=i%N,y=(i/N)|0;
-      if(c0)fillQ(x,y,`rgba(${Math.round(lerp(c0[0],c1[0],v))},${Math.round(lerp(c0[1],c1[1],v))},${Math.round(lerp(c0[2],c1[2],v))},.55)`);
+      if(c0){const cm=LENS[lensI][6],a=cm&&v>.5?cm:c0,b=cm?(v>.5?c1:cm):c1,u=cm?(v>.5?v*2-1:v*2):v;
+        fillQ(x,y,`rgba(${Math.round(lerp(a[0],b[0],u))},${Math.round(lerp(a[1],b[1],u))},${Math.round(lerp(a[2],b[2],u))},.55)`)}
       else if(v>.02)fillQ(x,y,`rgba(${c1[0]},${c1[1]},${c1[2]},${(.12+.6*v).toFixed(2)})`)}
     return}
   if(tool.type==='lens'){
@@ -4681,6 +4717,8 @@ function hitGround(x,y,dmg,src){
   else{const was=t.gd;t.gd='soil';t.plane=0;t.hw=0;t.rw=0;t.ds=1;burst(sx,sy,'dust',6);
     // crushed concrete and stone: only pioneers can root in it until roots and frost break it down
     t.stony=was==='rubble'?1:was==='road'||was==='pave'?.6:was==='path'?.3:0;
+    // concrete, mortar and road stone are full of lime
+    const lime=was==='rubble'?8:was==='road'||was==='pave'?7.5:was==='path'?7:0;if(lime)t.ph=Math.max(phOf(t),lime);
     if(t.stony>.5&&!S.flags.stony){S.flags.stony=1;toast('Stony ground','Broken rubble leaves crushed concrete and stone, not soil. Grass and hawthorn cannot root in it. Pioneer weeds can, and so can heather, broom, pine and birch, the plants of poor rocky ground, until roots and frost break the stones down. Brownfield like this, an "open mosaic" of bare ground and pioneers, is one of the richest habitats in a city: Berlin’s old Südgelände rail yard became a nature park this way. Remediate Soil clears the stones at once.','unlock')}}
   if(src==='nature'){S.natCracked=(S.natCracked||0)+1;if(!S.flags.rootcrack){S.flags.rootcrack=1;toast('Roots broke the paving','Nobody touched it: frost and roots split it open. The more green around hard ground, the faster it goes.','unlock')}}
   markDirty();
@@ -4702,10 +4740,10 @@ function nextStage(x,y){
   if(f&&(f.pre||f.managed))return null;if(p&&p.g<.6)return null;
   const st=f?f.stage:0;
   if(st===0)return near(x,y,1,isWater)?'reed':'weeds';
-  if(st===1)return t.fert<.3&&WET[y*N+x]<.6?'heath':'meadow';
+  if(st===1)return t.fert<.3&&WET[y*N+x]<.6&&phOf(t)<=6?'heath':'meadow';
   if(bid(p.id)==='reed')return 'willow';
   if(bid(p.id)==='heath')return has('broom')?'broom':'pine';
-  if(st===2)return t.fert<.35?'broom':'hawthorn';
+  if(st===2)return t.fert<.35&&phOf(t)<=6.8?'broom':'hawthorn';
   if(st===3)return MO[y*N+x]>=.4?'willow':hAt(x,y)>=HILL||t.fert<.4||(t.poor||0)>.2&&t.fert<.5?'pine':'birch';
   if(bid(p.id)==='birch')return 'oak';
   if(bid(p.id)==='oak'&&t.fert>=.55)return 'beech';
@@ -4742,9 +4780,11 @@ function naturalForces(){
 
 /* ---------- sowing by hand ---------- */
 const SOW_COST={weeds:5,meadow:15,heath:30,reed:20,hawthorn:35,broom:35,birch:60,willow:70,pine:90,oak:160,beech:260};
-const SOW_NEED={weeds:'any bare soil.',meadow:'soil under 55% toxicity with 22%+ richness.',heath:'poor soil (richness under 45%), under 60% toxicity It roots in stony ground too.',reed:'soil beside water, under 80% toxicity.',hawthorn:'soil under 45% toxicity with 35%+ richness.',
-  broom:'soil under 60% toxicity with richness under 55% It roots in stony ground too.',birch:'soil under 60% toxicity with 40%+ richness It roots in stony ground too.',willow:'soil within 2 tiles of water with 40%+ richness.',pine:'soil under 50% toxicity It roots in stony ground too.',oak:'clean soil (under 30% toxicity) with 50%+ richness.',beech:'clean soil (under 30% toxicity) with 55%+ richness that never waterlogs.'};
+const SOW_NEED={weeds:'any bare soil.',meadow:'soil under 55% toxicity with 22%+ richness.',heath:'poor, acid soil (richness under 45%, pH 6 or lower), under 60% toxicity. It roots in stony ground too.',reed:'soil beside water, under 80% toxicity.',hawthorn:'soil under 45% toxicity with 35%+ richness.',
+  broom:'acid soil (pH 6.8 or lower) under 60% toxicity with richness under 55%. It roots in stony ground too.',birch:'soil under 60% toxicity with 40%+ richness. It roots in stony ground too.',willow:'soil within 2 tiles of water with 40%+ richness.',pine:'soil under 50% toxicity. It roots in stony ground too.',oak:'clean soil (under 30% toxicity) with 50%+ richness.',beech:'clean soil (under 30% toxicity) with 55%+ richness and pH 5 or more that never waterlogs.'};
 // [most toxicity it stands, least soil richness it needs, most richness it stands]
+// [lowest pH it stands, highest]: heather and broom need acid soil, beech fails on the sourest sand
+const PH_LIM={heath:[0,6],broom:[0,6.8],beech:[5,9]};
 const SOIL_LIM={meadow:[.55,.22],heath:[.6,0,.45],reed:[.8,0],hawthorn:[.45,.35],broom:[.6,0,.55],birch:[.6,.4],willow:[.6,.4],pine:[.5,0],oak:[.3,.5],beech:[.3,.55]};
 const sowNeed=id=>SOW_NEED[id]||SOW_NEED[bid(id)];
 const SOWN_G=()=>.4+.15*lvl('seedbank');
@@ -4768,6 +4808,9 @@ function sowRule(id,x,y){
   const lim=SOIL_LIM[b0];
   if(lim){if(t.tox>lim[0])return `Soil is ${pct(t.tox)} toxic; ${f.name.toLowerCase()} needs under ${pct(lim[0])}.`;if(t.fert<lim[1])return `Soil richness is ${pct(t.fert)}; ${f.name.toLowerCase()} needs ${pct(lim[1])}.`;
     if(lim[2]!=null&&t.fert>lim[2])return `Soil richness is ${pct(t.fert)}: too rich for ${f.name.toLowerCase()}, which needs under ${pct(lim[2])}. Grass would swamp it.`}
+  const pl=PH_LIM[b0],ph=phOf(t);
+  if(pl&&ph>pl[1])return `The soil is lime-rich (pH ${ph.toFixed(1)}): ${f.name.toLowerCase()} needs acid soil, pH ${pl[1]} or lower.`;
+  if(pl&&ph<pl[0])return `The soil is too acid (pH ${ph.toFixed(1)}): ${f.name.toLowerCase()} needs pH ${pl[0]} or more.`;
   return '';
 }
 
@@ -5046,6 +5089,9 @@ const CASCADES=[
   {id:'c_fire',name:'The Fire Cycle',sp:['heath','weeds','birch'],steps:['fire:spread',['fireweed','ash:birch'],'renew:fire'],r:1500,bio:20,
     hint:'A drought, a spark, and what comes back.',
     about:'A drought fire ran through the dry heath. Fireweed and birch took the ash first, and the heather came back young from the seed in the ground.'},
+  {id:'c_heath',name:'Heath Makes Heath',sp:['heath','pine','meadow'],steps:[['ac:heath','ac:pine'],'heath:acid'],r:1200,bio:15,
+    hint:'What heather and pine leave in the soil, and what grows on it next.',
+    about:'Heather and pine litter soured the soil around them, the grassland there turned to acid grassland, and the heather moved in. A heath keeps itself going this way: its ground grows too sour for most other plants.'},
   {id:'c_jays',name:'Oaks from Jays',sp:['jay','oak'],steps:['acorn:oak','jay:oak'],r:1500,bio:20,
     hint:'A bird that forgets where it hid its food.',
     about:'A veteran oak dropped a feast of acorns. Jays carried them off and buried them far from any oak, forgot some, and new oaks came up where no oak had grown.'},
@@ -5383,7 +5429,7 @@ function defOf(tl){return tl.type==='sow'?FLORA[tl.id]:tl.type==='guide'?(tl.kin
 const kv=rows=>`<div class="kv">${rows.filter(r=>r&&r[1]).map(([k,v])=>`<span>${k}</span><div>${v}</div>`).join('')}</div>`;
 const miniChips=ids=>ids.length?`<span class="mchips">${ids.map(k=>{const n=(FLORA[k]||FAUNA[k]).name;return `<button class="mchip" data-enc="${k}" title="${n}" aria-label="${n}"><img src="${speciesPic(k)}" alt=""></button>`}).join('')}</span>`:'';
 function soilText(k){const L=SOIL_LIM[bid(k)];const extra=bid(k)==='reed'?'beside water':bid(k)==='willow'?'within 2 tiles of water':bid(k)==='beech'?'never waterlogged':'';
-  return [L&&L[0]<1?`toxicity under ${pct(L[0])}`:'',L&&L[1]?`richness over ${pct(L[1])}`:'',L&&L[2]!=null?`richness under ${pct(L[2])}`:'',extra].filter(Boolean).join(', ')||'any bare soil'}
+  return [L&&L[0]<1?`toxicity under ${pct(L[0])}`:'',L&&L[1]?`richness over ${pct(L[1])}`:'',L&&L[2]!=null?`richness under ${pct(L[2])}`:'',PH_LIM[bid(k)]?.[1]<9?`pH ${PH_LIM[bid(k)][1]} or lower (acid)`:'',PH_LIM[bid(k)]?.[0]>0?`pH ${PH_LIM[bid(k)][0]} or more`:'',extra].filter(Boolean).join(', ')||'any bare soil'}
 function plantPanel(k){
   const f=FLORA[k],lk=!has(k),R0=RES[k];
   const opens=Object.keys(RES).filter(a=>FAUNA[a]&&(RES[a].req||[]).includes(k)&&!guideHidden(a));
@@ -5502,8 +5548,9 @@ function updateInfo(){
   // the plant growing here and the animals whose home this is, each a shortcut to its field guide entry
   const spp=[...(t.p&&!FLORA[t.p.id].pre&&!FLORA[t.p.id].crop?[t.p.id]:[]),...new Set(S.an.filter(a=>a.hx===x&&a.hy===y).map(a=>a.sp))];
   ti.innerHTML=`<div class="tname"><span>${name}</span><span>${x}, ${y} · ${el} m</span></div>${spp.length?`<div class="tspp">${miniChips(spp)}</div>`:''}
-  <div class="meters">${[['moi','Water',WET[i]],['lit','Light',LIGHT[i]],['soi','Soil',t.fert],['stn','Stony',stonyOf(t)],['grz','Grazing',grazeOf(i)],['dst','Disturbed',t.ds||0],['hum','People',HUM[i]],['tox','Toxic',t.tox]]
-    .map(([c,l,v])=>`<div class="meter ${c}"><label>${l}<span>${pct(v)}</span></label><div class="bar"><i style="width:${pct(v)}"></i></div></div>`).join('')}</div>${notes}`;
+  <div class="meters">${[['moi','Water',WET[i]],['lit','Light',LIGHT[i]],['soi','Soil',t.fert],['stn','Stony',stonyOf(t)],['phv','Acidity',phOf(t)],['grz','Grazing',grazeOf(i)],['dst','Disturbed',t.ds||0],['hum','People',HUM[i]],['tox','Toxic',t.tox]]
+    .map(([c,l,v])=>c==='phv'?`<div class="meter phv"><label>${l}<span>pH ${v.toFixed(1)}</span></label><div class="bar"><i style="width:${pct(clamp((v-3.5)/5,0,1))};background:${v<5.5?'#e2703a':v<7?'#c8c08a':'#5a8ae0'}"></i></div></div>`
+      :`<div class="meter ${c}"><label>${l}<span>${pct(v)}</span></label><div class="bar"><i style="width:${pct(v)}"></i></div></div>`).join('')}</div>${notes}`;
 }
 function updateTip(px,py){
   const tip=$('tip');
@@ -5792,7 +5839,7 @@ function migrateRoster(){
   if(moved||refund)setTimeout(()=>toast('A wilder, leaner city',`Your city now grows the plants and animals of Central Europe. Old plant varieties became the levels of the plant that fills their place, and ${refund?`${fmt(refund)} seeds came back for the species that left`:'nothing was lost'}. Open the Lens to read the ground.`,'unlock'),1200);
 }
 function boot(state){
-  S=state;migrateRoster();worldDirty=true;ROT=S.rot||0;
+  S=state;migrateRoster();if(S.tiles[0].ph==null)startPh(true);worldDirty=true;ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
   RACT={};CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   // saves from before stepped terrain kept smooth corner heights: turn them into levels
