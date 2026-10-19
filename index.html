@@ -974,9 +974,9 @@ const PLANT_LINES=[
     {id:'meadow4',from:'meadow3',name:'Ancient Meadow',art:'cowslip',ok:t=>t.tox<.2&&t.fert<.55,keep:(t,x,y,i)=>BROWSE[i]<1.2&&t.fert<.6,where:'on clean soil that was never fertilised (toxicity under 20%, richness under 55%)',
       desc:'Old, never-ploughed grassland with cowslips and orchids, the richest nectar of all. Its dense turf keeps scrub out for a long time.'}]},
   {base:'heath',items:[
-    {id:'heath2',from:'heath',name:'Flowering Heath',art:'thyme',where:'anywhere heather grows',
+    {id:'heath2',from:'heath',name:'Flowering Heath',art:'heathBloom',where:'anywhere heather grows',
       desc:'Heather in full bloom in late summer, purple to the horizon and humming with bees.'},
-    {id:'heath3',from:'heath2',name:'Old Heath',art:'heath',scale:1.25,ok:t=>t.fert<.3,keep:t=>t.fert<.4,where:'on poor soil (richness under 30%)',
+    {id:'heath3',from:'heath2',name:'Old Heath',art:'heathOld',scale:1.1,ok:t=>t.fert<.3,keep:t=>t.fert<.4,where:'on poor soil (richness under 30%)',
       desc:'Tall, woody old heather. It locks away even more nutrients, and one day it will burn and start again.'}]},
   // reeds branch by the water beside them: still ponds make fen, a river keeps river reeds
   {base:'reed',items:[
@@ -1430,7 +1430,7 @@ function refreshUnlock(){
 // every block touching one you own, diagonals included, is drawn as it stands
 function blockNear(b){const bx=b%NB,by=(b/NB)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=bx+dx,ny=by+dy;if((dx||dy)&&nx>=0&&ny>=0&&nx<NB&&ny<NB&&S.blocks[ny*NB+nx].u)return true}return false}
 function blockAdj(b){const bx=b%NB,by=(b/NB)|0;return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const nx=bx+dx,ny=by+dy;return nx>=0&&ny>=0&&nx<NB&&ny<NB&&S.blocks[ny*NB+nx].u})}
-function blockCost(b){return Math.round(2.5*BT[S.blocks[b].t].cost*Math.pow(1.22,ownedBlocks()-1))}
+function blockCost(b){return Math.round(3*BT[S.blocks[b].t].cost*Math.pow(1.3,ownedBlocks()-1))}
 function blockStatus(b){
   const B=S.blocks[b],T0=BT[B.t];
   if(B.u)return {owned:true};
@@ -2827,10 +2827,9 @@ const FDRAW={
     const n=Math.round((5+9*g)*SEA.bloom);for(let i=0;i<n;i++){const[ox,oy]=spot(sd,i+50,.9),h=4+7*g*hash(sd,i,3),sw=Math.sin(tm*2+i)*.6,px=sx+ox+sw,py=sy+oy-h;
       seg(sx+ox,sy+oy,px,py,'#6c8a3e',.6);circ(px,py,1.6+.5*g,'#d8282a');circ(px,py,.55,'#1e1414')}
     X.globalAlpha=1},
-  heath(sx,sy,g,sd){const cov=1-SEA.snow*.7;X.globalAlpha=cov;const bloom=SEA.p>1.4&&SEA.p<2.7?1:0,base=SEA.p>=2.7&&SEA.p<3.9?'#6a4a3e':'#4e5e3a';
-    for(let i=0;i<11;i++){const[ox,oy]=spot(sd,i,.95),r=(1.5+2.8*g)*(.7+.5*hash(sd,i,2));ell(sx+ox,sy+oy-r*.4,r*1.2,r*.75,i%2?base:shade(hx(base),1.15));
-      if(bloom&&g>.3)for(let k=0;k<3;k++)circ(sx+ox+(hash(sd,i,k)-.5)*r*1.6,sy+oy-r*.6-hash(i,sd,k)*r*.5,.9,k%2?'#b45aa8':'#c97ac0')}
-    X.globalAlpha=1},
+  heath(sx,sy,g,sd){drawHeather(sx,sy,g,sd,0)},
+  heathBloom(sx,sy,g,sd){drawHeather(sx,sy,g,sd,1)},
+  heathOld(sx,sy,g,sd){drawHeather(sx,sy,g,sd,2)},
   orchid(sx,sy,g,sd,tm){FDRAW.meadow(sx,sy,g,sd,tm);if(SEA.bloom<.2||g<.4)return;
     for(let i=0;i<3;i++){const[ox,oy]=spot(sd,i+80,.7),bx=sx+ox,by=sy+oy,h=7+5*g;seg(bx,by,bx,by-h,'#5a8a3a',.8);
       for(let k=0;k<3;k++){const yy=by-h+k*2.2;ell(bx+.8,yy,1.3,1,'#e6a0c8');ell(bx+1.3,yy+.4,.8,.7,'#6a3a24')}}},
@@ -2882,6 +2881,29 @@ const FDRAW={
 /* ---------- drawing templates for the many plants ---------- */
 const inSeason=(a,b)=>a<=b?SEA.p>=a&&SEA.p<b:SEA.p>=a||SEA.p<b;
 // a herb or wildflower: a base (grass, leaves, swords), stems, and flowers in one of several shapes
+// heather: low, rounded cushions of fine twigs, purple with spikes of tiny bells in late summer, bronze in winter
+// lv 1 is flowering heath (more and longer bloom), lv 2 old heath (taller, woody, with bare grey stems)
+function drawHeather(sx,sy,g,sd,lv){
+  const cov=1-SEA.snow*.75;if(cov<.05)return;X.globalAlpha=cov;
+  const p=SEA.p,bloom=g<.35?0:smooth(1.55,1.9,p)*(1-smooth(lv?2.6:2.45,lv?2.95:2.75,p)),wint=Math.max(smooth(2.8,3.4,p),p<.6?1-smooth(.2,.6,p):0);
+  const lf=[[72,100,56],[104,130,76]],br=[[96,74,54],[128,98,66]],mix=(a,b,t)=>a.map((v,k)=>v+(b[k]-v)*t);
+  const dark=mix(lf[0],br[0],wint*.8),lite=mix(lf[1],br[1],wint*.8),fade=smooth(2.5,3,p)*(1-wint);
+  const n=lv===2?8:10,cl=[];
+  for(let i=0;i<n;i++){const[ox,oy]=spot(sd,i,.74);cl.push([ox,oy,(2.5+2.5*g)*(.8+.4*hash(sd,i,5))*(lv===2?1.1:1),i])}
+  cl.sort((a,b)=>a[1]-b[1]);
+  for(const[ox,oy,r,i]of cl){const cx=sx+ox,cy=sy+oy,h=r*(lv===2?.95:.75);
+    ell(cx,cy+.2,r*1.1,r*.42,'rgba(28,36,20,.32)');
+    ell(cx,cy-h*.45,r,h*.62,shade(dark,1));
+    ell(cx-r*.22,cy-h*.62,r*.72,h*.42,shade(lite,1));
+    // fine upright shoots over the cushion
+    const m=lv===2?7:6;
+    for(let j=0;j<m;j++){const u=(j+.5)/m-.5,x=cx+u*r*1.7,top=cy-h*.45-Math.sqrt(Math.max(0,1-4*u*u))*h*.62,len=(1+1.6*hash(sd,i*7+j,3))*(.6+.4*g),lean=(hash(sd,j,i)-.5)*1.2;
+      seg(x,top+1.2,x+lean,top-len,shade(j%2?lite:dark,1.08),.55);
+      if(bloom>.05&&hash(sd,i,j+20)<(lv===1?.95:.6)){const k=lv===1?3:2;for(let q=0;q<k;q++){const t=q/k,bx=x+lean*(1-t),by=top-len*(1-t)+.2;
+        X.globalAlpha=cov*Math.min(1,bloom*1.2);ell(bx,by,.75,.6,fade>.3?(q%2?'#8a5a72':'#a07088'):(q+j)%3===0?'#d48cc8':(q+j)%3===1?'#b862a8':'#9c4f92');X.globalAlpha=cov}}}
+    if(lv===2&&hash(sd,i,31)<.5){const x=cx+(hash(sd,i,30)-.5)*r,y=cy-h*.6;seg(x,y,x+(hash(sd,i,32)-.5)*2,y-h*.8,'#9a9282',.5)}
+  }
+  X.globalAlpha=1}
 function mkHerb(o){return (sx,sy,g,sd,tm)=>{
   const cov=1-SEA.snow*.85;if(cov<.05)return;
   if(o.base==='grass')FDRAW.meadow(sx,sy,g*.75,sd,tm);
@@ -3829,14 +3851,14 @@ const resName=k=>(RES[k]&&RES[k].name)||(FLORA[k]||FAUNA[k]).name;
 const lvl=k=>(S.res&&S.res[k])||0;
 // a level of a plant is known as soon as its stage is researched (secret levels also need their ecosystem)
 const has=k=>lvl(k)>0||(!!VBASE[k]&&lvl(VBASE[k])>0&&(!VSECRET[k]||!!(S.rec&&S.rec[VSECRET[k]])))||(!!ARRIVE[k]&&!!S.seen&&!!S.seen[k]);
-// every plant or animal already in the web makes the next one dearer: the web grows slower as it grows bigger
+// every plant or animal already in the web makes the next one dearer (28% each): the web grows slower as it grows bigger, the idle grind
 // later species also cost more the more life they need around them: (BIO/150)^2 on top
-const RES_INFL=1.12,RES_BASE=2.5,depthMult=k=>1+Math.pow(bioNeed(k)/150,2);
+const RES_INFL=1.28,RES_BASE=4,depthMult=k=>1+Math.pow(bioNeed(k)/150,2);
 const resDone=()=>{let n=0;for(const k in S.res||{})if(RES[k]&&RES[k].g!=='force'&&k!=='weeds'&&S.res[k])n++;return n};
 const resInfl=k=>Math.pow(RES_INFL,resDone());
 const resCost=k=>{const b=RES[k].grow?RES[k].cost*Math.pow(RES[k].grow,lvl(k)):RES[k].cost,c=b*RES_BASE*resInfl(k)*depthMult(k);return c<1000?Math.round(c/5)*5:Math.round(c/Math.pow(10,Math.floor(Math.log10(c))-2))*Math.pow(10,Math.floor(Math.log10(c))-2)};
-// seeds come slowly; milestones pay half of what they used to
-const INCOME_K=1,GOAL_K=.35;
+// seeds come slowly; milestones pay a quarter of their face value
+const INCOME_K=.7,GOAL_K=.25;
 // new plants and animals also need the city to be alive enough to hold them: a biodiversity threshold (the highest reached counts)
 // plants that depend on an animal: pollinated by it, or carried to new ground by it
 // (the richer species of each stage are levels its tiles grow into, not research)
