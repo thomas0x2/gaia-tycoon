@@ -23,6 +23,13 @@ redrawn without touching the code: replace a PNG and the game uses it. The sheet
 code with `npm run sprites`. Ground and water can be given textures drawn by hand. [`sprites/README.md`](sprites/README.md)
 explains the layout.
 
+## Playtest bot
+
+`npm run playtest` plays a city headless for a few game years and lists glitches it notices: animals over what the land can
+carry, values that went NaN or negative, animals stuck or living somewhere they cannot, one plant taking over, page errors.
+Options: `-- --years 6 --seed 7 --poor` (`--poor` earns seeds like a player instead of being given them, and prints what it
+could buy when, which shows where progress stalls). It needs `npm install` once for Playwright.
+
 ## Play on iPhone
 
 The game is also an installable web app. Open it in Safari at
