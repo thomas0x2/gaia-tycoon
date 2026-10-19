@@ -81,7 +81,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .ctrl button{padding:8px 10px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
 .rotgrp{display:flex;gap:2px}.ctrl .rotgrp button{font-size:15px;line-height:1;padding:6px 8px;font-family:inherit}
 .sndset{border:1px solid var(--line);border-radius:10px;padding:8px 12px 10px;margin:4px 0 0;display:grid;gap:6px}.sndset legend{padding:0 6px;color:var(--ink-dim);font-size:12px;font-family:var(--mono)}
-.sndset label{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:10px;font-size:13px;color:var(--ink-dim)}.sndset input{width:100%;accent-color:var(--lichen)}
+.sndset .row{margin:0}.sndset label{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:10px;font-size:13px;color:var(--ink-dim)}.sndset input{width:100%;accent-color:var(--lichen)}
 .ctrl button:hover{background:rgba(255,255,255,.06);color:var(--ink)}
 .ctrl button[aria-pressed="true"]{background:var(--lichen);color:#1d2614}
 .ctrl .sep{width:1px;align-self:stretch;background:var(--line);margin:4px 4px}
@@ -779,6 +779,10 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
         <label>Nature<input type="range" id="vol-amb" min="0" max="100" step="5"></label>
         <label>Music<input type="range" id="vol-mus" min="0" max="100" step="5"></label>
       </fieldset>
+      <fieldset class="sndset" id="noteSet" hidden><legend>Notifications</legend>
+        <p class="note" id="noteState"></p>
+        <div class="row"><button class="btn" id="noteTog"></button></div>
+      </fieldset>
     </div>
   </div>
   <div id="census" class="veil" hidden>
@@ -823,6 +827,14 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <p>Changes that are about to happen in your city. Tap one to go there.</p>
       <ol id="soonList"></ol>
       <div class="row"><button class="btn primary" id="soonClose">Close</button></div>
+    </div>
+  </div>
+  <div id="noteAsk" class="veil" hidden>
+    <div class="dialog panel" role="dialog" aria-labelledby="noteAskTitle">
+      <div class="eyebrow">Notifications</div>
+      <h2 id="noteAskTitle">Want a nudge?</h2>
+      <p>Your city keeps changing while you are away. Idle Nature can tell you on your phone when something is about to happen, like a new level growing or fire weather coming. At most two a day, and never at night.</p>
+      <div class="row"><button class="btn" id="noteNo">Not now</button><button class="btn primary" id="noteYes">Yes, tell me</button></div>
     </div>
   </div>
   <div id="away" class="veil" hidden>
@@ -2908,14 +2920,15 @@ function comingSoon(){
   return out.sort((a,b)=>b.pri-a.pri||(a.dt??1e12)-(b.dt??1e12)).slice(0,5);
 }
 function updateSoon(){SOON=comingSoon();const b=$('soonBtn');b.dataset.n=SOON.length||'';b.textContent=SOON.length?`Coming soon · ${SOON.length}`:'Coming soon';b.classList.toggle('has',SOON.length>0);
-  if(!$('soon').hidden)renderSoon()}
+  if(!$('soon').hidden)renderSoon();noteAsk()}
 function renderSoon(){
   $('soonList').innerHTML=SOON.length?SOON.map((s,n)=>`<li><button data-n="${n}"><b>${s.title}</b><span>${s.text}</span>${s.dt!=null?`<small>${soonWhen(s.dt)}</small>`:''}</button></li>`).join('')
     :'<li class="empty">Nothing is about to change right now. Sow, release animals and break up more ground, then look again.</li>'}
 function goSoon(n){const s=SOON[n];if(!s)return;$('soon').hidden=true;
   if(s.x==null){$('journal').hidden=false;renderJournal();return}
-  const[sx,sy]=iso(s.x,s.y,hAt(s.x,s.y));cam.x=sx;cam.y=sy;cam.z=Math.max(cam.z,1.6);clampCam();
-  selectTool({type:'inspect',id:'inspect'});pinned=[s.x,s.y];if(matchMedia('(max-width: 760px)').matches)$('info').classList.add('open');updateInfo();burst(...isoG(s.x,s.y),'ring',1);markDirty()}
+  showTile(s.x,s.y)}
+function showTile(x,y){const[sx,sy]=iso(x,y,hAt(x,y));cam.x=sx;cam.y=sy;cam.z=Math.max(cam.z,1.6);clampCam();
+  selectTool({type:'inspect',id:'inspect'});pinned=[x,y];if(matchMedia('(max-width: 760px)').matches)$('info').classList.add('open');updateInfo();burst(...isoG(x,y),'ring',1);markDirty()}
 
 /* ---------- drawing primitives ---------- */
 function poly(pts,fill){X.beginPath();X.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)X.lineTo(pts[i][0],pts[i][1]);X.closePath();X.fillStyle=tc(fill);X.fill()}
@@ -5939,7 +5952,7 @@ function renderMenu(){
     <button class="btn${m.id===S.slot?' primary':''}" data-load="${m.id}">${m.id===S.slot?'Continue':'Load'}</button><button class="btn del" data-del="${m.id}" aria-label="Delete ${m.name}">Delete</button></li>`).join(''):'<li class="empty">No saved cities yet.</li>';
   const full=list.length>=MAX_SLOTS;$('menuNew').disabled=full;$('menuNote').textContent=full?`All ${MAX_SLOTS} save slots are in use. Delete a city to start another.`:`${list.length} of ${MAX_SLOTS} save slots used. Every city saves itself as you play.`;
 }
-function openMenu(){if(S)save();renderMenu();$('menu').hidden=false}
+function openMenu(){if(S)save();renderMenu();renderNoteSet();$('menu').hidden=false}
 function closeMenu(){$('menu').hidden=true;last=performance.now()}
 function playSlot(id){
   if(id===S.slot){closeMenu();const away=S.savedAt?(Date.now()-S.savedAt)/1000:0;if(away>5)setTimeout(()=>catchUp(away,away>60),50);return}
@@ -5950,6 +5963,72 @@ function playSlot(id){
 function newCity(carry){if(S)save();boot(newGame(undefined,carry));S.slot=0;save();focusCity();closeMenu();$('intro').hidden=false}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 window.addEventListener('pagehide',save);
+/* ---------- phone notifications ----------
+   Only in the iPhone app. When you leave, up to two local notifications are booked from the coming-soon list, each at the
+   moment the city will reach it: while you are away the city runs one game second per real second, up to OFFLINE_SIM.
+   Opening the app cancels them. Asked for once, after the first cascade; at most two a day, none at night, the cap
+   counted across visits. An effect you have not seen yet stays a teaser, as it does in the list. */
+const CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform()&&CAP.nativePromise);
+const LN=(m,o)=>CAP.nativePromise('LocalNotifications',m,o);
+const NOTE_KEY='idle-nature-notes',NOTE_LOG='idle-nature-notes-sent',NOTE_BOOK='idle-nature-notes-booked';
+const NOTE_MIN=30*60,NOTE_GAP=3*3600,NOTE_DAY=2,NOTE_WAKE=8,NOTE_SLEEP=21;
+const notePref=()=>ls.get(NOTE_KEY); // 'on', 'off', or null before we have asked
+const dayOf=ms=>new Date(ms).toDateString();
+// the moment, in real time, that the away simulation reaches a game time dt from now (null if it never will)
+const awayAt=(now,dt)=>dt<=OFFLINE_SIM?now+Math.max(NOTE_MIN,dt)*1000:null;
+// never at night: push anything between 21:00 and 8:00 to the next morning
+function noteDay(ms){const d=new Date(ms),h=d.getHours();if(h>=NOTE_WAKE&&h<NOTE_SLEEP)return ms;
+  if(h>=NOTE_SLEEP)d.setDate(d.getDate()+1);d.setHours(NOTE_WAKE,0,0,0);return d.getTime()}
+function noteTimes(k){try{const a=JSON.parse(ls.get(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
+const noteSent=()=>noteTimes(NOTE_LOG).filter(t=>t>Date.now()-2*864e5);
+function notePlan(now){
+  const sent=noteSent(),pick=[],cand=comingSoon().filter(s=>s.dt!=null&&s.x!=null).map(s=>({s,at:awayAt(now,s.dt)})).filter(c=>c.at);
+  // when nature has done all it can without you
+  cand.push({s:{title:'Your city is waiting',text:`Nature has grown for ${Math.round(OFFLINE_SIM/3600)} hours without you. Come and see what changed.`,pri:0},at:now+OFFLINE_SIM*1000});
+  for(const c of cand){c.at=noteDay(c.at)}
+  cand.sort((a,b)=>b.s.pri-a.s.pri||a.at-b.at);
+  for(const c of cand){const all=sent.concat(pick.map(p=>p.at));
+    if(all.filter(t=>dayOf(t)===dayOf(c.at)).length>=NOTE_DAY||all.some(t=>Math.abs(t-c.at)<NOTE_GAP*1000))continue;
+    pick.push(c)}
+  return pick.sort((a,b)=>a.at-b.at);
+}
+function noteLeave(){
+  if(!NATIVE||notePref()!=='on'||!S)return;const now=Date.now(),pick=notePlan(now);ls.set(NOTE_BOOK,JSON.stringify(pick.map(p=>p.at)));if(!pick.length)return;
+  LN('schedule',{notifications:pick.map((p,n)=>({id:n+1,title:p.s.title,body:p.s.text,schedule:{at:new Date(p.at)},
+    extra:p.s.x!=null?{x:p.s.x,y:p.s.y,slot:S.slot}:{slot:S.slot}}))}).catch(()=>{});
+}
+// back in the app (or started fresh): whatever already went off counts towards today's two, the rest is called off
+function noteBack(){
+  if(!NATIVE)return;const now=Date.now(),went=noteTimes(NOTE_BOOK).filter(t=>t<=now);ls.del(NOTE_BOOK);
+  if(went.length)ls.set(NOTE_LOG,JSON.stringify(noteSent().concat(went)));
+  LN('cancel',{notifications:[1,2,3,4,5].map(id=>({id}))}).catch(()=>{});LN('removeAllDeliveredNotifications').catch(()=>{});
+}
+function noteAsk(){
+  if(!NATIVE||notePref()||catching||!Object.keys(S.rec||{}).length)return;
+  if([...document.querySelectorAll('.veil')].some(v=>!v.hidden))return;$('noteAsk').hidden=false;
+}
+async function noteOn(){
+  let ok=false;try{const r=await LN('requestPermissions');ok=r&&r.display==='granted'}catch(e){}
+  ls.set(NOTE_KEY,ok?'on':'off');renderNoteSet();return ok;
+}
+function renderNoteSet(){
+  $('noteSet').hidden=!NATIVE;if(!NATIVE)return;const on=notePref()==='on';
+  $('noteState').textContent=on?'You get a nudge when something is about to happen in your city. At most two a day, never at night.':'Off. Turn on to hear when something is about to happen in your city.';
+  $('noteTog').textContent=on?'Turn off':'Turn on';
+}
+let noteGo=null;
+function noteFocus(){if(!noteGo)return;if(catching||!$('away').hidden||!S){setTimeout(noteFocus,400);return}
+  const[x,y,slot]=noteGo;noteGo=null;if(slot===S.slot&&inb(x,y))showTile(x,y)}
+if(NATIVE){
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)noteLeave();else noteBack()});
+  CAP.addListener('LocalNotifications','localNotificationActionPerformed',e=>{const x=e&&e.notification&&e.notification.extra;
+    if(x&&x.x!=null){noteGo=[x.x,x.y,x.slot];setTimeout(noteFocus,300)}});
+  noteBack();
+}
+$('noteYes').addEventListener('click',async()=>{$('noteAsk').hidden=true;if(!await noteOn())toast('Notifications are off','To hear from your city later, allow notifications for Idle Nature in the iPhone Settings app, then turn them on in the menu.')});
+$('noteNo').addEventListener('click',()=>{$('noteAsk').hidden=true;ls.set(NOTE_KEY,'off')});
+$('noteTog').addEventListener('click',async()=>{if(notePref()==='on'){ls.set(NOTE_KEY,'off');renderNoteSet()}
+  else if(!await noteOn())$('noteState').textContent='Notifications are blocked. Allow them for Idle Nature in the iPhone Settings app, then try again.'});
 function valid(s){return s&&s.v===4&&Array.isArray(s.tiles)&&s.tiles.length===N*N&&(Array.isArray(s.lv)&&s.lv.length===N*N||Array.isArray(s.vh)&&s.vh.length===M*M)}
 // saves from the old single-slot, 28×28 version cannot be loaded, but their mycelium and field guide carry over
 function legacyCarry(){let c=null;for(const k of [KEY,OLD_KEY,...slots().map(m=>SLOT_PRE+m.id)]){try{const s=JSON.parse(ls.get(k));if(s&&(s.myc||s.cities)){c={myc:s.myc||0,cities:s.cities||0,seen:s.seen||{},dayNight:s.dayNight!==false};break}}catch(e){}}return c}
