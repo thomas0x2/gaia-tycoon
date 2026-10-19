@@ -569,13 +569,13 @@ body.touring #dock{visibility:hidden}
   .brand{order:0;flex:1 1 100%;flex-direction:row;align-items:center;gap:8px;min-width:0;padding:3px 10px}
   .brand h1,.brand .wx,.brand .stage{display:none}
   .brand .clock{font-size:12px;gap:8px;margin-left:0}
-  /* season and year lead the stats in one panel; the menu buttons stand beside it */
-  #hud:not(.more){display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:0}
-  #hud:not(.more) .brand{grid-column:1;border-right:0;border-radius:var(--r) 0 0 var(--r);box-shadow:none;padding:4px 4px 4px 10px}
-  #hud:not(.more) .brand .clock{flex-direction:column;align-items:flex-start;gap:0;line-height:1.15}
+  /* season and year lead the stats in one full-width panel; the menu button sits on its own row below */
+  #hud:not(.more){display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:0;row-gap:6px}
+  #hud:not(.more) .brand{grid-column:1;grid-row:1;border-right:0;border-radius:var(--r) 0 0 var(--r);box-shadow:none;padding:4px 4px 4px 10px}
+  #hud:not(.more) .brand .clock{align-items:baseline;gap:6px}
   #hud:not(.more) #sClock{display:none}
-  #hud:not(.more) #stats{grid-column:2;border-left:0;border-radius:0 var(--r) var(--r) 0}
-  #hud:not(.more) .ctrl{grid-column:3;margin-left:6px}
+  #hud:not(.more) #stats{grid-column:2;grid-row:1;border-left:0;border-radius:0 var(--r) var(--r) 0}
+  #hud:not(.more) .ctrl{grid-column:1/3;grid-row:2;justify-self:end}
   #hud:not(.more) .ctrl button{min-width:38px}
   #stats{order:1;flex:1 1 0;min-width:0;padding:2px}
   #stats .stat:not(.keep){display:none}
@@ -599,7 +599,7 @@ body.touring #dock{visibility:hidden}
   .stat small{margin-left:2px}
   .ctrl{order:2;flex:0 0 auto;padding:2px;gap:2px;align-items:stretch}
   .ctrl>*{display:none}
-  #moreBtn,#webBtn,#newBtn:not([hidden]){display:grid}
+  #moreBtn,#newBtn:not([hidden]){display:grid}
   /* the weather only takes a place in the strip during a drought or a flood */
   #wxBtn.alert{display:grid;min-width:36px}
   #hud:has(#wxBtn.alert) #sIncome{display:none}
@@ -621,7 +621,7 @@ body.touring #dock{visibility:hidden}
   #hud.more .ctrl{order:4;flex:1 1 100%;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px}
   #hud.more .ctrl>*{display:grid}
   #hud.more .rotgrp{display:contents}
-  #hud.more #moreBtn,#hud.more #webBtn,#hud.more #newBtn[hidden]{display:none}
+  #hud.more #moreBtn,#hud.more #newBtn[hidden]{display:none}
   #hud.more .ctrl button{display:grid;min-height:58px;padding:6px 2px}
   #hud.more .ctrl button::after{content:attr(data-lbl);font:500 11px var(--body);line-height:1.1}
   #moreBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%225%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3Ccircle%20cx%3D%2219%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3C/svg%3E")}
@@ -753,7 +753,7 @@ body.touring #dock{visibility:hidden}
       <button id="dnBtn" data-lbl="Day/night" aria-pressed="true" title="Turn the day and night cycle on or off">Day/night</button>
       <button id="sndBtn" data-lbl="Sound" aria-pressed="true" title="Sound on or off (M). Volumes are in the Menu.">Sound</button>
       <span class="rotgrp" role="group" aria-label="Rotate view"><button id="rotL" data-lbl="Rotate" title="Rotate the view left (Q)" aria-label="Rotate view left">⟲</button><button id="rotR" data-lbl="Rotate" title="Rotate the view right (E)" aria-label="Rotate view right">⟳</button></span>
-      <button id="webBtn" title="Research: unlock plants, animals and forces of nature">Wood Wide Web</button>
+      <button id="webBtn" data-lbl="Wood Wide Web" title="Research: unlock plants, animals and forces of nature">Wood Wide Web</button>
       <button id="charterBtn" data-lbl="Milestones" title="Milestones">Milestones</button>
       <button id="censusBtn" data-lbl="Census" title="Census: every plant and animal in the city, and how many">Census</button>
       <button id="recBtn" data-lbl="Journal" title="Field journal: the cascades and cycles you have discovered">Journal</button>
