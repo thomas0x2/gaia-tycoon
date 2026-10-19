@@ -81,7 +81,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .ctrl button{padding:8px 10px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim)}
 .rotgrp{display:flex;gap:2px}.ctrl .rotgrp button{font-size:15px;line-height:1;padding:6px 8px;font-family:inherit}
 .sndset{border:1px solid var(--line);border-radius:10px;padding:8px 12px 10px;margin:4px 0 0;display:grid;gap:6px}.sndset legend{padding:0 6px;color:var(--ink-dim);font-size:12px;font-family:var(--mono)}
-.sndset label{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:10px;font-size:13px;color:var(--ink-dim)}.sndset input{width:100%;accent-color:var(--lichen)}
+.sndset .row{margin:0}.sndset label{display:grid;grid-template-columns:70px 1fr;align-items:center;gap:10px;font-size:13px;color:var(--ink-dim)}.sndset input{width:100%;accent-color:var(--lichen)}
 .ctrl button:hover{background:rgba(255,255,255,.06);color:var(--ink)}
 .ctrl button[aria-pressed="true"]{background:var(--lichen);color:#1d2614}
 .ctrl .sep{width:1px;align-self:stretch;background:var(--line);margin:4px 4px}
@@ -322,6 +322,12 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 #jList li{display:flex;flex-direction:row;align-items:flex-start;gap:12px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.035);font-size:13px;line-height:1.45;color:var(--ink-dim)}
 #jList li b{font-family:var(--display);font-weight:400;font-size:16px;color:var(--ink-dim)}
 #jList li.found b{color:var(--ink)}
+#soonList{list-style:none;margin:6px 0 14px;padding:0;overflow:auto;display:grid;gap:6px;min-height:0}
+#soonList button{all:unset;box-sizing:border-box;width:100%;display:grid;gap:2px;padding:9px 11px;border-radius:8px;background:rgba(255,255,255,.035);font-size:13px;line-height:1.45;color:var(--ink-dim);cursor:pointer}
+#soonList button:hover,#soonList button:focus-visible{background:rgba(207,220,132,.08);box-shadow:inset 0 0 0 1px rgba(207,220,132,.35)}
+#soonList b{font-family:var(--display);font-weight:400;font-size:16px;color:var(--ink)}
+#soonList small{color:var(--lichen);font-size:12px}
+#soonList .empty{font-size:13px;color:var(--ink-dim);padding:8px 2px}
 #jList li.on{background:rgba(207,220,132,.08);box-shadow:inset 0 0 0 1px rgba(207,220,132,.35)}
 #jList li.on b{color:var(--lichen)}
 #jList .need{color:var(--ink)}
@@ -356,9 +362,33 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .btn{padding:9px 16px;border-radius:8px;font-weight:600;background:rgba(255,255,255,.08)}
 .btn.primary{background:var(--lichen);color:#1d2614}
 .awaybar{height:6px;margin:2px 0 14px}
-#awayBody ul{margin:0 0 16px;padding-left:18px;line-height:1.6}
-#awayBody li b{color:var(--lichen);font-family:var(--mono);font-weight:500}
-#awayBody .dim{color:var(--ink-dim);font-size:12.5px}
+#away .dialog{max-width:460px}
+#awayBody .dim{color:var(--ink-dim);font-size:12.5px;margin:0 0 10px}
+.aw-top{display:flex;align-items:center;gap:12px;margin:0 0 12px;flex-wrap:wrap}
+.aw-seeds{display:flex;align-items:baseline;gap:6px}.aw-seeds b{font:500 28px var(--mono);color:var(--lichen)}.aw-seeds span{color:var(--ink-dim);font-size:13px}
+.aw-sea{display:flex;gap:4px;flex-wrap:wrap;margin-left:auto;font-size:15px;align-items:center}
+.aw-sea span{position:relative;padding:3px 6px;border-radius:8px;background:rgba(255,255,255,.06);font-size:13px;white-space:nowrap}
+.aw-sea span.k-drought{background:rgba(242,160,60,.22)}.aw-sea span.k-wet{background:rgba(90,170,230,.22)}
+.aw-sea small{position:absolute;right:-5px;top:-7px;font-size:10px}.aw-sea i{font-style:normal;color:var(--ink-dim)}
+.aw-list{list-style:none;margin:0 0 12px;padding:0;display:flex;flex-direction:column;gap:6px}
+.aw-list button{display:flex;align-items:center;gap:10px;width:100%;padding:6px 8px 6px 6px;border-radius:12px;text-align:left;background:rgba(255,255,255,.05);border-left:3px solid var(--c);animation:awin .45s cubic-bezier(.2,1.2,.4,1) backwards}
+.aw-list li:nth-child(2) button{animation-delay:.08s}.aw-list li:nth-child(3) button{animation-delay:.16s}.aw-list li:nth-child(4) button{animation-delay:.24s}.aw-list li:nth-child(5) button{animation-delay:.32s}
+.aw-list li:first-child button{background:rgba(255,255,255,.09)}
+.aw-list img,.aw-emo,.tr-pic img{width:52px;height:42px;flex:none;object-fit:contain}
+.aw-emo{display:grid;place-items:center;font-size:26px}
+.aw-list div,.tr-txt{flex:1;min-width:0}
+.aw-list em,.tr-txt em{display:block;font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--c);font-style:normal}
+.aw-list b,.tr-txt b{display:block;font-weight:600;font-size:14px;line-height:1.25;color:var(--ink)}
+.aw-list p{margin:2px 0 0;font-size:12px;line-height:1.35;color:var(--ink-dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.aw-go{font-size:22px;color:var(--ink-dim);padding:0 2px}
+@keyframes awin{from{opacity:0;transform:translateY(10px) scale(.97)}}
+#tour{position:absolute;left:50%;transform:translateX(-50%);bottom:max(14px, env(safe-area-inset-bottom, 0px));width:min(440px, calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:10px 12px;border-left:3px solid var(--c);background:var(--panel-hi);animation:tin .35s ease-out}
+.tr-txt p{margin:2px 0 0;font-size:12.5px;line-height:1.4;color:var(--ink-dim);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tr-nav{display:flex;flex-direction:column;gap:6px}
+.tr-nav button{width:40px;height:34px;border-radius:9px;background:rgba(255,255,255,.08);font-size:20px;line-height:1}
+.tr-nav button.primary{background:var(--c);color:#18201a}.tr-nav button:disabled{opacity:.3}
+.tr-x{position:absolute;top:-10px;right:-6px;width:26px;height:26px;border-radius:50%;background:var(--panel-hi);border:1px solid var(--line);font-size:12px}
+body.touring #dock{visibility:hidden}
 .dialog.webpanel{max-width:1320px;height:100%;overflow:hidden;display:flex;flex-direction:column;gap:10px;padding:18px 20px}
 .webhead{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
 .webhead h2{margin:4px 0 6px}
@@ -560,6 +590,11 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   #webBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2012C3%207%207%204%2012%204s9%203%209%208z%22/%3E%3Cpath%20d%3D%22M9.5%2012v6.5a2.5%202.5%200%200%200%205%200V12%22/%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%22.6%22/%3E%3Ccircle%20cx%3D%2214.5%22%20cy%3D%227.5%22%20r%3D%22.6%22/%3E%3C/svg%3E")}
   #charterBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2021V4%22/%3E%3Cpath%20d%3D%22M5%204h11l-2%204%202%204H5%22/%3E%3C/svg%3E")}
   #censusBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2020V10M10%2020V4M16%2020v-7M21%2020H3%22/%3E%3C/svg%3E")}
+  #soonBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2%2012s3.6-7%2010-7%2010%207%2010%207-3.6%207-10%207S2%2012%202%2012z%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223%22/%3E%3C/svg%3E")}
+  /* on a phone the eye only takes a place in the strip when something is about to change */
+  #soonBtn.has{display:grid;position:relative}
+  #soonBtn.has::after{content:attr(data-n);position:absolute;top:3px;right:4px;min-width:15px;height:15px;border-radius:8px;background:var(--lichen);color:#1d2614;font:600 10px/15px var(--body);text-align:center}
+  #hud.more #soonBtn.has::after{content:attr(data-lbl);position:static;min-width:0;height:auto;background:none;color:inherit;font:500 11px var(--body)}
   #recBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2019c0-8%205-14%2015-14%200%2010-6%2015-14%2015%22/%3E%3Cpath%20d%3D%22M5%2019%2013%2011%22/%3E%3C/svg%3E")}
   #guideBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%206c-2-1.5-5-2-8-1.5V19c3-.5%206%200%208%201.5%202-1.5%205-2%208-1.5V4.5c-3-.5-6%200-8%201.5zM12%206v14.5%22/%3E%3C/svg%3E")}
   #newBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012h15M13%206l6%206-6%206%22/%3E%3C/svg%3E")}
@@ -679,6 +714,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <button id="charterBtn" data-lbl="Milestones" title="Milestones">Milestones</button>
       <button id="censusBtn" data-lbl="Census" title="Census: every plant and animal in the city, and how many">Census</button>
       <button id="recBtn" data-lbl="Ecosystems" title="Ecosystems you have discovered">Ecosystems</button>
+      <button id="soonBtn" data-lbl="Coming soon" title="What is about to change in your city">Coming soon</button>
       <button id="guideBtn" data-lbl="Guide" title="Field guide: every plant and animal, and how ecosystems work">Field guide</button>
       <button id="newBtn" data-lbl="Next city" title="Move on to the next city" hidden>Next city</button>
     </div>
@@ -709,6 +745,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   </nav>
 
   <div id="tip" hidden></div>
+  <div id="tour" class="panel" role="status" hidden></div>
   <div id="intro" class="veil" hidden>
     <div class="dialog panel intro" role="dialog" aria-labelledby="introTitle">
       <section class="ipage">
@@ -779,6 +816,10 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
         <label>Nature<input type="range" id="vol-amb" min="0" max="100" step="5"></label>
         <label>Music<input type="range" id="vol-mus" min="0" max="100" step="5"></label>
       </fieldset>
+      <fieldset class="sndset" id="noteSet" hidden><legend>Notifications</legend>
+        <p class="note" id="noteState"></p>
+        <div class="row"><button class="btn" id="noteTog"></button></div>
+      </fieldset>
     </div>
   </div>
   <div id="census" class="veil" hidden>
@@ -816,13 +857,30 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <div class="row"><button class="btn primary" id="jClose">Close</button></div>
     </div>
   </div>
+  <div id="soon" class="veil" hidden>
+    <div class="dialog panel jpanel" role="dialog" aria-labelledby="soonTitle">
+      <div class="eyebrow">Coming soon</div>
+      <h2 id="soonTitle">What to watch</h2>
+      <p>Changes that are about to happen in your city. Tap one to go there.</p>
+      <ol id="soonList"></ol>
+      <div class="row"><button class="btn primary" id="soonClose">Close</button></div>
+    </div>
+  </div>
+  <div id="noteAsk" class="veil" hidden>
+    <div class="dialog panel" role="dialog" aria-labelledby="noteAskTitle">
+      <div class="eyebrow">Notifications</div>
+      <h2 id="noteAskTitle">Want a nudge?</h2>
+      <p>Your city keeps changing while you are away. Idle Nature can tell you on your phone when something is about to happen, like a new level growing or fire weather coming. At most two a day, and never at night.</p>
+      <div class="row"><button class="btn" id="noteNo">Not now</button><button class="btn primary" id="noteYes">Yes, tell me</button></div>
+    </div>
+  </div>
   <div id="away" class="veil" hidden>
     <div class="dialog panel" role="dialog" aria-labelledby="awayTitle">
-      <div class="eyebrow">While you were away</div>
+      <div class="eyebrow" id="awayEye">While you were away</div>
       <h2 id="awayTitle">You were away</h2>
       <div class="bar awaybar"><i id="awayBar"></i></div>
       <div id="awayBody"></div>
-      <div class="row"><button class="btn primary" id="awayGo" hidden>Back to the city</button></div>
+      <div class="row"><button class="btn" id="awayGo" hidden>Back to the city</button><button class="btn primary" id="awayTour" hidden>Show me ▸</button></div>
     </div>
   </div>
   <div id="confirm" class="veil" hidden>
@@ -1194,7 +1252,7 @@ function fxItems(k){return fxOf(k).map(q=>fxSeen(q)?`<li><b>${fxName(q)}.</b> ${
 function fxText(k){const a=fxOf(k);if(!a.length)return VBASE[k]?`Earns more seeds than younger ${FLORA[VBASE[k]].name.toLowerCase()}.`:'';
   const s=a.filter(fxSeen),u=a.length-s.length;return [...s.map(q=>fxName(q)+'.'),u?`${u} effect${u>1?'s':''} not yet seen.`:''].filter(Boolean).join(' ')}
 function seeFx(k,x,y){
-  if(!S.fx)S.fx={};if(S.fx[k]||!FX[k])return;S.fx[k]=1;histEvent('fx',k,x,y);
+  if(!S.fx)S.fx={};if(S.fx[k]||!FX[k])return;S.fx[k]=1;if(offLog)offLog.push({k:'fx',id:k,x,y});histEvent('fx',k,x,y);
   if(x!=null&&!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy,'ring',1);mark(x,y,FX[k].cause,1)}
   toast(`Discovered: ${fxName(k)}`,FX[k].text,'unlock');checkCascades();
 }
@@ -2236,7 +2294,7 @@ function apply(x,y,quiet){
   return true;
 }
 function discover(kind,id,title){
-  if(S.seen[id])return;S.seen[id]=1;newDot[kind]=1;
+  if(S.seen[id])return;S.seen[id]=1;newDot[kind]=1;if(offLog)offLog.push({k:'new',kind,id});
   const d=kind==='flora'?FLORA[id]:FAUNA[id];
   reveal(kind,id,title||(kind==='flora'?'First sighting':'Arrived in the city'),d.desc);checkAch();
 }
@@ -2248,7 +2306,7 @@ const soilCap=(t,x,y)=>Math.min(1-.75*(t.stony||0),1-.5*(t.poor||0),hAt(x,y)>=HI
 const LIFE={birch:7200,willow:7200,pine:10800,oak:18000,beech:18000};
 const treeLife=(k,i)=>(LIFE[bid(k)]||7200)*(.75+.5*hash(i,7,3));
 function fallTree(x,y,why){
-  const t=T(x,y);if(!t.p)return false;hlog(x,y,'L',t.p.id,why);const name=FLORA[t.p.id].name,stump=bid(t.p.id)==='willow'&&why!=='age';t.p=stump?{id:'willow',g:.3}:{id:'weeds',g:.35};t.dw=1;t.ds=Math.max(t.ds||0,.8);t.fert=Math.min(1,t.fert+.1);
+  const t=T(x,y);if(!t.p)return false;if(offLog)offLog.push({k:'fall',why,id:t.p.id,x,y});hlog(x,y,'L',t.p.id,why);const name=FLORA[t.p.id].name,stump=bid(t.p.id)==='willow'&&why!=='age';t.p=stump?{id:'willow',g:.3}:{id:'weeds',g:.35};t.dw=1;t.ds=Math.max(t.ds||0,.8);t.fert=Math.min(1,t.fert+.1);
   if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-10,'leaf',8);burst(sx,sy,'dust',4)}markDirty();
   if(why!=='browse')seeFx(why==='beaver'?'fell:beaver':'fall:'+why,x,y);if(stump)seeFx('stump',x,y);
   return stump;
@@ -2292,7 +2350,7 @@ function fireTick(){
   if(!S.burning.length){S.fireAt=S.clock;if(S.fireLast){seeFx('fire:out',S.fireLast[0],S.fireLast[1]);histEvent('fire',S.fireN||1,S.fireLast[0],S.fireLast[1])}}
 }
 function burnOut(x,y){
-  const t=T(x,y),i=y*N+x;hlog(x,y,'F',t.p?t.p.id:null);delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);t.ph=Math.min(8,phOf(t)+.3);
+  const t=T(x,y),i=y*N+x;if(offLog)offLog.push({k:'burn',x,y});hlog(x,y,'F',t.p?t.p.id:null);delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);t.ph=Math.min(8,phOf(t)+.3);
   if(t.p){const k=t.p.id,b=bid(k),f=FLORA[k];
     if(k==='oak3'||k==='pine3'){seeFx('bark:fire',x,y)}
     else if(b==='heath'||b==='broom'){t.p={id:b,g:.12};seeFx('renew:fire',x,y)}
@@ -2306,7 +2364,7 @@ function tick(){
   IN_TICK=true;try{tick0()}finally{IN_TICK=false}
 }
 function tick0(){
-  S.t++;fireTick();if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();histTick();
+  S.t++;fireTick();if(!QUIET&&S.t%30===0)updateSoon();if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();histTick();
   const smogF=1-.3*S.smog;
   let shaded=0,drowned=0,parched=0,parchedAt=0;
   for(let i=0;i<N*N;i++){
@@ -2860,6 +2918,58 @@ function updateWxUI(){
   const b=$('wxBtn');b.className=alert?`alert k-${alert}`:'';b.dataset.ic=WX_ICON[f[0].kind];b.setAttribute('aria-label',`Weather: ${WX_WORD[f[0].kind].toLowerCase()}`);
 }
 function showWx(){const w=wxText();toast(w.title,w.body,'full')}
+/* ---------- coming soon: what is about to change, so there is a reason to look again ----------
+   Read from the same rules the simulation runs on, a few times a minute. An effect you have not seen yet stays a teaser:
+   the list says where to watch, never what will happen. Times are game time, so they hold whatever speed the clock runs at. */
+let SOON=[];
+function soonWhen(dt){if(dt==null)return '';const p=Math.floor((S.clock+dt)/SLEN)-Math.floor(S.clock/SLEN);
+  if(dt<DAY)return 'any day now';if(p===0)return `this ${SEASONS[SEA.idx].toLowerCase()}`;if(p===1)return `next ${SEASONS[(SEA.idx+1)%4].toLowerCase()}`;
+  if(dt<YEAR)return 'within a year';const y=Math.round(dt/YEAR);return y<=1?'in about a year':`in about ${y} years`}
+function comingSoon(){
+  const out=[],K=SUCC(),best={},keep=(it)=>{const o=best[it.key];if(!o||(it.dt??1e12)<(o.dt??1e12))best[it.key]=it};
+  // the first cascade with one link left to see (one at a time, so the map's own changes keep their place)
+  {const c=CASCADES.find(c=>!S.rec[c.id]&&c.steps.filter(st=>!stepSeen(st)).length===1);
+    if(c)out.push({key:'c:'+c.id,cause:'leaf',title:`One link left: ${c.name}`,text:c.hint,pri:2})}
+  const fuel=[];
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u||t.b||!t.p)continue;const k=t.p.id,f=FLORA[k];if(f.pre||f.managed||f.crop)continue;const x=i%N,y=(i/N)|0,g=t.p.g;
+    // a level the city does not have yet
+    if(g>=.95&&DISP[k]){const v=nextLevel(t,x,y,i);if(v&&DEPTH[v.id]>levelOf(k)&&!D.fl[v.id]){const nb=near(x,y,1,n=>!!n.p&&atLeast(n.p.id,v.id)),nm=FLORA[v.id].name;
+      keep({key:'lv:'+v.id,x,y,cause:'leaf',title:S.seen[v.id]?`The first ${nm}`:'Something new is growing',dt:1/(LV_RATE*K*(1+Math.min(3,nb))),pri:2,
+        text:S.seen[v.id]?`This ${f.name.toLowerCase()} is maturing into the city’s first ${nm.toLowerCase()}.`:`This ${f.name.toLowerCase()} is maturing into a level you have not seen yet.`})}}
+    // heather moving into the acid grassland beside it
+    if(k==='meadowA'&&has('heath')&&phOf(t)<5.25&&near(x,y,1,n=>!!n.p&&bid(n.p.id)==='heath'&&n.p.g>=.6)){const seen=S.fx['heath:acid'];
+      keep({key:'heath:acid',x,y,cause:'soil',title:seen?'Heather on the move':'Watch the heath edge',dt:(phOf(t)<5?0:YEAR)+1/(2*LV_RATE*K),pri:2,
+        text:seen?'The soil here is sour enough: the heather beside it will take this acid grassland.':'The grassland beside the heather is changing. Something is about to happen here.'})}
+    // an old tree near the end of its life
+    if(f.kind==='tree'&&g>=1&&t.p.age!=null){const life=treeLife(k,i);if(t.p.age>.85*life){const seen=S.fx['fall:age'];
+      keep({key:'fall',x,y,cause:'light',title:'An old tree',dt:Math.max(0,life-t.p.age)+1/.0006,pri:1,
+        text:seen?`This ${f.name.toLowerCase()} is near the end of its life. When it falls, light will reach the ground beneath it.`:`This ${f.name.toLowerCase()} is very old.`})}}
+    if((FLAM[k]||0)>=.7&&g>=.4)fuel.push(i)}
+  // fire weather: a drought summer ahead, with dry heather, broom or pine to burn
+  if(fuel.length>=6){const thisYear=WX.type==='drought'&&SEA.p<2.6,nextYear=yearType(Math.floor(WX.n/4)+1)==='drought';
+    if(thisYear||nextYear){const i=fuel[(fuel.length/2)|0];out.push({key:'fire',x:i%N,y:(i/N)|0,cause:'fire',title:'Fire weather ahead',pri:3,
+      dt:thisYear?Math.max(0,.8-SEA.p)*SLEN:(4-SEA.p+.8)*SLEN,text:`A drought summer is coming. The city has ${fuel.length} tiles of dry heather, broom and pine that could catch fire.`})}}
+  // bumblebee queens
+  for(const a of S.an){if(a.sp!=='bee')continue;const x=Math.round(a.x),y=Math.round(a.y);
+    if(a.st==='nest'&&(a.col||0)>=2&&SEA.p>=.5&&SEA.p<1.6)keep({key:'queens',x,y,cause:'bloom',title:S.fx['queens:bee']?'New queens':'A growing colony',dt:(1.6-SEA.p)*SLEN,pri:1,
+      text:S.fx['queens:bee']?'This colony will raise new queens in late summer, and they will look for places to sleep through the winter.':'This bumblebee colony is growing. Watch it in late summer.'});
+    else if(a.st==='hib'&&SEA.p>=2.6){const ok=!!earlyNectar(x,y);keep({key:ok?'wake':'cold',x,y,cause:'bloom',title:ok?'A sleeping queen':'A queen without spring flowers',dt:(4-SEA.p)*SLEN,pri:ok?1:3,
+      text:ok?'A bumblebee queen sleeps here. She will wake in spring and found a nest.':'A bumblebee queen sleeps here, but no willow catkins or dandelions grow within 3 tiles. Without them she will not survive the spring.'})}}
+  // at most two new levels, the nearest first, so one busy meadow does not crowd out the rest
+  const lv=Object.values(best).filter(o=>o.key.startsWith('lv:')).sort((a,b)=>a.dt-b.dt);
+  for(const k in best)if(!k.startsWith('lv:'))out.push(best[k]);out.push(...lv.slice(0,2));
+  return out.sort((a,b)=>b.pri-a.pri||(a.dt??1e12)-(b.dt??1e12)).slice(0,5);
+}
+function updateSoon(){SOON=comingSoon();const b=$('soonBtn');b.dataset.n=SOON.length||'';b.textContent=SOON.length?`Coming soon · ${SOON.length}`:'Coming soon';b.classList.toggle('has',SOON.length>0);
+  if(!$('soon').hidden)renderSoon();noteAsk()}
+function renderSoon(){
+  $('soonList').innerHTML=SOON.length?SOON.map((s,n)=>`<li><button data-n="${n}"><b>${s.title}</b><span>${s.text}</span>${s.dt!=null?`<small>${soonWhen(s.dt)}</small>`:''}</button></li>`).join('')
+    :'<li class="empty">Nothing is about to change right now. Sow, release animals and break up more ground, then look again.</li>'}
+function goSoon(n){const s=SOON[n];if(!s)return;$('soon').hidden=true;
+  if(s.x==null){$('journal').hidden=false;renderJournal();return}
+  showTile(s.x,s.y)}
+function showTile(x,y){const[sx,sy]=iso(x,y,hAt(x,y));cam.x=sx;cam.y=sy;cam.z=Math.max(cam.z,1.6);clampCam();
+  selectTool({type:'inspect',id:'inspect'});pinned=[x,y];if(matchMedia('(max-width: 760px)').matches)$('info').classList.add('open');updateInfo();burst(...isoG(x,y),'ring',1);markDirty()}
 
 /* ---------- drawing primitives ---------- */
 function poly(pts,fill){X.beginPath();X.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)X.lineTo(pts[i][0],pts[i][1]);X.closePath();X.fillStyle=tc(fill);X.fill()}
@@ -4510,7 +4620,7 @@ function render(){
   ctx.drawImage(cache,dx,dy,CW*s,CH*s);
   X=ctx;ctx.setTransform(DPR*z,0,0,DPR*z,DPR*(W/2-cam.x*z),DPR*(H/2-cam.y*z));
   syncHomes();
-  drawLive();drawMovers();drawPods();drawHighlight();
+  drawLive();drawMovers();drawPods();drawHighlight();drawTour();
   if(tool.type==='corridors'||tool.type==='guide'||tool.type==='lens')drawOverlay();
   const hm=hover||pinned;
   if(S.blocks&&hm&&!T(hm[0],hm[1]).u){const b=blockAt(hm[0],hm[1]);if(b>=0){const ok=blockStatus(b).ok;
@@ -4575,6 +4685,7 @@ function frame(now){
   if(!$('menu').hidden){last=now;render();return}
   const gap=(now-last)/1000;if(gap>3){last=now;catchUp(gap,gap>60);return}
   if(now-interactAt>1500&&!drag&&!pinch&&now-last<31)return;
+  flyStep(now);
   const dt=Math.min(.1,(now-last)/1000);last=now;time+=dt;soundTick(dt);podTick(dt);
   S.clock=(S.clock||0)+dt*S.speed;updateTime();
   if(S.speed>0){acc+=dt*S.speed;let n=0;while(acc>=1&&n<4){acc-=1;tick();n++}if(acc>1)acc=0}
@@ -4784,7 +4895,7 @@ function hitBuilding(x,y,dmg,src){
   const was=b.k,h=b.h;hlog(x,y,'B',b.k,src);t.b=null;t.gd='rubble';t.hp=null;S.demolished++;
   // salvage: the Trust pays a small bounty for every building you bring down by hand, so a city is never stuck without seeds
   const sal=src==='hand'?Math.round(3+2*Math.min(h,8)):0;S.seeds+=sal;if(sal&&!QUIET)say(`${bName({k:was,h,v:b.v})} down. Salvage: +${sal} seeds.`,'good');burst(sx,sy-h*FL*.5,'dust',14+h*2);
-  if(src==='nature'){S.natFell=(S.natFell||0)+1;if(!S.flags.ivyfell){S.flags.ivyfell=1;toast('Nature brought a building down','Ivy, roots and damp did the work. The wilder the land around a building, the faster it falls.','unlock')}}
+  if(src==='nature'){if(offLog)offLog.push({k:'down',x,y});S.natFell=(S.natFell||0)+1;if(!S.flags.ivyfell){S.flags.ivyfell=1;toast('Nature brought a building down','Ivy, roots and damp did the work. The wilder the land around a building, the faster it falls.','unlock')}}
   if(was==='factory'&&!S.flags.factory){S.flags.factory=1;toast('Factory closed','The smokestack goes cold. Factories are the biggest source of smog in the city.')}
   markDirty();
 }
@@ -4801,7 +4912,7 @@ function hitGround(x,y,dmg,src){
     // concrete, mortar and road stone are full of lime
     const lime=was==='rubble'?8:was==='road'||was==='pave'?7.5:was==='path'?7:0;if(lime)t.ph=Math.max(phOf(t),lime);
     if(t.stony>.5&&!S.flags.stony){S.flags.stony=1;toast('Stony ground','Broken rubble leaves crushed concrete and stone, not soil. Grass and hawthorn cannot root in it. Pioneer weeds can, and so can heather, broom, pine and birch, the plants of poor rocky ground, until roots and frost break the stones down. Brownfield like this, an "open mosaic" of bare ground and pioneers, is one of the richest habitats in a city: Berlin’s old Südgelände rail yard became a nature park this way. Remediate Soil clears the stones at once.','unlock')}}
-  if(src==='nature'){S.natCracked=(S.natCracked||0)+1;if(!S.flags.rootcrack){S.flags.rootcrack=1;toast('Roots broke the paving','Nobody touched it: frost and roots split it open. The more green around hard ground, the faster it goes.','unlock')}}
+  if(src==='nature'){if(offLog)offLog.push({k:'crack',x,y});S.natCracked=(S.natCracked||0)+1;if(!S.flags.rootcrack){S.flags.rootcrack=1;toast('Roots broke the paving','Nobody touched it: frost and roots split it open. The more green around hard ground, the faster it goes.','unlock')}}
   markDirty();
 }
 // ivy and birds move in: the structure stays, but becomes habitat
@@ -5111,10 +5222,10 @@ function summary(){const fl={};for(const k of WILD_FLORA)fl[k]=D.fl[k]||0;return
 function dur(s){s=Math.round(s);if(s<90)return `${s} seconds`;if(s<5400)return `${Math.round(s/60)} minutes`;return `${(s/3600).toFixed(1)} hours`}
 function catchUp(sec,show){
   if(catching||sec<2)return;catching=true;
-  const simS=Math.floor(Math.min(sec,OFFLINE_SIM)),extra=Math.max(0,Math.min(sec,OFFLINE_MAX)-simS),before=summary();
+  const simS=Math.floor(Math.min(sec,OFFLINE_SIM)),extra=Math.max(0,Math.min(sec,OFFLINE_MAX)-simS),before=summary();if(show){tourEnd();before.snap=awaySnap()}
   const K=Math.max(1,Math.ceil(simS/OFFLINE_STEPS)),simT=Math.ceil(simS/K);
   QUIET=true;offLog=[];let done=0;
-  if(show){$('away').hidden=false;$('awayBody').innerHTML='<p>Nature has been busy. Catching up…</p>';$('awayBar').style.width='0';$('awayTitle').textContent=`You were away for ${dur(sec)}`;$('awayGo').hidden=true}
+  if(show){$('away').hidden=false;$('awayBody').innerHTML='<p>Nature has been busy. Catching up…</p>';$('awayBar').style.width='0';$('awayEye').textContent=`You were away for ${dur(sec)}`;$('awayTitle').textContent='Catching up…';$('awayBar').parentNode.hidden=false;$('awayGo').hidden=true;$('awayTour').hidden=true}
   const step=()=>{
     const t0=performance.now();
     TICK_K=K;while(done<simT&&performance.now()-t0<30){S.clock+=K;if(done%5===0)updateTime();tick();done++}TICK_K=1;
@@ -5129,15 +5240,125 @@ function catchUp(sec,show){
   };
   step();
 }
+/* ---------- the away report: the biggest changes as a short story, each one flown to on the map ----------
+   Before catching up, awaySnap() notes every tile's plant and ground and how many of each animal live in the city.
+   While the city runs on its own, the simulation logs where things happened (offLog: effects seen, fires, falls,
+   buildings and paving brought down, first sightings). awayStory() turns the log and the difference into events. */
+function awaySnap(){const an={};for(const q of S.an)an[q.sp]=(an[q.sp]||0)+1;return {p:S.tiles.map(t=>t.p?t.p.id:''),gd:S.tiles.map(t=>t.gd),an,n:WX.n}}
+const plural=(n,w,ws)=>`${fmt(n)} ${n===1?w:(ws||w+'s')}`;
+const lc=s=>s.charAt(0).toLowerCase()+s.slice(1);
+const firstSent=s=>{const m=s.match(/^.*?[.!?](\s|$)/);return m?m[0].trim():s};
+const AWAY_FALL={drought:['Drought killed {n}','The dry summer was too much for trees that need damp ground. Their gaps let drought-hardy plants in.'],
+  age:['{n} fell of old age','They leave deadwood behind: food for beetles and fungi, and a gap of light in the canopy.'],
+  storm:['A storm blew down {n}','The fallen trunks open a clearing where young growth gets the light.'],
+  beaver:['Beavers felled {n}','They cut willow and birch for their dam and lodge. Willow sprouts again from the stump.'],
+  browse:['Browsing opened up {n}','Deer and rabbits ate the young growth until the old trees gave way to glade.']};
+function awayStory(a,log){
+  const ev=[],xy=i=>[i%N,(i/N)|0],uniq=ps=>{const m=new Map;for(const p of ps)m.set(p[1]*N+p[0],p);return [...m.values()]};
+  const seenNew=new Set;
+  // effects seen for the first time: the two with a place on the map get a stop each, the rest share one
+  const fx=log.filter(m=>m.k==='fx'&&FX[m.id]).sort((p,q)=>(q.x!=null)-(p.x!=null));
+  for(const m of fx.slice(0,fx.length>3?2:3)){const F=FX[m.id],k=F.sp.find(q=>FLORA[q]||FAUNA[q]);
+    ev.push({pri:100,tag:'Discovered',pic:k,title:fxName(m.id),line:F.text,pts:m.x!=null?[[m.x,m.y]]:[],c:'#cfdc84'})}
+  if(fx.length>3){const L=fx.slice(2);ev.push({pri:58,tag:'Discovered',emo:'🔍',title:`${L.length} more effects seen`,line:L.map(m=>fxName(m.id)).join(' · ')+'. Read them in the field guide.',pts:L.filter(m=>m.x!=null).map(m=>[m.x,m.y]),c:'#cfdc84'})}
+  for(const m of log)if(m.k==='unlock'&&m.t.startsWith('Cascade discovered: '))ev.push({pri:98,tag:'Cascade found',emo:'🔗',title:m.t.slice(20),line:m.b,pts:[],c:'#cfdc84'});
+  for(const m of log)if(m.k==='new'&&!seenNew.has(m.id)){seenNew.add(m.id);const F=m.kind==='flora';
+    const lv=F&&VBASE[m.id];
+    ev.push({pri:lv?62:90,tag:lv?'New level':F?'First sighting':'New in the city',pic:m.id,title:(F?FLORA:FAUNA)[m.id].name,line:firstSent((F?FLORA:FAUNA)[m.id].desc),pts:F?S.tiles.map((t,i)=>t.p&&t.p.id===m.id?xy(i):null).filter(Boolean):[],an:F?null:m.id,c:'#f6eca0',rev:m})}
+  const burnt=uniq(log.filter(m=>m.k==='burn').map(m=>[m.x,m.y])),burnSet=new Set(burnt.map(p=>p[1]*N+p[0]));
+  if(burnt.length)ev.push({pri:95,tag:'Wildfire',emo:'🔥',title:`Fire burned ${plural(burnt.length,'tile')}`,line:'A drought summer dried the fuel. Heather and broom sprout again from the ash, and fireweed and birch move in first.',pts:burnt,c:'#f08a2c'});
+  const falls={};for(const m of log)if(m.k==='fall')(falls[m.why]=falls[m.why]||[]).push(m);
+  for(const why in falls){const L=falls[why],n=L.length,tx=AWAY_FALL[why]||['{n} fell',''],cnt={};for(const m of L)cnt[bid(m.id)]=(cnt[bid(m.id)]||0)+1;
+    const top=Object.keys(cnt).sort((p,q)=>cnt[q]-cnt[p])[0],nm=Object.keys(cnt).length===1?plural(n,lc(FLORA[top].name),lc(FLORA[top].name)==='birch'?'birches':undefined):plural(n,'tree');
+    ev.push({pri:55+Math.min(25,n*3),tag:'Trees down',pic:top,title:tx[0].replace('{n}',nm),line:tx[1],pts:uniq(L.map(m=>[m.x,m.y])),c:'#c49a5c'})}
+  const down=uniq(log.filter(m=>m.k==='down').map(m=>[m.x,m.y]));
+  if(down.length)ev.push({pri:80+Math.min(10,down.length),tag:'Reclaimed',emo:'🏚️',title:`Nature brought down ${plural(down.length,'building')}`,line:'Ivy, roots and damp did the work. Their rubble is open ground for the pioneers.',pts:down,c:'#d9c3a0'});
+  const crack=uniq(log.filter(m=>m.k==='crack').map(m=>[m.x,m.y]));
+  if(crack.length)ev.push({pri:40+Math.min(20,crack.length*2),tag:'Reclaimed',emo:'🧱',title:`Roots broke up ${plural(crack.length,'tile')} of paving`,line:'Frost and roots split the hard ground open, and weeds root in the cracks.',pts:crack,c:'#d9c3a0'});
+  // the difference: water, plants spreading, maturing or slipping back
+  const wet=[],bv=[],spread={},from={},grew={},gFrom={},slip={},sFrom={};
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u)continue;
+    if(t.gd==='water'&&a.gd[i]!=='water'){wet.push(xy(i));if(t.bv)bv.push(xy(i));continue}
+    if(burnSet.has(i)||!t.p)continue;const pa=a.p[i],pb=t.p.id,ba=pa?bid(pa):'',bb=bid(pb);
+    if(ba!==bb){(spread[bb]=spread[bb]||[]).push(xy(i));const f=from[bb]=from[bb]||{},w=pa?ba:a.gd[i]==='rubble'?'rubble':'bare';f[w]=(f[w]||0)+1}
+    else if(pa!==pb){const up=levelOf(pb)>=levelOf(pa)&&!(PARENT[pa]===pb),M=up?grew:slip,F=up?gFrom:sFrom;(M[pb]=M[pb]||[]).push(xy(i));(F[pb]=F[pb]||{})[pa]=((F[pb]||{})[pa]||0)+1}}
+  if(bv.length)ev.push({pri:88,tag:'Beaver pond',pic:'beaver',title:`Beavers flooded ${plural(wet.length,'tile')}`,line:'Their dam backs up the creek into a pond. Trees standing in the water drown and turn into snags.',pts:wet,c:'#6cc4e6'});
+  else if(wet.length>=2)ev.push({pri:50+Math.min(20,wet.length),tag:'Water',emo:'💧',title:`The water spread over ${plural(wet.length,'tile')}`,line:'Open water brings reeds, herons and fish closer.',pts:wet,c:'#6cc4e6'});
+  const top=o=>Object.keys(o).sort((p,q)=>o[q]-o[p])[0],fromName=w=>w==='bare'?'bare ground':w==='rubble'?'rubble':lc(FLORA[w].name);
+  for(const k in spread){const n=spread[k].length;if(n<3)continue;
+    ev.push({pri:20+Math.min(50,n*1.5),tag:'Spread',pic:k,title:`${FLORA[k].name} spread to ${plural(n,'tile')}`,line:`Mostly onto ${fromName(top(from[k]))}.`,pts:spread[k],c:'#9fd36a',n})}
+  for(const k in grew){const n=grew[k].length;if(n<3)continue;const f=top(gFrom[k]);
+    ev.push({pri:18+Math.min(40,n*1.2)+levelOf(k)*4,tag:'Grew up',pic:k,title:`${plural(n,'tile')} became ${FLORA[k].name}`,line:`The ${lc(FLORA[f].name)} there matured.`,pts:grew[k],c:'#f2d03a'})}
+  for(const k in slip){const n=slip[k].length;if(n<3)continue;const f=top(sFrom[k]);
+    ev.push({pri:30+Math.min(35,n*1.5),tag:'Slipped back',pic:k,title:`${plural(n,'tile')} of ${lc(FLORA[f].name)} slipped back`,line:`They are ${lc(FLORA[k].name)} now: the ground under them changed. Survey a tile to see what it needs.`,pts:slip[k],c:'#f09080'})}
+  // animals
+  const now={};for(const q of S.an)now[q.sp]=(now[q.sp]||0)+1;
+  for(const sp of new Set([...Object.keys(a.an),...Object.keys(now)])){const w=a.an[sp]||0,n=now[sp]||0,F=FAUNA[sp];if(!F||w===n)continue;
+    if(!w){if(!seenNew.has(sp))ev.push({pri:75,tag:'Moved in',pic:sp,title:`${F.name} moved in`,line:`${plural(n,'animal')} live in the city now.`,pts:[],an:sp,c:'#f6eca0'});continue}
+    if(!n){ev.push({pri:70,tag:'Gone',pic:sp,title:`The last ${lc(F.name)} left`,line:'Its habitat ran out. Check what it needs in the field guide.',pts:[],c:'#f09080'});continue}
+    const d=n-w;if(Math.abs(d)<2&&Math.abs(d)<w*.5)continue;
+    ev.push({pri:22+Math.min(30,Math.abs(d)*3),tag:d>0?'Thriving':'Declining',pic:sp,title:`${F.name}: ${w} → ${n}`,line:d>0?'There was food and room for more.':'Food or shelter is running short for them.',pts:[],an:sp,c:d>0?'#9fd36a':'#f09080'})}
+  ev.sort((p,q)=>q.pri-p.pri);
+  // the story: the biggest changes, at most a couple of each kind, so a long absence still reads in one breath
+  const CAP={Discovered:3,Spread:2,'Trees down':2,'New in the city':2,'First sighting':1},cnt={},story=[];
+  for(const e of ev){if(story.length>=6)break;if((cnt[e.tag]=(cnt[e.tag]||0)+1)<=(CAP[e.tag]||1))story.push(e)}
+  return {story,more:ev.length-story.length};
+}
+// the seasons that passed, as a ribbon of icons, with the year's weather where it was unusual
+const SEA_IC=['🌸','☀️','🍂','❄️'];
+function awaySeasons(n0,n1){
+  if(n1<=n0)return `<span>${SEA_IC[n1%4]} ${SEASONS[n1%4]}</span>`;
+  if(n1-n0>8){const y0=Math.floor(n0/4),y1=Math.floor(n1/4),ys=[];for(let y=y0;y<=y1;y++)ys.push(yearType(y));const dr=ys.filter(t=>t==='drought').length,we=ys.filter(t=>t==='wet').length;
+    return `<span>${SEA_IC[n0%4]} Year ${y0+1}</span><i>→</i><span>${SEA_IC[n1%4]} Year ${y1+1}</span>${dr?`<span class="k-drought">☀️ ${plural(dr,'drought')}</span>`:''}${we?`<span class="k-wet">🌧️ ${plural(we,'wet year')}</span>`:''}`}
+  let h='';for(let n=n0;n<=n1;n++){const R=seasonR(n),k=wxKind(R),bad=k==='drought'||k==='wet';h+=`<span class="${bad?'k-'+k:''}" title="${SEASONS[n%4]}: ${WX_WORD[k].toLowerCase()}">${SEA_IC[n%4]}${bad?`<small>${WX_ICON[k]}</small>`:''}</span>`}return h}
+const awayPic=e=>e.pic?`<img src="${speciesPic(e.pic,96)}" alt="">`:`<span class="aw-emo">${e.emo||'🌿'}</span>`;
+let AWAY=null;
 function showAway(a,b,extra){
-  const rows=[`<li><b>+${fmt(b.seeds-a.seeds)}</b> seeds</li>`];
-  const grew=WILD_FLORA.map(k=>[k,b.fl[k]-a.fl[k]]).filter(([,d])=>d>0).sort((p,q)=>q[1]-p[1]).slice(0,4).map(([k,d])=>`${FLORA[k].name.toLowerCase()} +${d} tiles`);
-  if(grew.length)rows.push(`<li>Spread: ${grew.join(', ')}</li>`);
-  if(b.fell>a.fell||b.cracked>a.cracked)rows.push(`<li>Nature brought down <b>${b.fell-a.fell}</b> buildings and broke up <b>${b.cracked-a.cracked}</b> tiles of paving</li>`);
-  if(b.carried>a.carried)rows.push(`<li>Animals carried seed to <b>${b.carried-a.carried}</b> new spots</li>`);
-  for(const m of offLog.filter(m=>m.k==='unlock').slice(-7))rows.push(`<li>${m.t==='Milestone reached'?`Milestone: ${m.b}`:m.t}</li>`);
-  if(extra>60)rows.push(`<li class="dim">Nature grew for the first ${OFFLINE_SIM/3600} hours. After that, seeds trickled in at a quarter of the rate, up to ${OFFLINE_MAX/3600} hours.</li>`);
-  $('awayBody').innerHTML=`<ul>${rows.join('')}</ul>`;$('awayGo').hidden=false;$('awayGo').focus();
+  const {story:ev,more:rest}=awayStory(a.snap,offLog),show=ev,gain=b.seeds-a.seeds;
+  AWAY={ev,i:0};
+  $('awayTitle').textContent=ev.length?(ev[0].pri>=85?'Something happened!':'Nature has been busy'):'A quiet spell';
+  let h=`<div class="aw-top"><div class="aw-seeds"><b>+${fmt(gain)}</b><span>seeds</span></div><div class="aw-sea">${awaySeasons(a.snap.n,WX.n)}</div></div>`;
+  if(show.length)h+=`<ol class="aw-list">${show.map((e,i)=>`<li><button data-aw="${i}" style="--c:${e.c}">${awayPic(e)}<div><em>${e.tag}</em><b>${e.title}</b><p>${e.line}</p></div>${e.pts.length||e.an?'<span class="aw-go" aria-hidden="true">›</span>':''}</button></li>`).join('')}</ol>`;
+  else h+=`<p class="dim">Nothing big changed. Plants grow slowly: give them a season or two.</p>`;
+  if(rest>0)h+=`<p class="dim">…and ${plural(rest,'smaller change')} around the city.</p>`;
+  if(extra>60)h+=`<p class="dim">Nature grew for the first ${OFFLINE_SIM/3600} hours. After that, seeds trickled in at a quarter of the rate, up to ${OFFLINE_MAX/3600} hours.</p>`;
+  $('awayBody').innerHTML=h;$('awayBar').parentNode.hidden=true;
+  const go=ev.some(e=>e.pts.length||e.an);$('awayTour').hidden=!go;$('awayGo').hidden=false;$('awayGo').textContent=go?'Later':'Back to the city';(go?$('awayTour'):$('awayGo')).focus();
+}
+/* the tour: one change at a time, the camera flies there and the changed tiles light up */
+let FLY=null,TOUR=null;
+cv.addEventListener('pointerdown',()=>{FLY=null});
+const tourStops=()=>AWAY?AWAY.ev.filter(e=>e.pts.length||e.an):[];
+function tourPts(e){return e.an?S.an.filter(q=>q.sp===e.an).map(q=>[q.x,q.y]):e.pts}
+function hotspot(pts){
+  const sm=pts.length>240?pts.filter((_,i)=>i%Math.ceil(pts.length/240)===0):pts;let best=sm[0],bn=-1;
+  for(const p of sm){let n=0;for(const q of sm)if(Math.abs(p[0]-q[0])<=4&&Math.abs(p[1]-q[1])<=4)n++;if(n>bn){bn=n;best=p}}
+  const near=pts.filter(q=>Math.abs(best[0]-q[0])<=6&&Math.abs(best[1]-q[1])<=6),span=Math.max(2,...near.map(q=>Math.max(Math.abs(q[0]-best[0]),Math.abs(q[1]-best[1]))));
+  return {x:near.reduce((s,q)=>s+q[0],0)/near.length,y:near.reduce((s,q)=>s+q[1],0)/near.length,span}}
+function flyTo(x,y,z){interactAt=performance.now();const[sx,sy]=iso(x,y,hAt(Math.round(x),Math.round(y)));FLY={t0:performance.now(),f:{x:cam.x,y:cam.y,z:cam.z},to:{x:sx,y:sy+Math.min(H*.12,70)/z,z}}}
+function flyStep(now){if(!FLY)return;const k=Math.min(1,(now-FLY.t0)/900),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2,{f,to}=FLY;
+  // pull out a little in the middle of a long flight, the way map apps do
+  const far=Math.hypot(to.x-f.x,to.y-f.y)*f.z>W*.6?.75:1,dip=1-(1-far)*Math.sin(k*Math.PI);
+  cam.x=lerp(f.x,to.x,e);cam.y=lerp(f.y,to.y,e);cam.z=lerp(f.z,to.z,e)*dip;clampCam();interactAt=now;if(k>=1)FLY=null}
+function tourShow(i){
+  const L=tourStops();if(!L.length){tourEnd();return}i=clamp(i,0,L.length-1);const e=L[i],pts=tourPts(e);TOUR={i,e,at:time};
+  if(pts.length){const h=hotspot(pts);flyTo(h.x,h.y,clamp(Math.min(W,H)/((h.span*2+5)*HW*1.1),1.2,2.4))}
+  $('tour').style.setProperty('--c',e.c);
+  $('tour').innerHTML=`<div class="tr-pic">${awayPic(e)}</div><div class="tr-txt"><em>${i+1} of ${L.length} · ${e.tag}</em><b>${e.title}</b><p>${e.line}</p></div>
+    <div class="tr-nav"><button data-tr="-1" aria-label="Previous"${i?'':' disabled'}>‹</button><button data-tr="1" class="primary" aria-label="${i<L.length-1?'Next':'Done'}">${i<L.length-1?'›':'✓'}</button></div><button class="tr-x" data-tr="x" aria-label="Close the tour">✕</button>`;
+  $('tour').hidden=false;document.body.classList.add('touring');sfx('note');markDirty();
+  if(e.rev&&!e.revDone){e.revDone=1;const d=(e.rev.kind==='flora'?FLORA:FAUNA)[e.rev.id];setTimeout(()=>{if(TOUR&&TOUR.e===e)reveal(e.rev.kind,e.rev.id,e.rev.kind==='flora'?'First sighting':'Arrived while you were away',d.desc)},950)}
+}
+function tourEnd(){TOUR=null;FLY=null;$('tour').hidden=true;document.body.classList.remove('touring');markDirty()}
+function drawTour(){
+  if(!TOUR)return;const e=TOUR.e,pts=tourPts(e),age=time-TOUR.at,a=Math.min(1,age*2)*(.75+.25*Math.sin(time*5)),[r,g,b]=hx(e.c);
+  X.save();X.globalAlpha=a;X.strokeStyle=e.c;X.lineWidth=2.5/cam.z;X.fillStyle=`rgba(${r},${g},${b},.42)`;
+  for(const[x,y]of pts){if(e.an){const[sx,sy]=isoG(x,y);X.beginPath();X.ellipse(sx,sy,14,7,0,0,7);X.stroke()}
+    else{const q=quad(Math.round(x),Math.round(y),.5);X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let k=1;k<4;k++)X.lineTo(q[k][0],q[k][1]);X.closePath();X.fill();X.stroke()}}
+  // a single spot gets a beacon of rings so it can't be missed
+  if(pts.length<=2&&pts.length){const[x,y]=pts[0],[sx,sy]=isoG(x,y);X.lineWidth=3/cam.z;for(let k=0;k<3;k++){const u=((age*.7+k/3)%1);X.globalAlpha=(1-u);X.beginPath();X.ellipse(sx,sy,8+u*44,4+u*22,0,0,7);X.stroke()}
+    X.globalAlpha=1;X.beginPath();X.moveTo(sx,sy-34-4*Math.sin(time*4));X.lineTo(sx-6,sy-46-4*Math.sin(time*4));X.lineTo(sx+6,sy-46-4*Math.sin(time*4));X.closePath();X.fillStyle=e.c;X.fill()}
+  X.restore();
 }
 function prestige(){
   const g=mycReward(),carry={myc:(S.myc||0)+g,cities:(S.cities||0)+1,seen:S.seen,rec:S.rec,fx:S.fx,ach:S.ach,dayNight:S.dayNight,slot:S.slot};
@@ -5604,6 +5825,7 @@ function updateInfo(){
   else if(t.ash)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89a8a;font-weight:600">Burnt ground.</b> The ash makes the soil richer, and the bare ground is open to fireweed and birch.</p>`;
   if(t.dw)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#c9a77a;font-weight:600">Dead wood.</b> A fallen trunk is rotting here (${Math.round(t.dw*100)}% left). Beetles and fungi are turning it back into rich soil while flowers and young growth fill the gap.</p>`;
   if(t.p&&!t.b&&DISP[t.p.id]){const up=upgradeNote(t,x,y,i);if(up)notes+=`<p class="note">${up}</p>`}
+  for(const s of SOON)if(s.x===x&&s.y===y)notes+=`<p class="note" style="color:var(--ink)"><b style="color:var(--lichen);font-weight:600">Coming soon${s.dt!=null?`, ${soonWhen(s.dt)}`:''}.</b> ${s.text}</p>`;
   if(passable(t))notes+=`<p class="note">${TCONN[TCOMP[i]]?'Part of a large, connected habitat patch.':'A small habitat patch, cut off by roads or buildings.'}</p>`;
   else if(t.gd==='water')notes+=`<p class="note">${WCONN[WCOMP[i]]?'Part of a stretch of 15+ connected water tiles.':'A small, isolated pond.'}</p>`;
   if(FID[i]>=0){const f=D.forests[FID[i]];if(f)notes+=`<p class="note" style="color:var(--lichen)">${f.name} · ${f.size} trees, ${f.species} species. Forest bonus: +25% growth, +50% seeds.</p>`}
@@ -5834,6 +6056,9 @@ $('slotList').addEventListener('click',e=>{const b=e.target.closest('button');if
     if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Sure?';setTimeout(()=>{if(b.isConnected){b.dataset.sure='';b.textContent='Delete'}},3000);return}
     deleteSlot(id);if(id===S.slot){const rest=slots();if(rest.length){const st=readSlot(rest[0].id);if(st){boot(st);focusCity()}}else{boot(newGame());S.slot=0;save();focusCity()}}renderMenu()}});
 $('recBtn').addEventListener('click',()=>{$('journal').hidden=false;renderJournal();$('jClose').focus()});
+$('soonBtn').addEventListener('click',()=>{updateSoon();$('soon').hidden=false;renderSoon();$('soonClose').focus()});
+$('soonClose').addEventListener('click',()=>{$('soon').hidden=true});
+$('soonList').addEventListener('click',e=>{const b=e.target.closest('button[data-n]');if(b)goSoon(+b.dataset.n)});
 $('jClose').addEventListener('click',()=>{$('journal').hidden=true});
 $('journal').addEventListener('click',e=>{if(e.target.id==='journal')$('journal').hidden=true});
 $('journal').addEventListener('keydown',e=>{if(e.key==='Escape')$('journal').hidden=true});
@@ -5843,6 +6068,11 @@ $('newBtn').addEventListener('click',()=>{const g=mycReward();
   $('confirmText').innerHTML=`All 64 blocks of ${S.name} are wild. Leave it to grow on its own and start over in ${CITY_NAMES[((S.cities||0)+1)%CITY_NAMES.length]}, a new megacity, with <b>+${g} mycelium</b> (${(S.myc||0)+g} in all): +10% seed income and +5% faster succession each. The map and the Wood Wide Web start over; your field guide and your ecosystem journal come with you.`;
   $('confirm').hidden=false;$('confirmNo').focus()});
 $('awayGo').addEventListener('click',()=>{$('away').hidden=true});
+$('awayTour').addEventListener('click',()=>{$('away').hidden=true;tourShow(0)});
+$('awayBody').addEventListener('click',e=>{const b=e.target.closest('[data-aw]');if(!b||!AWAY)return;const ev=AWAY.ev[+b.dataset.aw],i=tourStops().indexOf(ev);if(i<0)return;$('away').hidden=true;tourShow(i)});
+$('tour').addEventListener('click',e=>{const b=e.target.closest('[data-tr]');if(!TOUR)return;if(b&&b.dataset.tr==='x'){tourEnd();return}
+  const d=b?+b.dataset.tr:1,n=TOUR.i+d;if(n>=tourStops().length){tourEnd();return}tourShow(n)});
+window.addEventListener('keydown',e=>{if(!TOUR||!$('reveal').hidden)return;if(e.key==='Escape')tourEnd();else if(e.key==='ArrowRight')$('tour').querySelector('[data-tr="1"]').click();else if(e.key==='ArrowLeft'&&TOUR.i)tourShow(TOUR.i-1)});
 $('confirmNo').addEventListener('click',()=>{$('confirm').hidden=true});
 $('confirmYes').addEventListener('click',()=>{$('confirm').hidden=true;prestige()});
 $('introGo').addEventListener('click',()=>{$('intro').hidden=true;setTab('land');selectTool({type:'unbuild',id:'unbuild'})});
@@ -5881,7 +6111,7 @@ function renderMenu(){
     <button class="btn${m.id===S.slot?' primary':''}" data-load="${m.id}">${m.id===S.slot?'Continue':'Load'}</button><button class="btn del" data-del="${m.id}" aria-label="Delete ${m.name}">Delete</button></li>`).join(''):'<li class="empty">No saved cities yet.</li>';
   const full=list.length>=MAX_SLOTS;$('menuNew').disabled=full;$('menuNote').textContent=full?`All ${MAX_SLOTS} save slots are in use. Delete a city to start another.`:`${list.length} of ${MAX_SLOTS} save slots used. Every city saves itself as you play.`;
 }
-function openMenu(){if(S)save();renderMenu();$('menu').hidden=false}
+function openMenu(){if(S)save();renderMenu();renderNoteSet();$('menu').hidden=false}
 function closeMenu(){$('menu').hidden=true;last=performance.now()}
 function playSlot(id){
   if(id===S.slot){closeMenu();const away=S.savedAt?(Date.now()-S.savedAt)/1000:0;if(away>5)setTimeout(()=>catchUp(away,away>60),50);return}
@@ -5892,6 +6122,72 @@ function playSlot(id){
 function newCity(carry){if(S)save();boot(newGame(undefined,carry));S.slot=0;save();focusCity();closeMenu();$('intro').hidden=false}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 window.addEventListener('pagehide',save);
+/* ---------- phone notifications ----------
+   Only in the iPhone app. When you leave, up to two local notifications are booked from the coming-soon list, each at the
+   moment the city will reach it: while you are away the city runs one game second per real second, up to OFFLINE_SIM.
+   Opening the app cancels them. Asked for once, after the first cascade; at most two a day, none at night, the cap
+   counted across visits. An effect you have not seen yet stays a teaser, as it does in the list. */
+const CAP=window.Capacitor,NATIVE=!!(CAP&&CAP.isNativePlatform&&CAP.isNativePlatform()&&CAP.nativePromise);
+const LN=(m,o)=>CAP.nativePromise('LocalNotifications',m,o);
+const NOTE_KEY='idle-nature-notes',NOTE_LOG='idle-nature-notes-sent',NOTE_BOOK='idle-nature-notes-booked';
+const NOTE_MIN=30*60,NOTE_GAP=3*3600,NOTE_DAY=2,NOTE_WAKE=8,NOTE_SLEEP=21;
+const notePref=()=>ls.get(NOTE_KEY); // 'on', 'off', or null before we have asked
+const dayOf=ms=>new Date(ms).toDateString();
+// the moment, in real time, that the away simulation reaches a game time dt from now (null if it never will)
+const awayAt=(now,dt)=>dt<=OFFLINE_SIM?now+Math.max(NOTE_MIN,dt)*1000:null;
+// never at night: push anything between 21:00 and 8:00 to the next morning
+function noteDay(ms){const d=new Date(ms),h=d.getHours();if(h>=NOTE_WAKE&&h<NOTE_SLEEP)return ms;
+  if(h>=NOTE_SLEEP)d.setDate(d.getDate()+1);d.setHours(NOTE_WAKE,0,0,0);return d.getTime()}
+function noteTimes(k){try{const a=JSON.parse(ls.get(k)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
+const noteSent=()=>noteTimes(NOTE_LOG).filter(t=>t>Date.now()-2*864e5);
+function notePlan(now){
+  const sent=noteSent(),pick=[],cand=comingSoon().filter(s=>s.dt!=null&&s.x!=null).map(s=>({s,at:awayAt(now,s.dt)})).filter(c=>c.at);
+  // when nature has done all it can without you
+  cand.push({s:{title:'Your city is waiting',text:`Nature has grown for ${Math.round(OFFLINE_SIM/3600)} hours without you. Come and see what changed.`,pri:0},at:now+OFFLINE_SIM*1000});
+  for(const c of cand){c.at=noteDay(c.at)}
+  cand.sort((a,b)=>b.s.pri-a.s.pri||a.at-b.at);
+  for(const c of cand){const all=sent.concat(pick.map(p=>p.at));
+    if(all.filter(t=>dayOf(t)===dayOf(c.at)).length>=NOTE_DAY||all.some(t=>Math.abs(t-c.at)<NOTE_GAP*1000))continue;
+    pick.push(c)}
+  return pick.sort((a,b)=>a.at-b.at);
+}
+function noteLeave(){
+  if(!NATIVE||notePref()!=='on'||!S)return;const now=Date.now(),pick=notePlan(now);ls.set(NOTE_BOOK,JSON.stringify(pick.map(p=>p.at)));if(!pick.length)return;
+  LN('schedule',{notifications:pick.map((p,n)=>({id:n+1,title:p.s.title,body:p.s.text,schedule:{at:new Date(p.at)},
+    extra:p.s.x!=null?{x:p.s.x,y:p.s.y,slot:S.slot}:{slot:S.slot}}))}).catch(()=>{});
+}
+// back in the app (or started fresh): whatever already went off counts towards today's two, the rest is called off
+function noteBack(){
+  if(!NATIVE)return;const now=Date.now(),went=noteTimes(NOTE_BOOK).filter(t=>t<=now);ls.del(NOTE_BOOK);
+  if(went.length)ls.set(NOTE_LOG,JSON.stringify(noteSent().concat(went)));
+  LN('cancel',{notifications:[1,2,3,4,5].map(id=>({id}))}).catch(()=>{});LN('removeAllDeliveredNotifications').catch(()=>{});
+}
+function noteAsk(){
+  if(!NATIVE||notePref()||catching||!Object.keys(S.rec||{}).length)return;
+  if([...document.querySelectorAll('.veil')].some(v=>!v.hidden))return;$('noteAsk').hidden=false;
+}
+async function noteOn(){
+  let ok=false;try{const r=await LN('requestPermissions');ok=r&&r.display==='granted'}catch(e){}
+  ls.set(NOTE_KEY,ok?'on':'off');renderNoteSet();return ok;
+}
+function renderNoteSet(){
+  $('noteSet').hidden=!NATIVE;if(!NATIVE)return;const on=notePref()==='on';
+  $('noteState').textContent=on?'You get a nudge when something is about to happen in your city. At most two a day, never at night.':'Off. Turn on to hear when something is about to happen in your city.';
+  $('noteTog').textContent=on?'Turn off':'Turn on';
+}
+let noteGo=null;
+function noteFocus(){if(!noteGo)return;if(catching||!$('away').hidden||!S){setTimeout(noteFocus,400);return}
+  const[x,y,slot]=noteGo;noteGo=null;if(slot===S.slot&&inb(x,y))showTile(x,y)}
+if(NATIVE){
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)noteLeave();else noteBack()});
+  CAP.addListener('LocalNotifications','localNotificationActionPerformed',e=>{const x=e&&e.notification&&e.notification.extra;
+    if(x&&x.x!=null){noteGo=[x.x,x.y,x.slot];setTimeout(noteFocus,300)}});
+  noteBack();
+}
+$('noteYes').addEventListener('click',async()=>{$('noteAsk').hidden=true;if(!await noteOn())toast('Notifications are off','To hear from your city later, allow notifications for Idle Nature in the iPhone Settings app, then turn them on in the menu.')});
+$('noteNo').addEventListener('click',()=>{$('noteAsk').hidden=true;ls.set(NOTE_KEY,'off')});
+$('noteTog').addEventListener('click',async()=>{if(notePref()==='on'){ls.set(NOTE_KEY,'off');renderNoteSet()}
+  else if(!await noteOn())$('noteState').textContent='Notifications are blocked. Allow them for Idle Nature in the iPhone Settings app, then try again.'});
 function valid(s){return s&&s.v===4&&Array.isArray(s.tiles)&&s.tiles.length===N*N&&(Array.isArray(s.lv)&&s.lv.length===N*N||Array.isArray(s.vh)&&s.vh.length===M*M)}
 // saves from the old single-slot, 28×28 version cannot be loaded, but their mycelium and field guide carry over
 function legacyCarry(){let c=null;for(const k of [KEY,OLD_KEY,...slots().map(m=>SLOT_PRE+m.id)]){try{const s=JSON.parse(ls.get(k));if(s&&(s.myc||s.cities)){c={myc:s.myc||0,cities:s.cities||0,seen:s.seen||{},dayNight:s.dayNight!==false};break}}catch(e){}}return c}
