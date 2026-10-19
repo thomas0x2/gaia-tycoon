@@ -139,6 +139,9 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .cbar{grid-column:2/4;height:5px;border-radius:3px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}.cbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:rgba(207,220,132,.4)}.cbar i.g{background:var(--lichen)}.cbar i.over{background:#e2a76c}
 .cloc{width:34px;border-radius:9px;background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:16px}.cloc:hover{background:rgba(255,255,255,.1);color:var(--ink)}
 .cempty,.cnote{font-size:12.5px;color:var(--ink-dim);margin:6px 0}
+.chbox{touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.hz{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}.hz button{padding:7px 12px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);background:rgba(255,255,255,.05)}.hz button[aria-pressed="true"]{background:rgba(207,220,132,.22);color:var(--lichen)}
+
 .cspark{width:56px;height:20px;align-self:center}
 .crow{grid-template-columns:40px 1fr auto auto}.cbar{grid-column:2/5}
 .cbody.one,.cbody.history{grid-template-columns:1fr}.csp{display:flex;flex-direction:column;gap:10px}.cback{align-self:flex-start}
@@ -647,7 +650,7 @@ body.touring #dock{visibility:hidden}
   #info:not(.open) .tool-head{grid-template-columns:30px 1fr auto auto;gap:8px}
   #info:not(.open) .tool-head canvas{width:30px;height:25px}
   #info:not(.open) .tool-head h2{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #info:not(.open) .tool-head em,#info:not(.open) #tileInfo .note,#info:not(.open) #tileInfo .kv{display:none}
+  #info:not(.open) .tool-head em,#info:not(.open) #tileInfo .note,#info:not(.open) #tileInfo .kv,#info:not(.open) #tileInfo .thist{display:none}
   #info:not(.open) .cost{font-size:12px}
   #info:not(.open) #tileInfo{padding-top:5px;gap:4px}
   #info:not(.open) #msg{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -6605,6 +6608,7 @@ $('cClose').addEventListener('click',()=>{$('census').hidden=true});
 $('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').hidden=true;return}const l=e.target.closest('[data-loc]');if(l){locateSpecies(l.dataset.loc);return}
   const sp=e.target.closest('[data-sp]');if(sp){censusSp=sp.dataset.sp;renderCensus();$('cBody').scrollTop=0;return}
   if(e.target.closest('[data-back]')){censusSp=null;renderCensus();return}
+  const hz=e.target.closest('[data-hz]');if(hz){hzLen=+hz.dataset.hz;hzPan=0;chartRedraw();return}
   const t=e.target.closest('[data-ct]');if(t){censusTab=t.dataset.ct;censusSp=null;renderCensus();$('cBody').scrollTop=0}});
 $('census').addEventListener('input',e=>{if(e.target.id==='snapR'){snapAt=+e.target.value;drawSnap()}});
 $('census').addEventListener('keydown',e=>{if(e.key==='Escape')$('census').hidden=true});
@@ -6688,20 +6692,24 @@ function sparkline(pts){if(pts.length<2)return '<span class="cspark"></span>';co
   return `<svg class="cspark" viewBox="0 0 ${W0} ${H0}" aria-hidden="true"><polyline points="${d}" fill="none" stroke="${up>0?'#8fd06a':up<0?'#f09080':'#8b9488'}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`}
 // a chart across the seasons: drought years shaded amber, wet years blue, fires and mast years marked along the top
 function chartSVG(series,opt={}){
-  const Wc=340,Hc=opt.h||150,L=30,R=8,T0=18,B=20,n0=Math.min(...series.flatMap(s=>s.pts.map(p=>p[0]))),n1=Math.max(n0+1,...series.flatMap(s=>s.pts.map(p=>p[0])));
+  const Wc=340,Hc=opt.h||150,L=30,R=8,T0=18,B=20,n0=opt.n0??Math.min(...series.flatMap(s=>s.pts.map(p=>p[0]))),n1=opt.n1??Math.max(n0+1,...series.flatMap(s=>s.pts.map(p=>p[0])));
   const top=opt.stack?Math.max(1,...series[0].pts.map((p,j)=>series.reduce((a,s)=>a+s.pts[j][1],0))):Math.max(1,...series.flatMap(s=>s.pts.map(p=>p[1])));
   const ymax=niceMax(top),X0=n=>L+(n-n0)/(n1-n0)*(Wc-L-R),Y0=v=>Hc-B-v/ymax*(Hc-B-T0);let g='';
   for(let y=Math.floor(n0/4);y<=Math.floor(n1/4);y++){const ty=yearType(y);if(ty==='normal')continue;const a=X0(Math.max(n0,y*4)),b=X0(Math.min(n1,y*4+4));
     if(b>a)g+=`<rect x="${a.toFixed(1)}" y="${T0}" width="${(b-a).toFixed(1)}" height="${Hc-B-T0}" fill="${ty==='drought'?'rgba(230,170,70,.16)':'rgba(90,150,230,.18)'}"/>`}
   for(const f of [0,.5,1]){const yy=Y0(ymax*f);g+=`<line x1="${L}" x2="${Wc-R}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,${f?'.08':'.2'})"/><text x="${L-4}" y="${yy+3.5}" text-anchor="end" class="chl">${ymax*f>=1000?+(ymax*f/1000).toFixed(1)+'K':Number.isInteger(ymax*f)?ymax*f:''}</text>`}
   const yrs=Math.floor(n1/4)-Math.ceil(n0/4)+1,step=Math.max(1,Math.ceil(yrs/6));
+  // a window of a year or two also names the seasons
+  if(n1-n0<=9)for(let q=Math.ceil(n0);q<=n1;q++)if(q%4)g+=`<text x="${X0(q)}" y="${Hc-5}" text-anchor="middle" class="chl" opacity=".7">${['','Su','Au','Wi'][q%4]}</text><line x1="${X0(q)}" x2="${X0(q)}" y1="${Hc-B}" y2="${Hc-B+2}" stroke="rgba(255,255,255,.2)"/>`;
   for(let y=Math.ceil(n0/4);y*4<=n1;y+=step)g+=`<line x1="${X0(y*4)}" x2="${X0(y*4)}" y1="${Hc-B}" y2="${Hc-B+3}" stroke="rgba(255,255,255,.3)"/><text x="${X0(y*4)}" y="${Hc-5}" text-anchor="middle" class="chl">Y${y+1}</text>`;
+  const cid='chc'+(opt.ci??0);g+=`<clipPath id="${cid}"><rect x="${L}" y="0" width="${Wc-L-R}" height="${Hc-B}"/></clipPath><g clip-path="url(#${cid})">`;
   if(opt.stack){const base=series[0].pts.map(()=>0);
     for(const s of series){const lo=base.slice();s.pts.forEach((p,j)=>base[j]+=p[1]);if(!s.pts.some(p=>p[1]))continue;
       const upper=s.pts.map((p,j)=>`${X0(p[0]).toFixed(1)},${Y0(base[j]).toFixed(1)}`),lower=s.pts.map((p,j)=>`${X0(p[0]).toFixed(1)},${Y0(lo[j]).toFixed(1)}`).reverse();
       g+=`<polygon points="${upper.concat(lower).join(' ')}" fill="${s.c}" opacity=".85"/>`}}
   else for(const s of series){const d=s.pts.map(p=>`${X0(p[0]).toFixed(1)},${Y0(p[1]).toFixed(1)}`).join(' ');
     g+=`<polyline points="${d}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;const lp=s.pts[s.pts.length-1];g+=`<circle cx="${X0(lp[0])}" cy="${Y0(lp[1])}" r="3" fill="${s.c}"/>`}
+  g+='</g>';
   for(const e of histOf().ev){if(e[0]<Math.floor(n0)||e[0]>n1)continue;const x=X0(e[0]+.5);
     if(e[1]==='fire'||e[1]==='mast'){g+=`<line x1="${x}" x2="${x}" y1="${T0}" y2="${Hc-B}" stroke="${e[1]==='fire'?'rgba(240,120,60,.5)':'rgba(200,170,90,.5)'}" stroke-dasharray="2 3"/><text x="${x}" y="${T0-3}" text-anchor="middle" font-size="11">${e[1]==='fire'?'🔥':'🌰'}</text>`;chartSeen[e[1]]=1}}
   for(let y=Math.floor(n0/4);y<=Math.floor(n1/4);y++){const ty=yearType(y);if(ty!=='normal')chartSeen[ty]=1}
@@ -6710,11 +6718,32 @@ function chartSVG(series,opt={}){
 let chartSeen={};
 function chartKey(){const k=chartSeen;chartSeen={};const it=[k.drought&&'<i style="background:rgba(230,170,70,.5)"></i>drought year',k.wet&&'<i style="background:rgba(90,150,230,.55)"></i>wet year',k.fire&&'<span>🔥</span> wildfire',k.mast&&'<span>🌰</span> mast year'].filter(Boolean);
   return it.length?`<p class="chkey">${it.join(' ')}</p>`:''}
+/* every chart on the page shares one window: a horizon (seasons, 0 = all of it) that ends hzPan seasons before now; swipe to scroll */
+let CHARTS=[],hzLen=0,hzPan=0;
+const HZ=[[4,'1 year'],[20,'5 years'],[40,'10 years'],[0,'All']];
+function chartBox(series,opt){const i=CHARTS.length;CHARTS.push({series,opt});return `<div class="chbox" data-ci="${i}">${chartDraw(i)}</div>`}
+function chartSpan(){let a=1e9,b=-1e9;for(const c of CHARTS)for(const s of c.series)for(const p of s.pts){a=Math.min(a,p[0]);b=Math.max(b,p[0])}return [a,Math.max(a+1,b)]}
+function chartWin(){const[a,b]=chartSpan();if(!hzLen||b-a<=hzLen){hzPan=0;return [a,b]}hzPan=clamp(hzPan,0,b-a-hzLen);return [b-hzPan-hzLen,b-hzPan]}
+function chartDraw(i){const c=CHARTS[i],[w0,w1]=chartWin();
+  // keep the points in the window, and one either side so the lines run to the edges
+  const P=c.series[0].pts,keep=P.map((p,j)=>(p[0]>=w0&&p[0]<=w1)||(P[j+1]&&P[j+1][0]>=w0&&p[0]<w0)||(P[j-1]&&P[j-1][0]<=w1&&p[0]>w1));
+  const ser=c.series.map(s=>({...s,pts:s.pts.filter((p,j)=>keep[j])}));
+  return chartSVG(ser,{...c.opt,n0:w0,n1:w1,ci:i})}
+function hzBar(){const[a,b]=chartSpan(),span=b-a;if(span<4)return '';
+  return `<div class="hz" role="group" aria-label="Time span">${HZ.filter(([n])=>!n||n<span).map(([n,l])=>`<button data-hz="${n}" aria-pressed="${hzLen===n||(n===0&&(!hzLen||hzLen>=span))}">${l}</button>`).join('')}</div>`}
+function chartRedraw(){chartSeen={};for(const el of document.querySelectorAll('#cBody .chbox'))el.innerHTML=chartDraw(+el.dataset.ci);const h=document.querySelector('#cBody .hzwrap');if(h)h.innerHTML=hzBar();const k=chartKey();for(const el of document.querySelectorAll('#cBody .chkeywrap'))el.innerHTML=k}
+// swiping a chart scrolls the window through the years
+{let drag=null,raf=0;const cb=$('cBody');
+  cb.addEventListener('pointerdown',e=>{const box=e.target.closest('.chbox');if(!box||!hzLen)return;drag={x:e.clientX,pan:hzPan,w:box.clientWidth}});
+  cb.addEventListener('pointermove',e=>{if(!drag)return;const[a,b]=chartSpan();hzPan=clamp(drag.pan+(e.clientX-drag.x)/drag.w*hzLen*1.12,0,Math.max(0,b-a-hzLen));
+    if(!raf)raf=requestAnimationFrame(()=>{raf=0;chartRedraw()})});
+  for(const ev of ['pointerup','pointercancel','pointerleave'])cb.addEventListener(ev,()=>{drag=null})}
 function niceMax(v){const p=10**Math.floor(Math.log10(v)),m=v/p;return ([1,1.5,2,2.5,3,4,5,6,8,10].find(q=>q>=m-1e-9)||10)*p}
 
 /* one species: its numbers over the years */
 let censusSp=null;
 function renderSpecies(k){
+  CHARTS=[];
   const isF=!!FLORA[k],kind=isF?'fl':'fa',d=isF?FLORA[k]:FAUNA[k],pts=histSeries(kind,k),now=pts[pts.length-1][1];
   let peak=pts[0];for(const p of pts)if(p[1]>=peak[1])peak=p;
   const yearAgo=pts.filter(p=>p[0]<=pts[pts.length-1][0]-4).pop(),dy=yearAgo?now-yearAgo[1]:null;
@@ -6726,9 +6755,9 @@ function renderSpecies(k){
   $('cBody').innerHTML=`<section class="csp"><button class="btn cback" data-back>‹ Census</button>
     <div class="csph"><img src="${speciesPic(k,96)}" alt=""><div><b>${d.name} ${rarTag(k)}</b><small>${firstSeen?`First here in ${seasonLbl(firstSeen[0]).toLowerCase()}`:pts.length>1?'Here since before records began':'Records begin this season'}</small></div></div>
     <div class="csum">${facts.map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
-    ${pts.length>1?chartSVG([{pts,c:isF?GROUP_C[bid(k)]||'#cfdc84':'#cfdc84'}],{label:`${d.name} over the years`})+chartKey():`<p class="cempty">The census counts every species once a season. Come back after a few seasons to see a chart.</p>`}
+    ${pts.length>1?'<div class="hzwrap"></div>'+chartBox([{pts,c:isF?GROUP_C[bid(k)]||'#cfdc84':'#cfdc84'}],{label:`${d.name} over the years`})+'<div class="chkeywrap"></div>':`<p class="cempty">The census counts every species once a season. Come back after a few seasons to see a chart.</p>`}
     ${ev.length?`<ul class="chron">${ev.map(e=>`<li>${chronText(e)}</li>`).join('')}</ul>`:''}
-    <div class="wi-links"><button class="glink" data-enc="${k}">Field guide ›</button><button class="glink" data-loc="${k}">Show on the map ◎</button></div></section>`}
+    <div class="wi-links"><button class="glink" data-enc="${k}">Field guide ›</button><button class="glink" data-loc="${k}">Show on the map ◎</button></div></section>`;chartRedraw()}
 
 /* the whole ecosystem: plants by stage over the years, the map then and now, and a chronicle */
 let snapAt=-1;
@@ -6740,14 +6769,15 @@ function chronText(e){const[n,k,a]=e,nm=q=>FLORA[q]?FLORA[q].name:FAUNA[q]?FAUNA
     case 'mast':return `<span>🌰</span>A mast year: oaks and beeches dropped a huge crop <em>${when}</em>`;}
   return `<span>·</span>${k} <em>${when}</em>`}
 function renderHistory(){
+  CHARTS=[];
   const h=histOf(),c=censusCount(),nowN=S.clock/SLEN;
   let o='';
   // plants by stage, stacked, so succession shows as bands moving up the chart
   const ns=h.s.map(q=>q.n).concat([nowN]),samples=h.s.concat([{fl:c.fl,fa:c.fa,an:S.an.length}]);
   if(samples.length>1){
     const ser=CSTAGE.map(([g,label])=>({c:GROUP_C[g],label,pts:samples.map((q,j)=>[ns[j],Object.keys(q.fl).filter(k=>bid(k)===g).reduce((a,k)=>a+q.fl[k],0)])})).filter(s=>s.pts.some(p=>p[1]));
-    o+=`<section>${ser.length?`<h3>Plants by stage</h3>${chartSVG(ser,{stack:1,h:170,label:'Wild plant tiles by stage'})}<p class="chkey">${ser.map(s=>`<b><i style="background:${s.c}"></i>${s.label}</b>`).join(' ')}</p>`:''}
-      <h3>Animals</h3>${chartSVG([{c:'#cfdc84',pts:samples.map((q,j)=>[ns[j],q.an??Object.values(q.fa).reduce((a,b)=>a+b,0)])}],{h:110,label:'Animals in the city'})}${chartKey()}</section>`}
+    o+=`<section><div class="hzwrap"></div>${ser.length?`<h3>Plants by stage</h3>${chartBox(ser,{stack:1,h:170,label:'Wild plant tiles by stage'})}<p class="chkey">${ser.map(s=>`<b><i style="background:${s.c}"></i>${s.label}</b>`).join(' ')}</p>`:''}
+      <h3>Animals</h3>${chartBox([{c:'#cfdc84',pts:samples.map((q,j)=>[ns[j],q.an??Object.values(q.fa).reduce((a,b)=>a+b,0)])}],{h:110,label:'Animals in the city'})}<div class="chkeywrap"></div></section>`}
   else o+=`<section><p class="cempty">The census is counted once a season. After a few seasons, this page shows how the city changed: charts, the map then and now, and a chronicle of every year.</p></section>`;
   // then and now
   if(h.snaps.length){const k=snapAt<0||snapAt>h.snaps.length?h.snaps.length:snapAt;
@@ -6766,7 +6796,7 @@ function renderHistory(){
     if(!lines.length&&ty==='normal')continue;
     ch+=`<li class="cy"><h4>Year ${y+1}${y===y1?' · this year':''}<em>${ty==='drought'?'☀️ drought year':ty==='wet'?'🌧️ wet year':''}</em></h4><ul class="chron">${lines.join('')||'<li class="dim">A quiet year.</li>'}</ul></li>`}
   o+=`<section><h3>Chronicle</h3>${ch?`<ol class="chy">${ch}</ol>`:'<p class="cempty">Nothing written yet. Fires, new arrivals, discoveries and the years that changed the land will appear here.</p>'}</section>`;
-  $('cBody').className='cbody history';$('cBody').innerHTML=o;
+  $('cBody').className='cbody history';$('cBody').innerHTML=o;chartRedraw();
   if(h.snaps.length)drawSnap();
 }
 function drawSnap(){
