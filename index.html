@@ -2316,7 +2316,7 @@ function tick0(){
       if(best){T(best[0],best[1]).dam=1;a.dam=[best[0],best[1]];markDirty()}continue}
     const[dx0,dy0]=a.dam,lv=S.lv[dy0*N+dx0],cand=[];let n=0;
     for(let y=dy0-4;y<=dy0+4;y++)for(let x=dx0-4;x<=dx0+4;x++){if(!inb(x,y))continue;const t=T(x,y);if(t.bv)n++;
-      if(t.u&&t.gd==='soil'&&!t.b&&S.lv[y*N+x]<=lv&&near(x,y,1,isWater))cand.push([x,y])}
+      if(t.u&&t.gd==='soil'&&!t.b&&Math.abs(S.lv[y*N+x]-lv)<.01&&near(x,y,1,isWater))cand.push([x,y])}
     if(n>=10||!cand.length)continue;
     const[x,y]=cand[(Math.random()*cand.length)|0],t=T(x,y),tree=!!t.p&&FLORA[t.p.id].kind==='tree'&&t.p.g>=.6;
     makeWater(x,y);t.bv=1;if(tree){t.snag=1;seeFx('drown',x,y)}flooded=[x,y];if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy,'splash',8)}
