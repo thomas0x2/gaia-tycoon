@@ -1699,16 +1699,17 @@ function buildTerrain(){
   const lv=S.lv,vh=new Array(4*N*N),CO=[[0,0],[1,0],[1,1],[0,1]];
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){const l=lv[y*N+x];
     for(let c=0;c<4;c++){const vi=x+CO[c][0],vj=y+CO[c][1];let m=l;
-      for(const[tx,ty]of [[vi-1,vj-1],[vi,vj-1],[vi-1,vj],[vi,vj]])if(inb(tx,ty)&&lv[ty*N+tx]===l+1)m=l+1;
+      for(const[tx,ty]of [[vi-1,vj-1],[vi,vj-1],[vi-1,vj],[vi,vj]])if(inb(tx,ty)&&lv[ty*N+tx]===l+1&&!fallCliff(x,y,tx,ty))m=l+1;
       vh[(y*N+x)*4+c]=m*HS}}
   S.vh0=vh;S.vh=vh.slice();
   // open water lies flat, a little below the ground of its level, and the banks around it slope down to the
   // water's edge instead of standing over it: every corner touching water comes down to just above it
-  const ws=new Float32Array(M*M).fill(Infinity);
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(S.tiles[y*N+x].gd!=='water')continue;const w=lv[y*N+x]*HS-5;
-    for(let c=0;c<4;c++){const k=(y+CO[c][1])*M+x+CO[c][0];ws[k]=Math.min(ws[k],w);S.vh[(y*N+x)*4+c]=w}}
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(S.tiles[y*N+x].gd==='water')continue;
-    for(let c=0;c<4;c++){const w=ws[(y+CO[c][1])*M+x+CO[c][0]],k=(y*N+x)*4+c;if(w+1<S.vh[k])S.vh[k]=w+1}}
+  // (except water below the waterfall's scarp, which the bank above stands over)
+  const wet=(x,y)=>inb(x,y)&&S.tiles[y*N+x].gd==='water';
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(!wet(x,y))continue;const w=lv[y*N+x]*HS-5;for(let c=0;c<4;c++)S.vh[(y*N+x)*4+c]=w}
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(wet(x,y))continue;
+    for(let c=0;c<4;c++){const vi=x+CO[c][0],vj=y+CO[c][1],k=(y*N+x)*4+c;
+      for(const[tx,ty]of [[vi-1,vj-1],[vi,vj-1],[vi-1,vj],[vi,vj]]){if(!wet(tx,ty)||fallCliff(x,y,tx,ty))continue;const w=lv[ty*N+tx]*HS-5;if(w+1<S.vh[k])S.vh[k]=w+1}}}
 }
 // roads climb at most half a step from one tile to the next (diagonals too, so junctions stay smooth),
 // and the streams in brooks only ever run downhill along their paths: both cut down into the ground until they fit.
@@ -1752,8 +1753,20 @@ function levelWater(){
     for(let h=0;h<body.length;h++){const k=body[h],x=k%N,y=(k/N)|0;
       for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy,j=ny*N+nx;if(inb(nx,ny)&&!seen[j]&&S.tiles[j].gd==='water'&&!split(k,j)){seen[j]=1;body.push(j)}}}
     const m=Math.min(...body.map(k=>lv[k]));for(const k of body){wet.add(k);if(lv[k]>m){lv[k]=m;changed=true}}}
-  if(changed)settleLevels(lv,[],(x,y,nx,ny)=>split(y*N+x,ny*N+nx),wet);
+  if(changed)settleLevels(lv,[],fallCliff,wet);
 }
+// The waterfall is a short scarp across the valley: the banks either side of it drop a full step in line with the
+// falling water, FALL_W tiles each way, so the land ends flush with the fall instead of sloping past it.
+// fallCliff says whether two neighbouring tiles lie on opposite sides of that scarp.
+const FALL_W=2;
+function fallLine(){const f=S.fall;if(!f||f[0]<0)return null;
+  const ax=f[0]%N,ay=(f[0]/N)|0,bx=f[1]%N,by=(f[1]/N)|0;return {ax,ay,dx:bx-ax,dy:by-ay,px:ay-by,py:bx-ax}}
+// how far along the scarp (in tiles across the stream) a tile on the upper (0) or lower (1) side sits, or null
+function fallSide(L,x,y,side){const rx=x-L.ax-side*L.dx,ry=y-L.ay-side*L.dy,k=rx*L.px+ry*L.py;return rx===k*L.px&&ry===k*L.py?k:null}
+function fallCliff(x,y,nx,ny){const L=fallLine();if(!L)return false;
+  for(const[s0,s1]of [[[x,y],[nx,ny]],[[nx,ny],[x,y]]]){const i=fallSide(L,s0[0],s0[1],0),j=fallSide(L,s1[0],s1[1],1);
+    if(i!==null&&j!==null&&Math.abs(i-j)<=1&&Math.min(Math.abs(i),Math.abs(j))<=FALL_W)return true}
+  return false}
 function unWater(x,y){const t=T(x,y);t.gd='soil';delete t.bv;delete t.snag;delete t.ho;buildTerrain()}
 
 /* ---------- city generation ---------- */
@@ -1912,7 +1925,9 @@ function newGame(seed,carry){
   const FLAT={downtown:.35,industrial:.4,airport:.15,highway:.5,commercial:.6},hills=[];
   for(let k=0;k<5;k++)hills.push([R()*N,R()*N,6+R()*7,3+R()*6]);
   // Just east of the first block the brook falls a whole level, on a straight eastward run away from the roads
-  let fall=cul.findIndex(([cx,cy],k)=>k>1&&cul[k-1][0]===cx-1&&cul[k-1][1]===cy&&cul[k-2][0]===cx-2&&cul[k-2][1]===cy&&cx-1>=sx1+3&&cx<=sx1+6&&!isRoadT(cx,cy)&&!isRoadT(cx-1,cy));
+  // (preferring a spot where the scarp across the banks can run its full width without meeting a road)
+  const clear=cy=>{let n=0;for(let d=1;d<=FALL_W&&!isRoadLine(cy-d);d++)n++;for(let d=1;d<=FALL_W&&!isRoadLine(cy+d);d++)n++;return n};
+  let fall=-1;cul.forEach(([cx,cy],k)=>{if(k>1&&cul[k-1][0]===cx-1&&cul[k-1][1]===cy&&cul[k-2][0]===cx-2&&cul[k-2][1]===cy&&cx-1>=sx1+3&&cx<=sx1+12&&!isRoadT(cx,cy)&&!isRoadT(cx-1,cy)&&(fall<0||clear(cy)>clear(cul[fall][1])))fall=k});
   if(fall<0)fall=Math.max(1,cul.findIndex(([cx,cy],k)=>k>0&&cul[k-1][0]===cx-1&&cx-1>sx1+1&&!isRoadT(cx,cy)&&!isRoadT(...cul[k-1])));
   const hs=[];
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){let h=0;
@@ -1927,15 +1942,25 @@ function newGame(seed,carry){
   const mn=Math.min(...hs),lv=hs.map(h=>Math.round((h-mn)/6.5));
   // the only cliff is the waterfall itself: the banks around it slope
   const fw=cul[fall-1][1]*N+cul[fall-1][0],fe=cul[fall][1]*N+cul[fall][0],creeks=trib.length?[cul,trib]:[cul];
-  const cliffAt=(x,y,nx,ny)=>{const a=y*N+x,b=ny*N+nx;return a===fw&&b===fe||a===fe&&b===fw};
+  S.fall=[fw,fe];const cliffAt=fallCliff;
   settleLevels(lv,creeks,cliffAt);
   // the brook runs level above the fall and level below it, a full step lower, and the tributary at the height
   // where it joins, so once daylit each stretch is one flat body of water; the banks are eased down to it
   const dmin=Math.min(...cul.slice(fall).map(([cx,cy])=>lv[cy*N+cx])),bed=new Set();
   cul.forEach(([cx,cy],k)=>{lv[cy*N+cx]=k<fall?dmin+2:dmin;bed.add(cy*N+cx)});
   if(trib.length){const[jx,jy]=trib[trib.length-1],l=lv[jy*N+jx];for(const[tx,ty]of trib){lv[ty*N+tx]=l;bed.add(ty*N+tx)}}
+  // the banks beside the fall sit level with the water above and below it, so the scarp lines up with the fall
+  const FL=fallLine();
+  for(let k=-FALL_W;k<=FALL_W;k++)for(const side of [0,1]){const tx=FL.ax+side*FL.dx+k*FL.px,ty=FL.ay+side*FL.dy+k*FL.py,i=ty*N+tx;
+    if(inb(tx,ty)&&!bed.has(i)&&!isRoadT(tx,ty)){lv[i]=dmin+2-2*side;bed.add(i)}}
+  // nor does the land around the water lie below it: banks lower than the stream are lifted to its level,
+  // and the ground behind them eased up into slopes
+  for(let raised=true;raised;){raised=false;
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){const i=y*N+x;if(bed.has(i))continue;
+      for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy,j=ny*N+nx;if(!inb(nx,ny)||cliffAt(x,y,nx,ny))continue;
+        const l=bed.has(j)?lv[j]:lv[j]-1;if(lv[i]<l){lv[i]=l;raised=true}}}}
   settleLevels(lv,[],cliffAt,bed);
-  const lo=Math.min(...lv);S.lv=lv.map(l=>l-lo);S.fall=[fw,fe];buildTerrain();
+  const lo=Math.min(...lv);S.lv=lv.map(l=>l-lo);buildTerrain();
   // the city, block by block
   const FARMS=[['pasture','maize'],['rapeseed','wheat'],['wheat','pasture'],['maize','rapeseed']];let farmN=0;
   const names=STREETS.slice();for(let i=names.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
