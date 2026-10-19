@@ -1501,8 +1501,10 @@ function newGame(seed,carry){
     let dm=99;for(const[cx,cy]of creek)dm=Math.min(dm,Math.hypot(x-cx,y-cy));
     // the flattening fades from one block's centre to the next, so it leaves no seams along the roads
     const fu=clamp((x-3)/6,0,NB-1),fv=clamp((y-3)/6,0,NB-1),bu=Math.min(NB-2,Math.floor(fu)),bv=Math.min(NB-2,Math.floor(fv)),tu=fu-bu,tv=fv-bv,F=(i,j)=>FLAT[LAYOUT[j][i]]??1;
-    h*=lerp(lerp(F(bu,bv),F(bu+1,bv),tu),lerp(F(bu,bv+1),F(bu+1,bv+1),tu),tv)*(1-Math.exp(-dm/4));
-    hs.push(h+24*(1-Math.exp(-dm/10))+(N-x)*.17)}
+    // a flat floor a few tiles either side of the water, then the valley sides rise gently and level off
+    const ss=t=>{t=clamp(t,0,1);return t*t*(3-2*t)};
+    h*=lerp(lerp(F(bu,bv),F(bu+1,bv),tu),lerp(F(bu,bv+1),F(bu+1,bv+1),tu),tv)*ss((dm-2)/6);
+    hs.push(h+26*ss((dm-3)/16)+(N-x)*.17)}
   const mn=Math.min(...hs),lv=hs.map(h=>Math.round((h-mn)/6.5));
   // the only cliff is the waterfall itself: the banks around it slope
   const fw=cul[fall-1][1]*N+cul[fall-1][0],fe=cul[fall][1]*N+cul[fall][0],creeks=trib.length?[cul,trib]:[cul];
