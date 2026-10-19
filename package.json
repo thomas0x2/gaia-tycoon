@@ -6,13 +6,15 @@
   "scripts": {
     "build": "node scripts/build-web.mjs",
     "ios": "npm run build && cap sync ios && cap open ios",
-    "sync": "npm run build && cap sync ios"
+    "sync": "npm run build && cap sync ios",
+    "sprites": "node scripts/bake-sprites.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.3",
     "@capacitor/ios": "^8.5.3"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.5.3"
+    "@capacitor/cli": "^8.5.3",
+    "playwright": "^1.56.1"
   }
 }

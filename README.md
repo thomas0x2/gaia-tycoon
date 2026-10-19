@@ -4,7 +4,7 @@ An isometric idle game about rewilding a British city. Bring down buildings, bre
 succession take over: pioneer weeds, then grassland, scrub and woodland. Bring back the animals that
 pollinate, carry seed, browse and hunt, and discover hidden ecosystems along the way.
 
-The whole game is a single file: open `index.html` in a browser. Progress is saved in the browser.
+The game is a single file, `index.html`, plus its sprite sheets in `sprites/`: open `index.html` in a browser. Progress is saved in the browser.
 
 ## How it plays
 
@@ -16,6 +16,12 @@ The whole game is a single file: open `index.html` in a browser. Progress is sav
   fur of grazers or on water. Once enough parent plants grow, their seed rains in everywhere.
 - **A field guide** with an entry for every plant and animal, and lessons on how ecosystems work.
 
+## Graphics
+
+Plants and animals are drawn from PNG sprite sheets in [`sprites/`](sprites/README.md), so the art can be redrawn
+without touching the code: replace a PNG and the game uses it. The sheets are baked from the game's own drawing code
+with `npm run sprites`; [`sprites/README.md`](sprites/README.md) explains the layout. Buildings, terrain and water are still drawn in code.
+
 ## Play on iPhone
 
 The game is also an installable web app. Open it in Safari at
@@ -25,7 +31,7 @@ screen from its own icon and keeps working offline. Tap to act, drag to pan, pin
 The Home Screen app keeps its own save, separate from the one in Safari.
 
 Hosting is plain GitHub Pages from the `main` branch root (Settings → Pages → Deploy from a branch → `main`, `/ (root)`).
-`sw.js` caches the game for offline play; bump its `VERSION` if you add files the app needs.
+`sw.js` caches the game and its sprites for offline play; bump its `VERSION` if you add files the app needs.
 
 ## Native iPhone app (Capacitor)
 
@@ -47,4 +53,4 @@ With a free Apple ID the app stops opening after 7 days until you run it from Xc
 Program membership removes that limit and lets you share it through TestFlight or the App Store
 (Product → Archive in Xcode).
 
-After changing `index.html`, run `npm run sync` (or `npm run ios`) so the app picks up the new version.
+After changing `index.html` or the sprites, run `npm run sync` (or `npm run ios`) so the app picks up the new version.
