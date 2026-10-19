@@ -1,8 +1,8 @@
 // Offline support for the installed web app.
 // The game page is fetched from the network first so updates arrive, with the cached copy as a fallback offline.
-// Fonts are cached on first use. Bump VERSION when the list of app files changes.
-const VERSION = 'idle-nature-v1';
-const APP = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
+// Fonts and the sprite sheets are cached on first use. Bump VERSION when the list of app files changes.
+const VERSION = 'idle-nature-v2';
+const APP = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png', 'sprites/sprites.js'];
 const FONTS = /^https:\/\/fonts\.(googleapis|gstatic)\.com\//;
 
 self.addEventListener('install', e => {
