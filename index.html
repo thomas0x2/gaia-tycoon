@@ -1486,28 +1486,23 @@ function newGame(seed,carry){
       if(R()<.65)ty+=dir;else tx=clamp(tx+(R()<.5?-1:1),sx1+7,N-2)}
     if(inb(tx,ty)&&onBrook.has(ty*N+tx)){for(const[a,b]of trib)T(a,b).cul=true;trib.push([tx,ty])}else trib.length=0}
   const creek=cul.concat(trib);
-  // relief: broad, low hills and a shallow valley along the brook, flatter still under downtown, industry and
-  // the airport, rounded to half steps so most of the city is flat ground with the odd sloping row between.
-  // A scarp runs north to south just east of the first block: the land west of it stands a level higher,
-  // sloping down to the east, and where the brook crosses it the brook drops a level in a waterfall once it is
-  // daylit. That waterfall is the only cliff; around it, and all along the streams, the banks slope.
+  // relief: the streams have cut valleys, so the land rises the further it lies from them, and the whole city
+  // tilts gently down towards the east, the way the brook flows. A few low hills sit anywhere away from the water,
+  // flattened under downtown, industry and the airport. It is all rounded to half steps, so most of the city is
+  // flat ground with the odd sloping row between
   const FLAT={downtown:.35,industrial:.4,airport:.15,highway:.5,commercial:.6},hills=[];
-  for(let k=0;k<7;k++)hills.push([R()*N,R()*N,9+R()*9,4+R()*8]);
-  // The brook falls a whole level where it crosses it, into a pool the ground slopes down to: the scarp is laid
-  // through an eastward step of the brook in the next block east, away from the roads
+  for(let k=0;k<5;k++)hills.push([R()*N,R()*N,6+R()*7,3+R()*6]);
+  // Just east of the first block the brook falls a whole level, on a straight eastward run away from the roads
   let fall=cul.findIndex(([cx,cy],k)=>k>1&&cul[k-1][0]===cx-1&&cul[k-1][1]===cy&&cul[k-2][0]===cx-2&&cul[k-2][1]===cy&&cx-1>=sx1+3&&cx<=sx1+6&&!isRoadT(cx,cy)&&!isRoadT(cx-1,cy));
   if(fall<0)fall=Math.max(1,cul.findIndex(([cx,cy],k)=>k>0&&cul[k-1][0]===cx-1&&cx-1>sx1+1&&!isRoadT(cx,cy)&&!isRoadT(...cul[k-1])));
-  const yc=cul[fall][1],scA=.3+R()*.5,scP=R()*7,sc0=cul[fall][0]-.5-scA*Math.sin(yc*.21+scP),scarp=y=>sc0+scA*Math.sin(y*.21+scP),west=(x,y)=>x<scarp(y);
   const hs=[];
   for(let y=0;y<N;y++)for(let x=0;x<N;x++){let h=0;
     for(const[a,b,r,amp]of hills)h+=amp*Math.exp(-((x-a)**2+(y-b)**2)/(r*r));
     let dm=99;for(const[cx,cy]of creek)dm=Math.min(dm,Math.hypot(x-cx,y-cy));
-    h-=11*Math.exp(-dm*dm/20);
     // the flattening fades from one block's centre to the next, so it leaves no seams along the roads
     const fu=clamp((x-3)/6,0,NB-1),fv=clamp((y-3)/6,0,NB-1),bu=Math.min(NB-2,Math.floor(fu)),bv=Math.min(NB-2,Math.floor(fv)),tu=fu-bu,tv=fv-bv,F=(i,j)=>FLAT[LAYOUT[j][i]]??1;
-    h*=lerp(lerp(F(bu,bv),F(bu+1,bv),tu),lerp(F(bu,bv+1),F(bu+1,bv+1),tu),tv);
-    if(west(x,y)&&LAYOUT[blkNear(y)][blkNear(x)]!=='airport')h+=13;
-    hs.push(h)}
+    h*=lerp(lerp(F(bu,bv),F(bu+1,bv),tu),lerp(F(bu,bv+1),F(bu+1,bv+1),tu),tv)*(1-Math.exp(-dm/4));
+    hs.push(h+24*(1-Math.exp(-dm/10))+(N-x)*.17)}
   const mn=Math.min(...hs),lv=hs.map(h=>Math.round((h-mn)/6.5));
   // the only cliff is the waterfall itself: the banks around it slope
   const fw=cul[fall-1][1]*N+cul[fall-1][0],fe=cul[fall][1]*N+cul[fall][0],creeks=trib.length?[cul,trib]:[cul];
