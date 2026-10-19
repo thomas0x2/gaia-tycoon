@@ -57,6 +57,13 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .clock b{font-weight:600;color:var(--water)}
 .clock span{font-family:var(--mono);font-size:11px;font-variant-numeric:tabular-nums}
 .stage{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-dim)}
+.wx{display:flex;gap:4px;cursor:pointer}
+.wx span{flex:1 1 0;display:flex;flex-direction:column;align-items:center;padding:2px 4px;border-radius:6px;background:rgba(255,255,255,.04);font-size:10px;line-height:1.15;color:var(--ink-dim)}
+.wx span.now{background:rgba(255,255,255,.12);color:var(--ink)}
+.wx i{font-style:normal;font-size:14px}
+.wx .k-drought{box-shadow:inset 0 0 0 1px rgba(232,170,84,.7)}
+.wx .k-wet{box-shadow:inset 0 0 0 1px rgba(96,160,232,.7)}
+#wxBtn{display:none}
 .stage b{color:var(--lichen);font-weight:600}
 .bar{flex:1;height:5px;border-radius:3px;background:rgba(255,255,255,.1);overflow:hidden;min-width:60px}
 .bar i{display:block;height:100%;width:0;background:var(--lichen);transition:width .4s}
@@ -509,6 +516,14 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .ctrl{order:2;flex:0 0 auto;padding:2px;gap:2px;align-items:stretch}
   .ctrl>*{display:none}
   #moreBtn,#webBtn,#newBtn:not([hidden]){display:grid}
+  /* the weather only takes a place in the strip during a drought or a flood */
+  #wxBtn.alert{display:grid;min-width:36px}
+  #hud:has(#wxBtn.alert) #sIncome{display:none}
+  #hud.more #wxBtn{display:none}
+  #wxBtn::before{content:attr(data-ic);-webkit-mask:none;mask:none;background:none;width:auto;height:auto;font-size:20px;line-height:1}
+  #wxBtn.k-drought{box-shadow:inset 0 0 0 1px rgba(232,170,84,.7)}
+  #wxBtn.k-wet{box-shadow:inset 0 0 0 1px rgba(96,160,232,.7)}
+  #hud.more .brand .wx{flex:1 1 100%}
   .ctrl button,.ctrl .rotgrp button{font-size:0 !important;min-width:42px;min-height:42px;padding:4px;place-items:center;gap:3px}
   .ctrl button::before{content:'';width:22px;height:22px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
   .ctrl button[aria-pressed="true"]{color:#1d2614}
@@ -553,6 +568,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .toast{padding:7px 12px;pointer-events:auto;cursor:pointer}
   .toast b{font-size:14px;margin-bottom:0}
   .toast p{font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .toast.full p{display:block}
   #toasts .toast:nth-last-child(n+3){display:none}
   #info:not(.open){padding:6px 10px;gap:4px}
   #info:not(.open) .tool-head{grid-template-columns:30px 1fr auto auto;gap:8px}
@@ -608,6 +624,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
     <div class="brand panel">
       <h1>Idle Nature <small id="cityName">Meridian</small></h1>
       <div class="clock" title="Plants grow fastest in spring and almost stop in winter."><b id="sSeason">Spring</b><span id="sClock"></span></div>
+      <div id="wx" class="wx" role="button" tabindex="0" aria-label="Weather forecast" title="Weather forecast: this season and the next three. Tap for more."></div>
       <div class="stage"><b id="stageName">Megacity</b><div class="bar"><i id="stageBar"></i></div><span id="stageNext"></span></div>
     </div>
     <div id="stats" class="panel">
@@ -623,6 +640,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <div class="stat" id="mycStat" hidden title="Carried over from the cities you rewilded before"><label>Mycelium</label><div><span id="sMyc">0</span><small id="sMycS"></small></div></div>
     </div>
     <div class="ctrl panel" role="group" aria-label="Game speed">
+      <button id="wxBtn" data-ic="🌦️" title="Weather forecast" aria-label="Weather forecast">Weather</button>
       <button id="moreBtn" aria-expanded="false" title="More">More</button>
       <button id="menuBtn" title="Save slots and new games" data-lbl="Saves">Menu</button>
       <button id="dnBtn" data-lbl="Day/night" aria-pressed="true" title="Turn the day and night cycle on or off">Day/night</button>
@@ -1230,7 +1248,7 @@ const relCost=sp=>{const R=RES[sp],c=(R?R.cost:100)*.3*REL_RAR[rarityOf(sp)]*(1+
 const PASSIVE=new Set(['inspect','corridors','guide','lens']);
 // the Lens: one map view per ground condition. [id, name, what it shows, value 0..1, colour at 0 (null: clear), colour at 1]
 const LENS=[
-  ['water','Water','Dry ground to flooded. Open water, reed beds, fen and wet meadow raise it; hilltops, sand, stones and sealed ground stay dry. Reed and willow need it high; beech drowns above 60%, oak, pine, heather and broom above about 66%.',i=>WET[i],[214,190,140],[50,140,220]],
+  ['water','Water','Dry ground to flooded. Open water, reed beds, fen and wet meadow raise it; hilltops, sand, stones and sealed ground stay dry. Rain keeps the land away from the water damp: in a drought it dries out, and in a wet year the streams flood their banks. Reed and willow need it high; beech drowns above 60%, oak, pine, heather and broom above about 66%.',i=>WET[i],[214,190,140],[50,140,220]],
   ['light','Light','Deep shade to open sky. Every canopy shades its own tile and adds a third as much to each of the 8 around it, so shade builds up inside a wood: light under birch and pine, deep under oak, deepest under beech. Meadow, heather and pioneers fade below about half light; only beech seedlings grow up in deep shade.',i=>LIGHT[i],[30,40,60],[250,232,150]],
   ['soil','Soil richness','Poor sand to rich earth. Broom, dead wood and salmon feed it; heather and pine keep it poor; rubble, old downtown and the hilltops stay poor. Heather wants it poor, beech rich.',i=>S.tiles[i].fert,[236,222,180],[80,52,26]],
   ['stony','Stony','Deep soil to bare stone. Broken roads and rubble leave crushed stone that drains dry and holds few nutrients; pioneer roots and frost wear it down. Grass and hawthorn cannot root above 35%, but heather, broom, pine and birch can.',i=>stonyOf(S.tiles[i]),null,[150,150,165]],
@@ -1734,8 +1752,10 @@ function computeConditions(){
     const hp=t.b&&!t.b.rp?(t.b.k==='factory'||t.b.k==='terminal'||t.b.h>=5?.9:.7):t.gd==='road'&&!t.hg?(t.hw?.35:.25)+.35*traffic:0;
     if(hp)for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const d=Math.max(Math.abs(dx),Math.abs(dy)),j=ny*N+nx,v=hp*(d===0?1:d===1?.6:.3);if(HUM[j]<v)HUM[j]=v}
   }
+  // rain keeps land away from the water damp; low streams reach less far from their banks, and in a wet year they flood them
+  const rw=.15*WX.R,riv=WX.R<1?.78+.22*WX.R:1+.08*(WX.R-1);
   for(let i=0;i<N*N;i++){const t=S.tiles[i],x=i%N,y=(i/N)|0;LIGHT[i]=1-Math.min(.95,SHD[i]+OPEN[i]);OPEN[i]=1-Math.min(.95,OPEN[i]);
-    WET[i]=t.gd==='water'?1:clamp(.15+.75*MO[i]+Math.min(.3,WADD[i])+(t.p&&bid(t.p.id)==='reed'?.1:0)-(hAt(x,y)>=HILL?.15:0)-.15*(t.poor||0)-.25*(t.gd==='soil'?t.stony||0:0),0,1)}
+    WET[i]=t.gd==='water'?1:clamp(rw+(.75*riv+.15*WX.wet)*MO[i]+Math.min(.3,WADD[i])+(t.p&&bid(t.p.id)==='reed'?.1:0)-(hAt(x,y)>=HILL?.15:0)-.15*(t.poor||0)-.25*(t.gd==='soil'?t.stony||0:0),0,1)}
 }
 // a canopy's shade: all of it on its own tile, a share added onto each of the 8 around it (OPEN holds that neighbour shade until it becomes light)
 function shadeAt(cx,cy,v,side){const i0=cy*N+cx;if(SHD[i0]<v)SHD[i0]=v;for(const[dx,dy]of N8){const x=cx+dx,y=cy+dy;if(inb(x,y))OPEN[y*N+x]+=v*side}}
@@ -1743,6 +1763,11 @@ function shadeAt(cx,cy,v,side){const i0=cy*N+cx;if(SHD[i0]<v)SHD[i0]=v;for(const
 const SUN_NEED={weeds:.5,meadow:.45,heath:.5,broom:.45,hawthorn:.3};
 // plants that drown when the ground is wetter than this: beech, oak, pine and heath can't stand waterlogging
 const WATERLOG={beech:.6,oak:.66,pine:.66,heath:.7,broom:.7,hawthorn:.8,birch:.8};
+// in a drought these dry out where the ground holds less water than this; lush meadow levels slip back below 20%
+const DRY_MIN={beech:.12,willow:.3,reed:.35},DRY_LEVEL=new Set(['meadow2','meadow3','meadowR','meadowW','meadowF']);
+// plants of dry ground that drought does not slow
+const HARDY=new Set(['weeds','heath','broom','pine','meadowD','meadowO']);
+const dryMin=k=>DRY_MIN[bid(k)]??(DRY_LEVEL.has(k)?.2:0);
 // the most toxic soil each stage of plant can stand before it starts to die back
 const TOX_MAX=f=>f.stage<=1?1:bid(f.id||'')==='oak'||bid(f.id||'')==='beech'?.4:f.stage===2?.65:f.stage===3?.55:.7;
 const BIGSP=new Set(['deer','bison','wolf','lynx','boar','badger','otter','marten','stork','heron','fox','beaver','falcon','kestrel','barnowl','owl']);
@@ -1837,7 +1862,7 @@ function succRaw(x,y){
   if(p&&p.g<1)return {next:null,chance:0,need:`Maturing, ${Math.round(p.g*100)}%.${b>.05&&p.g<.4&&(f.stage>=4||f.kind==='shrub')?` Browsing animals may eat it back${f.stage>=4&&near(x,y,1,isP('hawthorn'))>=3?', though the thorny scrub around it gives cover':''}.`:''}`,growing:true};
   if(st===0){
     if(near(x,y,1,isWater)&&t.tox<.8){const s=near(x,y,3,isP('reed'))?1:.04+.6*rainOf('reed');
-      return {next:'reed',chance:.001*s,need:s<1?rainNote('reed'):''}}
+      return {next:'reed',chance:.001*s*(1+2*WX.wet),need:(s<1?rainNote('reed'):'')+(WX.wet>.2?' The water is high: reeds spread fast along the flooded banks.':'')}}
     // the floor of a closed wood: only beech seedlings grow up in deep shade
     if(LIGHT[i]<.5&&has('beech')&&t.fert>=.55&&WET[i]<.6&&t.tox<=.3){const sb=seedField('beech',i);if(sb>.05)return {next:'beech',chance:.00015*sb,need:`Deep shade (light ${pct(LIGHT[i])}): only beech seedlings grow up here.`}}
     const w=near(x,y,2,isP('weeds')),lf=Math.min(1,LIGHT[i]/.5);
@@ -1878,7 +1903,7 @@ function succRaw(x,y){
     return {next:'hawthorn',chance:ch,need:(stray?rainNote('hawthorn'):'')+rich+(gap<.6?' Dense turf keeps most scrub seedlings out; light grazing or disturbed ground lets them in.':'')};
   }
   if(st===3){
-    const wet=MO[i]>=.4,hill=hAt(x,y)>=HILL;
+    const wet=MO[i]>=.4||WET[i]>=.6,hill=hAt(x,y)>=HILL;
     // pine is the tree of poor, dry ground: hilltops, sand and stony rubble, or anywhere broadleaves can't yet grow
     let type=wet?'willow':hill||(t.stony||0)>.2||(t.poor||0)>.2&&t.fert<.5?'pine':'birch';
     if(t.fert<.4){if(wet)return {next:'willow',chance:0,need:`Soil richness is ${pct(t.fert)}; willow needs 40%.`};type='pine'}
@@ -1993,8 +2018,8 @@ function fallTree(x,y,why){
   const t=T(x,y);if(!t.p)return false;const name=FLORA[t.p.id].name,stump=bid(t.p.id)==='willow'&&why!=='age';t.p=stump?{id:'willow',g:.3}:{id:'weeds',g:.35};t.dw=1;t.ds=Math.max(t.ds||0,.8);t.fert=Math.min(1,t.fert+.1);
   if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-10,'leaf',8);burst(sx,sy,'dust',4)}markDirty();
   const key='fall_'+why;if(why!=='browse'&&!S.flags[key]){S.flags[key]=1;
-    toast(why==='storm'?'A storm brought trees down':why==='beaver'?'Beavers felled a tree':`${/^old /i.test(name)?'An':'An old'} ${name.toLowerCase()} fell`,
-      why==='beaver'&&stump?'Beavers fell willows by the water for food and dam wood. A felled willow sprouts again from its stump, so beavers never run out of food, and the gap lets light into the wet woodland.':why==='storm'?'Wind tore a gap in the wood. Gaps like this are how a forest renews itself: light reaches the floor, flowers and scrub move in, then young trees.'
+    toast(why==='drought'?'Drought killed a tree':why==='storm'?'A storm brought trees down':why==='beaver'?'Beavers felled a tree':`${/^old /i.test(name)?'An':'An old'} ${name.toLowerCase()} fell`,
+      why==='drought'?'A dry year was too much for it: beech and willow need damp ground. The dead tree opens a gap where heather, broom and pine, the plants that hold on in drought, can move in.':why==='beaver'&&stump?'Beavers fell willows by the water for food and dam wood. A felled willow sprouts again from its stump, so beavers never run out of food, and the gap lets light into the wet woodland.':why==='storm'?'Wind tore a gap in the wood. Gaps like this are how a forest renews itself: light reaches the floor, flowers and scrub move in, then young trees.'
       :why==='beaver'?'Beavers fell trees by the water for food and dam wood, opening the wet woodland to light: reeds, flowers and willow shoots follow.'
       :'Trees grow old and die. The fallen trunk rots back into the soil, feeding beetles and fungi, and the gap fills with willowherb and woodland flowers, then scrub and young trees. Grazers keep such glades open for longer.','unlock')}
   return stump;
@@ -2011,7 +2036,7 @@ function tick(){
 function tick0(){
   S.t++;if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();
   const smogF=1-.3*S.smog;
-  let shaded=0,drowned=0;
+  let shaded=0,drowned=0,parched=0;
   for(let i=0;i<N*N;i++){
     const t=S.tiles[i];if(!t.u)continue;
     // a fallen trunk rots away in about twenty-five minutes, feeding the soil
@@ -2025,6 +2050,7 @@ function tick0(){
         if(f.flower&&POL[i])m*=1.3;m*=TGROW[i];if(BOOST[i]&&f.stage===2&&f.kind==='ground')m*=1.4;if(HERB[i]&&!f.pre)m*=.4;
         if(SUN_NEED[bid(t.p.id)]&&LIGHT[i]<SUN_NEED[bid(t.p.id)]||WATERLOG[bid(t.p.id)]&&WET[i]>WATERLOG[bid(t.p.id)])m=0;
         if(f.kind==='tree'){if(t.p.g<.4)m*=1-.5*Math.min(1,BROWSE[i]);if(FS[i])m*=1.25}
+        if(WX.dry>.05&&!HARDY.has(t.p.id)&&!HARDY.has(bid(t.p.id)))m*=1-.4*WX.dry;
         t.p.g=Math.min(1,t.p.g+m*TICK_K);
       }
       if(!f.pre&&!f.crop){
@@ -2039,6 +2065,12 @@ function tick0(){
         const wl=WATERLOG[bid(t.p.id)];
         if(wl&&WET[i]>wl){if(VBASE[t.p.id]){if(Math.random()<.003*TICK_K)levelDown(t,x,y,t.p.id,PARENT[t.p.id])}
           else{t.p.g-=.0015*TICK_K;if(t.p.g<=.05){t.p={id:has('reed')&&near(x,y,1,isWater)?'reed':'weeds',g:.2};drowned++;continue}}}
+        // drought: thirsty plants dry out where the ground holds too little water. Lush meadow on poor soil turns to dry grassland
+        const dm=WX.dry>.2?dryMin(t.p.id):0;
+        if(dm&&WET[i]<dm){parched++;
+          if(VBASE[t.p.id]){if(Math.random()<.0015*WX.dry*TICK_K)levelDown(t,x,y,t.p.id,bid(t.p.id)==='meadow'&&t.fert<.45&&has('meadowD')?'meadowD':PARENT[t.p.id])}
+          else if(f.kind==='tree'&&t.p.g>=1){if(Math.random()<.0004*WX.dry*TICK_K){fallTree(x,y,'drought');continue}}
+          else{t.p.g-=.001*WX.dry*TICK_K;if(t.p.g<=.05){t.p={id:'weeds',g:.2};continue}}}
       }
       const g=t.p.g;
       // the work of each stage on the soil
@@ -2054,6 +2086,7 @@ function tick0(){
     }else if(t.gd==='soil'&&!t.b){t.gr=Math.min(1,t.gr+.003*(1-t.tox)*(.3+t.fert)*TICK_K);if(t.stony)t.stony=Math.max(0,t.stony-.00005*TICK_K*(1+.3*lvl('roots')))}
   }
   if(shaded&&!S.flags.shaded){S.flags.shaded=1;toast('Shaded out','The trees around a patch of open ground have closed their canopy, and it faded to bare woodland floor. Meadow, heather and pioneers need sun; in deep shade only beech seedlings grow up. Grazers, storms and boar keep glades open.','warn')}
+  if(parched>=3&&!S.flags.parched){S.flags.parched=1;toast('The land is drying out','In a drought, beech, willow, reeds away from the water and lush meadows wither: wet and herb-rich meadow slip back, and on poor soil they turn to dry grassland. Heather, broom, pine and dry grassland hold on. Fen and wet meadow keep the ground around them damp.','warn')}
   if(drowned&&!S.flags.drowned){S.flags.drowned=1;toast('Drowned by rising water','Ground beside the water grew too wet for it and it died back. Beech, oak, pine, heather and broom cannot stand waterlogged roots; reeds, willow and wet meadow take their place.','warn')}
   // runoff: sprayed fields and working factories leak poison into the soil around them
   {const K=TICK_K;for(let i=0;i<N*N;i++){const t=S.tiles[i],src=t.p&&FLORA[t.p.id].crop?[.0003,.6]:t.b&&t.b.k==='factory'?[.0008,.95]:null;if(!src)continue;const x=i%N,y=(i/N)|0;
@@ -2340,12 +2373,45 @@ function seasonFields(p){const o={p,idx:Math.floor(p)};
   o.summer=smooth(.8,1.1,p)*(1-smooth(1.85,2.2,p));
   o.dry=Math.max(o.aut,p>=2.9?smooth(2.9,3.1,p)*(1-smooth(3.78,3.98,p)):0);
   return o}
+/* ---------- weather ----------
+   Every year is a normal year, a drought year or a wet year, fixed by the city's seed so it plays out the same while you are away.
+   R is the rain of a season (1 = an ordinary one). Rain keeps land far from water damp; how full the streams run sets how far
+   water reaches from their banks; in a wet year the banks flood. WX.dry and WX.wet (0..1) say how deep the land is in drought or flood now. */
+const YEAR_R={normal:[1.1,.85,1,1.05],drought:[.7,.12,.35,.85],wet:[2,1.6,1.9,2]};
+const YEAR_NAME={normal:'an ordinary year',drought:'a drought year',wet:'a wet year'};
+const WX={n:0,type:'normal',R:1,dry:0,wet:0,rain:0};
+// the first two years are ordinary; after that about one year in five is a drought and one in five is wet, rarely twice running
+function yearType(y){const roll=k=>{const h=hash(S.seed|0,k,91);return k<2?'normal':h<.18?'drought':h>.82?'wet':'normal'};
+  const t=roll(y);return t!=='normal'&&roll(y-1)===t&&hash(S.seed|0,y,92)<.6?'normal':t}
+const seasonR=n=>YEAR_R[yearType(Math.floor(n/4))][n%4];
+const SLEN=DAY*SDAYS;
+// what a season's rain will be called in the forecast
+const wxKind=R=>R<.45?'drought':R<.8?'dry':R>1.45?'wet':'fair';
+const WX_ICON={drought:'☀️',dry:'🌤️',fair:'🌦️',wet:'🌧️'},WX_WORD={drought:'Drought',dry:'Dry',fair:'Showers',wet:'Very wet'};
+function updateWeatherState(){
+  const s=S.clock/SLEN,n=Math.floor(s);
+  WX.n=n;WX.type=yearType(Math.floor(n/4));WX.R=lerp(seasonR(n),seasonR(n+1),smooth(.7,1,s-n));
+  WX.dry=clamp((.6-WX.R)/.45,0,1);WX.wet=clamp((WX.R-1.3)/.6,0,1);
+  // showers come and go every half day, more often the wetter the season; snow takes their place in winter
+  WX.rain=SEA.snow<.15&&hash(S.seed|0,Math.floor(S.clock/(DAY/2)),93)<clamp(.3*WX.R,.02,.75)?1:0;
+  // drought browns the grass like late summer does
+  SEA.dry=Math.max(SEA.dry,WX.dry*.85);
+}
+// the forecast: this season and the three after it
+function forecast(){const out=[];for(let k=0;k<4;k++){const n=WX.n+k,R=seasonR(n);out.push({n,idx:n%4,R,kind:wxKind(R),type:yearType(Math.floor(n/4))})}return out}
+function wxText(){const f=forecast(),now=f[0];
+  const lines=f.map((s,k)=>`${k?SEASONS[s.idx]:'Now'}: ${WX_WORD[s.kind].toLowerCase()}`).join(' · ');
+  const why=WX.dry>.2?'Away from the water, beech, willow, reeds and lush meadow dry out; heather, broom, pine and dry grassland hold on. Fen and wet meadow keep the ground around them damp.'
+    :WX.wet>.2?'The streams flood their banks: reeds, fen, wet meadow and willow spread, and oak, beech and pine within 2 tiles of the water drown.'
+    :'Rain keeps the land away from the water damp.';
+  return {title:`Weather: ${YEAR_NAME[now.type]}`,body:`${lines}. ${why}`}}
 function updateTime(){
   const c=S.clock,dp=dayPhase(),e=-Math.cos(dp*Math.PI*2);
   DAYL=smooth(-.2,.22,e);NIGHT=1-DAYL;
   const p=(c/(DAY*SDAYS))%4;Object.assign(SEA,seasonFields(p));
   SEA.warm=Math.exp(-(((e+.02)/.2)**2));
   const i=SEA.idx;SEA.grow=lerp(SEASON_GROW[i],SEASON_GROW[(i+1)%4],smooth(.7,1,p-i));
+  updateWeatherState();
   // light colour: deep blue at night, warm at dawn and dusk, slightly cool on winter days
   let L=lerpc([.2,.26,.48],lerpc([1,1,1],[.95,.98,1.06],SEA.snow),DAYL);
   L=[L[0]*(1+.12*SEA.warm*DAYL),L[1]*(1-.04*SEA.warm),L[2]*(1-.2*SEA.warm*DAYL)];
@@ -2386,22 +2452,41 @@ function glowSprite(rgb){const k=rgb.join();if(GLOW[k])return GLOW[k];const c=do
 const WARM=[255,210,140],FIREFLY=[205,255,120],REDL=[255,90,70];
 let RPDARK=false;
 function glow(x,y,r,col,a,sq=1){if(a<=.01||!TINT_ON||OCC||FOG===2||RPDARK)return;X.globalCompositeOperation='lighter';X.globalAlpha=Math.min(1,a);X.drawImage(glowSprite(col),x-r,y-r*sq,r*2,r*2*sq);X.globalAlpha=1;X.globalCompositeOperation='source-over'}
-let flakes=[];
+let flakes=[],drops=[];
 function updateWeather(dt){
   const snowing=SEA.snow>.15&&SEA.p>2.95&&SEA.p<3.7,target=snowing?Math.round(150*Math.min(1,SEA.snow*1.5)):0;
   while(flakes.length<target)flakes.push({x:Math.random()*W,y:Math.random()*H-H,v:16+Math.random()*26,r:.8+Math.random()*1.6,ph:Math.random()*6});
   if(flakes.length>target)flakes.length=Math.max(target,flakes.length-2);
   for(const f of flakes){f.y+=f.v*dt;f.x+=Math.sin(time*.8+f.ph)*10*dt;if(f.y>H){f.y=-5;f.x=Math.random()*W}}
+  // rain showers, heavier in a wet year
+  const rt=WX.rain&&!snowing?Math.round(90+90*WX.wet):0;
+  while(drops.length<rt)drops.push({x:Math.random()*(W+60),y:Math.random()*H-H,v:420+Math.random()*180,l:7+Math.random()*7});
+  if(drops.length>rt)drops.length=Math.max(rt,drops.length-4);
+  for(const d of drops){d.y+=d.v*dt;d.x-=d.v*.12*dt;if(d.y>H){d.y=-10;d.x=Math.random()*(W+60)}}
 }
 let lastClockTxt='';
 function updateClockUI(){
   const idx=SEA.idx;if(S.lastSeason==null)S.lastSeason=idx;
-  if(idx!==S.lastSeason){S.lastSeason=idx;toast(`${SEASONS[idx]} arrives`,SEASON_MSG[idx])}
+  if(idx!==S.lastSeason){S.lastSeason=idx;const nt=yearType(Math.floor(WX.n/4)+1);
+    if(idx===0&&WX.type==='drought')toast('A drought year begins','Little rain is coming this year, and the summer will be dry. Land far from water dries out first: beech, willow and lush meadows suffer, while heather, broom, pine and dry grassland hold on. Fen and wet meadow keep the ground around them damp.','warn');
+    else if(idx===0&&WX.type==='wet')toast('A wet year begins','Rain all year: the streams will burst their banks. Fen, wet meadow and willow spread along the water, and oaks, beeches and pines within 2 tiles of it drown.','warn');
+    else if(idx===3&&nt!=='normal')toast(`Forecast: ${YEAR_NAME[nt]} ahead`,nt==='drought'?'Next year will be dry. Wet ground holds out longest: fen, wet meadow and reed beds keep the land around them damp.':'Next year will be wet. Trees on the banks may drown; willow, reeds and wet meadow will spread.','warn');
+    else toast(`${SEASONS[idx]} arrives`,SEASON_MSG[idx])}
   if(NIGHT>.6&&!S.flags.night){S.flags.night=1;toast('Night falls over Meridian','Every lit window and streetlight you take away gives the stars back to the city.')}
   const dp=(S.clock%DAY)/DAY,hh=Math.floor(dp*24),mm=Math.floor((dp*24-hh)*6)*10,day=Math.floor(S.clock/DAY)%SDAYS+1,yr=Math.floor(S.clock/YEAR)+1;
   const txt=`${SEASONS[idx]}|Y${yr} · Day ${day}${S.dayNight===false?'':` · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`}`;
   if(txt!==lastClockTxt){lastClockTxt=txt;const[a,b]=txt.split('|');$('sSeason').textContent=a;$('sClock').textContent=b}
+  updateWxUI();
 }
+// the forecast strip: this season and the three after it; on a phone only an icon, and only in drought or flood
+let lastWxKey='';
+function updateWxUI(){
+  const f=forecast(),alert=WX.dry>.2?'drought':WX.wet>.2?'wet':'',key=f.map(s=>s.n+s.kind).join()+alert;
+  if(key===lastWxKey)return;lastWxKey=key;
+  $('wx').innerHTML=f.map((s,k)=>`<span class="${k?'':'now '}k-${s.kind}" title="${SEASONS[s.idx]}: ${WX_WORD[s.kind].toLowerCase()}"><i>${WX_ICON[s.kind]}</i>${k?SEASONS[s.idx].slice(0,3):'Now'}</span>`).join('');
+  const b=$('wxBtn');b.className=alert?`alert k-${alert}`:'';b.dataset.ic=WX_ICON[f[0].kind];b.setAttribute('aria-label',`Weather: ${WX_WORD[f[0].kind].toLowerCase()}`);
+}
+function showWx(){const w=wxText();toast(w.title,w.body,'full')}
 
 /* ---------- drawing primitives ---------- */
 function poly(pts,fill){X.beginPath();X.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)X.lineTo(pts[i][0],pts[i][1]);X.closePath();X.fillStyle=tc(fill);X.fill()}
@@ -3750,6 +3835,7 @@ function render(){
   ctx.setTransform(DPR,0,0,DPR,0,0);
   renderAtmo();ctx.drawImage(atmo,0,0,W,H);
   if(S.blocks)drawBlockLabels();
+  if(drops.length){ctx.strokeStyle=`rgba(200,215,235,${.25+.2*DAYL})`;ctx.lineWidth=1;ctx.beginPath();for(const d of drops){ctx.moveTo(d.x,d.y);ctx.lineTo(d.x-d.l*.12,d.y+d.l)}ctx.stroke()}
   if(flakes.length){ctx.fillStyle=`rgba(250,252,255,${.55+.35*DAYL})`;ctx.beginPath();for(const f of flakes){ctx.moveTo(f.x+f.r,f.y);ctx.arc(f.x,f.y,f.r,0,7)}ctx.fill()}
 }
 
@@ -4528,6 +4614,10 @@ const LESSONS=[
       'Species depend on these conditions, and they change them too. Broom feeds the soil around it, heather and pine keep it poor, beech casts a shade so deep that almost nothing grows beneath it, and boar turn turf into bare earth. That is how one species changes what can live next to it.',
       'Rich soil is not always better. Heathland, dry grassland and pine woods need poor ground and hold many specialists; rich ground drifts toward nettles, coarse grass and closed beech wood.',
       'In the game: the Lens on the Land tab shows each condition across the map, and Survey shows all of them for one tile. Each species acts on its own tile and the 8 around it, or further for animals.']},
+  {id:'weather',name:'Drought and wet years',pics:['beech','heath','meadow','willow'],
+    text:['Central Europe gets rain all year, but not the same every year. In a drought summer, like 2018 and 2019, beech woods browned and died back, wet meadows dried out and streams ran low. In a wet year rivers burst their banks and floodplain woods stand in water for weeks.',
+      'Such years sort plants out. Beech and willow need damp soil; heather, broom, pine and the dry grassland of sand and rubble are built to hold on. Fen and wet meadow soak up water and hold it, so the land around them stays damp when the rain fails. Oak, beech and pine cannot stand waterlogged roots, so floods leave the banks to willow, reeds and wet meadow.',
+      'In the game: most years are ordinary, but about one in five is a drought and one in five is wet. The forecast at the top shows this season and the next three. In a drought, land away from water dries out: lush meadows slip back or turn to dry grassland, and beech, willow and reeds away from the water wither. In a wet year, reeds, fen, wet meadow and willow spread along the banks, and oaks, beeches and pines within 2 tiles of the water drown. The Lens shows the water on each tile.']},
   {id:'dispersal',name:'Seed dispersal',pics:['weeds','thrush','jay','rabbit','oak'],
     text:['A plant cannot walk, so its seeds must travel. Each species has its own way. Willowherb, birch, pine and willow make light seeds that ride the wind for kilometres. Hawthorn wraps its seeds in fruit: thrushes eat the haws and drop the seeds far away.',
       'Oaks and beeches make heavy nuts that would fall at their feet, but jays bury thousands and forget some. Meadow flowers and heather hitch rides in the fur and dung of grazing animals. Broom flicks its seeds out of exploding pods, a few metres at most.',
@@ -4683,7 +4773,7 @@ function toast(title,body,kind){
   sfx(kind==='unlock'?'chime':'note');
   const box=$('toasts');const el=document.createElement('div');el.className='toast '+(kind||'');el.innerHTML=`<b>${title}</b><p>${body}</p>`;
   el.onclick=()=>el.remove();box.appendChild(el);while(box.children.length>3)box.firstChild.remove();
-  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),450)},kind==='unlock'?6500:4500);
+  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),450)},kind==='unlock'?6500:kind==='full'?9000:4500);
 }
 function fmt(n){const neg=n<0;n=Math.floor(Math.abs(n));let o;if(n<1e4)o=n.toLocaleString('en-US');else{const u=['K','M','B','T','Qa'];let i=-1;while(n>=1e3&&i<4){n/=1e3;i++}o=(n<100?n.toFixed(1):Math.round(n))+u[i]}return(neg?'−':'')+o}
 function updateHUD(){
@@ -4807,6 +4897,8 @@ function updateInfo(){
   if(t.b&&t.b.k==='factory')notes+=`<p class="note" style="color:var(--smog)">Its runoff poisons the soil next to it.</p>`;
   if(!t.b&&t.poor>.05)notes+=`<p class="note">Poor ground left by the old ${S.blocks&&blockOf(x,y)>=0?BT[S.blocks[blockOf(x,y)].t].name.toLowerCase():'city'} block: soil richness here can never pass ${pct(soilCap(t,x,y))}. Heather, broom and pine do well on it.</p>`;
   if(!t.b&&HUM[i]>=.4)notes+=`<p class="note">Human pressure ${pct(HUM[i])} from the buildings and roads nearby: ${HUM[i]>=.6?'deer, herons and wolves':'wolves'} won’t settle here.</p>`;
+  if(t.p&&WX.dry>.2&&dryMin(t.p.id)&&WET[i]<dryMin(t.p.id))notes+=`<p class="note" style="color:#e2b86c">Drought: the ground here holds ${pct(WET[i])} water and ${FLORA[t.p.id].name.toLowerCase()} needs ${pct(dryMin(t.p.id))}. It is drying out.</p>`;
+  else if(WX.wet>.2&&!t.b&&t.gd!=='water'&&MO[i]>=.3)notes+=`<p class="note" style="color:#7fb0e6">Wet year: the water is high and floods the ground near its banks.</p>`;
   if(!t.b&&(t.ds||0)>.1)notes+=`<p class="note">Freshly disturbed ground (${pct(t.ds)}): pioneers and acorns sprout faster here. It heals over a season.</p>`;
   if(t.p&&FLORA[t.p.id].sps&&t.p.g>.05)notes+=kv([['Earns',`${(FLORA[t.p.id].sps*t.p.g*(FS[i]?1.5:1)).toFixed(3)} seeds/s now`],['Bonus',FLORA[t.p.id].fx]]);
   if(t.b&&t.b.rp)notes+=`<p class="note" style="color:var(--lichen)">${REP[t.b.k].desc}</p>`;
@@ -5369,6 +5461,7 @@ function drawHighlight(){
 let censusTimer=null;
 function openCensus(){renderCensus();$('census').hidden=false;$('cClose').focus();clearInterval(censusTimer);censusTimer=setInterval(()=>{if($('census').hidden){clearInterval(censusTimer);return}renderCensus()},2000)}
 $('censusBtn').addEventListener('click',openCensus);
+$('wx').addEventListener('click',showWx);$('wxBtn').addEventListener('click',showWx);
 $('cClose').addEventListener('click',()=>{$('census').hidden=true});
 $('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').hidden=true;return}const l=e.target.closest('[data-loc]');if(l){locateSpecies(l.dataset.loc);return}
   const t=e.target.closest('[data-ct]');if(t){censusTab=t.dataset.ct;renderCensus()}});
