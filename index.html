@@ -2472,10 +2472,18 @@ function habitatNear(sp,x,y){const F=FAUNA[sp],r=F.range,c=TCOMP[y*N+x];
   for(let j=Math.max(0,y-r);j<=Math.min(N-1,y+r);j++)for(let i=Math.max(0,x-r);i<=Math.min(N-1,x+r);i++){
     if(!canStand(F.mv,T(i,j))||!habOk(sp,i,j))continue;if(F.mv==='land'&&TCOMP[j*N+i]!==c)continue;return true}
   return false}
+// a home sits on open ground: no bee nest or warren out on the water or the tarmac (salmon live in the water, beavers in their lodge)
+const HOME_GD=new Set(['soil','garden','path']);
+function homeOk(sp,x,y){const t=T(x,y);if(!t.u||t.b)return false;return sp==='salmon'?t.gd==='water':sp==='beaver'||HOME_GD.has(t.gd)}
+// the nearest tile within 4 where its home can go, for a home that ended up somewhere it can't be
+function nearHome(a){const F=FAUNA[a.sp];
+  for(let r=1;r<=4;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
+    const x=a.hx+dx,y=a.hy+dy;if(inb(x,y)&&homeOk(a.sp,x,y)&&canStand(F.mv,T(x,y)))return [x,y]}
+  return null}
 function pickHome(a,F,r){
   const sp=a.sp;
   for(let k=0;k<20;k++){const x=Math.round(a.x)+((Math.random()*(2*r+1))|0)-r,y=Math.round(a.y)+((Math.random()*(2*r+1))|0)-r;
-    if(!inb(x,y)||!canStand(F.mv,T(x,y))||!habOk(sp,x,y))continue;
+    if(!inb(x,y)||!canStand(F.mv,T(x,y))||!homeOk(sp,x,y)||!habOk(sp,x,y))continue;
     if(F.mv==='land'&&TCOMP[y*N+x]!==TCOMP[ri(a)])continue; // walkers stay inside their patch
     if(FEAR_OF[sp]&&FEAR_OF[sp]()[y*N+x]&&Math.random()<.85)continue; // prey keep clear of predators
     return [x,y]}
@@ -2488,7 +2496,7 @@ const homeTaken=(a,x,y,r)=>S.an.some(b=>b!==a&&b.sp===a.sp&&!b.bad&&Math.max(Mat
 // before giving up, look for free habitat anywhere it can get to: flyers within flight reach, the rest along their corridor
 // (with a goal, it just plans the route there; roaming, it also wants enough food there for one more)
 function relocate(a,F,goal,roam){
-  const ox=Math.round(a.x),oy=Math.round(a.y),r=F.range,ok=goal?(x,y)=>x===goal[0]&&y===goal[1]:(x,y)=>canStand(F.mv,T(x,y))&&habOk(a.sp,x,y)&&!homeTaken(a,x,y,r)&&!(roam&&crowded(a,x,y));
+  const ox=Math.round(a.x),oy=Math.round(a.y),r=F.range,ok=goal?(x,y)=>x===goal[0]&&y===goal[1]:(x,y)=>canStand(F.mv,T(x,y))&&homeOk(a.sp,x,y)&&habOk(a.sp,x,y)&&!homeTaken(a,x,y,r)&&!(roam&&crowded(a,x,y));
   if(goal&&ox===goal[0]&&oy===goal[1])return{h:goal,path:[]};
   if(F.mv==='fly'){if(goal)return{h:goal,path:[]};let best=null,bd=1e9;const R=F.reach;
     for(let y=Math.max(0,oy-R);y<=Math.min(N-1,oy+R);y++)for(let x=Math.max(0,ox-R);x<=Math.min(N-1,ox+R);x++){
@@ -2519,6 +2527,7 @@ function habitatCheck(){
   const gone=[],moved=[];
   for(const a of S.an)if(a.sp==='beaver'&&!a.lodge){for(let r=0;r<=2&&!a.lodge;r++)for(let dy=-r;dy<=r&&!a.lodge;dy++)for(let dx=-r;dx<=r;dx++){const x=a.hx+dx,y=a.hy+dy;if(inb(x,y)&&T(x,y).gd==='water'){T(x,y).lodge=1;a.lodge=1;markDirty();break}}}
   const fled=[],roamed=[];
+  for(const a of S.an){a.hx=Math.round(a.hx);a.hy=Math.round(a.hy);if(!homeOk(a.sp,a.hx,a.hy)){const h=nearHome(a);if(h){a.hx=h[0];a.hy=h[1]}}}
   for(const a of S.an){const F=FAUNA[a.sp];if(a.st==='hib'||a.sp==='bee'&&SEA.p<1&&earlyNectar(a.hx,a.hy))continue; // a queen founding her nest lives on early nectar
     // a rabbit with a fox den close by, or deer and boar with a wolf pack, move their home out of its reach
     const fear=FEAR_OF[a.sp];if(fear&&fear()[a.hy*N+a.hx]&&Math.random()<.2){const h=pickHome(a,F,F.range+2);if(h&&!fear()[h[1]*N+h[0]]){a.hx=h[0];a.hy=h[1];a.bad=0;fled.push(a);continue}}
@@ -2590,7 +2599,7 @@ function colonies(){
       if(p<1){const e=earlyNectar(a.hx,a.hy);
         if(e){a.st='nest';a.col=0;a.made=-1;a.boost=e.cat?1.6:1;a.x=a.hx;a.y=a.hy;a.tx=a.hx;a.ty=a.hy;next--;seeFx('wake:bee',a.hx,a.hy);if(e.cat)seeFx('cat:willow',e.cat[0],e.cat[1]);continue}
         // she flies about looking for flowers, and dies if spring ends before she finds any
-        if(Math.random()<.15)for(let k=0;k<12;k++){const x=a.hx+((Math.random()*9)|0)-4,y=a.hy+((Math.random()*9)|0)-4;if(inb(x,y)&&T(x,y).u&&!T(x,y).b&&earlyNectar(x,y)){a.hx=x;a.hy=y;break}}
+        if(Math.random()<.15)for(let k=0;k<12;k++){const x=a.hx+((Math.random()*9)|0)-4,y=a.hy+((Math.random()*9)|0)-4;if(inb(x,y)&&homeOk('bee',x,y)&&earlyNectar(x,y)){a.hx=x;a.hy=y;break}}
         if(p>.9)dead.push(a)}
       continue}
     if(p<2){
