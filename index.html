@@ -140,8 +140,8 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .cloc{width:34px;border-radius:9px;background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:16px}.cloc:hover{background:rgba(255,255,255,.1);color:var(--ink)}
 .cempty,.cnote{font-size:12.5px;color:var(--ink-dim);margin:6px 0}
 .chbox{touch-action:pan-y;user-select:none;-webkit-user-select:none}
-.hz{display:flex;gap:4px;flex-wrap:wrap}.hz button{padding:7px 12px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);background:rgba(255,255,255,.05)}.hz button[aria-pressed="true"]{background:rgba(207,220,132,.22);color:var(--lichen)}
-.hzl{margin:4px 0 6px;font-size:11.5px;color:var(--ink-dim);min-height:1em}.hzl button{color:var(--lichen);text-decoration:underline;font-size:11.5px;margin-left:6px}
+.hz{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}.hz button{padding:7px 12px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);background:rgba(255,255,255,.05)}.hz button[aria-pressed="true"]{background:rgba(207,220,132,.22);color:var(--lichen)}
+
 .cspark{width:56px;height:20px;align-self:center}
 .crow{grid-template-columns:40px 1fr auto auto}.cbar{grid-column:2/5}
 .cbody.one,.cbody.history{grid-template-columns:1fr}.csp{display:flex;flex-direction:column;gap:10px}.cback{align-self:flex-start}
@@ -6605,7 +6605,6 @@ $('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').
   const sp=e.target.closest('[data-sp]');if(sp){censusSp=sp.dataset.sp;renderCensus();$('cBody').scrollTop=0;return}
   if(e.target.closest('[data-back]')){censusSp=null;renderCensus();return}
   const hz=e.target.closest('[data-hz]');if(hz){hzLen=+hz.dataset.hz;hzPan=0;chartRedraw();return}
-  if(e.target.closest('[data-hznow]')){hzPan=0;chartRedraw();return}
   const t=e.target.closest('[data-ct]');if(t){censusTab=t.dataset.ct;censusSp=null;renderCensus();$('cBody').scrollTop=0}});
 $('census').addEventListener('input',e=>{if(e.target.id==='snapR'){snapAt=+e.target.value;drawSnap()}});
 $('census').addEventListener('keydown',e=>{if(e.key==='Escape')$('census').hidden=true});
@@ -6726,9 +6725,8 @@ function chartDraw(i){const c=CHARTS[i],[w0,w1]=chartWin();
   const P=c.series[0].pts,keep=P.map((p,j)=>(p[0]>=w0&&p[0]<=w1)||(P[j+1]&&P[j+1][0]>=w0&&p[0]<w0)||(P[j-1]&&P[j-1][0]<=w1&&p[0]>w1));
   const ser=c.series.map(s=>({...s,pts:s.pts.filter((p,j)=>keep[j])}));
   return chartSVG(ser,{...c.opt,n0:w0,n1:w1,ci:i})}
-function hzBar(){const[a,b]=chartSpan(),span=b-a;if(span<4)return '';const[w0,w1]=chartWin();
-  return `<div class="hz" role="group" aria-label="Time span">${HZ.filter(([n])=>!n||n<span).map(([n,l])=>`<button data-hz="${n}" aria-pressed="${hzLen===n||(n===0&&(!hzLen||hzLen>=span))}">${l}</button>`).join('')}</div>
-    <p class="hzl">${hzLen&&hzLen<span?`Year ${Math.floor(w0/4)+1} to ${hzPan?`year ${Math.floor(w1/4)+1}`:'now'} · swipe a chart to look ${hzPan?'back or forward':'back'}${hzPan?' <button data-hznow>Now ›</button>':''}`:''}</p>`}
+function hzBar(){const[a,b]=chartSpan(),span=b-a;if(span<4)return '';
+  return `<div class="hz" role="group" aria-label="Time span">${HZ.filter(([n])=>!n||n<span).map(([n,l])=>`<button data-hz="${n}" aria-pressed="${hzLen===n||(n===0&&(!hzLen||hzLen>=span))}">${l}</button>`).join('')}</div>`}
 function chartRedraw(){chartSeen={};for(const el of document.querySelectorAll('#cBody .chbox'))el.innerHTML=chartDraw(+el.dataset.ci);const h=document.querySelector('#cBody .hzwrap');if(h)h.innerHTML=hzBar();const k=chartKey();for(const el of document.querySelectorAll('#cBody .chkeywrap'))el.innerHTML=k}
 // swiping a chart scrolls the window through the years
 {let drag=null,raf=0;const cb=$('cBody');
