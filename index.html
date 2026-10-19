@@ -541,7 +541,10 @@ body.touring #dock{visibility:hidden}
 @media (max-width: 760px){
   /* one slim strip: three stats as icons, research, and a menu button that opens everything else */
   #hud{gap:6px;flex-wrap:wrap;align-items:stretch}
-  .brand{display:none}
+  /* the calendar stays in view as a slim line above the strip; the rest of the brand waits in the menu */
+  .brand{order:0;flex:1 1 100%;flex-direction:row;align-items:center;gap:8px;min-width:0;padding:3px 10px}
+  .brand h1,.brand .wx,.brand .stage{display:none}
+  .brand .clock{font-size:12px;gap:8px;margin-left:0}
   #stats{order:1;flex:1 1 0;min-width:0;padding:2px}
   #stats .stat:not(.keep){display:none}
   #stats .stat.keep{flex:1 1 auto;min-width:0;padding:4px 8px;flex-direction:row;align-items:center;gap:6px}
@@ -580,6 +583,7 @@ body.touring #dock{visibility:hidden}
   #hud.more .brand h1{display:none}
   #hud.more .brand .clock{margin-left:0}
   #hud.more .brand .stage{flex:1 1 100%}
+  #hud.more .brand .wx,#hud.more .brand .stage{display:flex}
   #hud.more .ctrl{order:4;flex:1 1 100%;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px}
   #hud.more .ctrl>*{display:grid}
   #hud.more .rotgrp{display:contents}
