@@ -18,9 +18,10 @@ The game is a single file, `index.html`, plus its sprite sheets in `sprites/`: o
 
 ## Graphics
 
-Plants and animals are drawn from PNG sprite sheets in [`sprites/`](sprites/README.md), so the art can be redrawn
-without touching the code: replace a PNG and the game uses it. The sheets are baked from the game's own drawing code
-with `npm run sprites`; [`sprites/README.md`](sprites/README.md) explains the layout. Buildings, terrain and water are still drawn in code.
+Plants, animals and buildings are drawn from PNG sprite sheets in [`sprites/`](sprites/README.md), so the art can be
+redrawn without touching the code: replace a PNG and the game uses it. The sheets are baked from the game's own drawing
+code with `npm run sprites`. Ground and water can be given textures drawn by hand. [`sprites/README.md`](sprites/README.md)
+explains the layout.
 
 ## Play on iPhone
 
