@@ -24,6 +24,7 @@
   --ground:#1c2320;
   --panel:rgba(21,30,27,.94);
   --panel-hi:rgba(40,54,48,.95);
+  --panel-solid:rgb(39,52,46);
   --line:rgba(206,226,208,.15);
   --ink:#edf2ea;
   --ink-dim:#a2b3a8;
@@ -139,6 +140,9 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .cbar{grid-column:2/4;height:5px;border-radius:3px;background:rgba(255,255,255,.07);position:relative;overflow:hidden}.cbar i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:rgba(207,220,132,.4)}.cbar i.g{background:var(--lichen)}.cbar i.over{background:#e2a76c}
 .cloc{width:34px;border-radius:9px;background:rgba(255,255,255,.04);color:var(--ink-dim);font-size:16px}.cloc:hover{background:rgba(255,255,255,.1);color:var(--ink)}
 .cempty,.cnote{font-size:12.5px;color:var(--ink-dim);margin:6px 0}
+.chbox{touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.hz{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px}.hz button{padding:7px 12px;border-radius:7px;font-family:var(--mono);font-size:12px;color:var(--ink-dim);background:rgba(255,255,255,.05)}.hz button[aria-pressed="true"]{background:rgba(207,220,132,.22);color:var(--lichen)}
+
 .cspark{width:56px;height:20px;align-self:center}
 .crow{grid-template-columns:40px 1fr auto auto}.cbar{grid-column:2/5}
 .cbody.one,.cbody.history{grid-template-columns:1fr}.csp{display:flex;flex-direction:column;gap:10px}.cback{align-self:flex-start}
@@ -276,6 +280,25 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .gbig.sil{filter:brightness(0);opacity:.5}
 .glatin{color:var(--ink-dim)}
 .gtags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.gtag.finds{background:rgba(159,196,232,.12);color:#9fc4e8}.gtag.finds.all{background:rgba(207,220,132,.18);color:var(--lichen)}
+.gn{font-family:var(--mono);font-size:10px;color:#9fc4e8;opacity:.85}.gn.all{color:var(--lichen)}
+.gprog{flex:1 0 100%;display:flex;align-items:center;gap:8px;margin-top:-4px;font-size:12px;color:var(--ink-dim)}.gprog b{color:var(--lichen);font-weight:600}.gprog small{color:#9fc4e8;white-space:nowrap}
+.gprog i{flex:0 1 160px;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--lichen) var(--p),rgba(255,255,255,.1) var(--p))}
+/* locked paragraphs: scrambled, blurred text that shimmers faintly, with the hint readable underneath */
+.cipher{display:block;filter:blur(2.6px);color:#c9d6ad;opacity:.65;user-select:none;-webkit-user-select:none;pointer-events:none;font-style:normal;letter-spacing:.02em;line-height:1.55;animation:cshim 5s ease-in-out infinite}
+@keyframes cshim{0%,100%{opacity:.5;filter:blur(2.8px)}50%{opacity:.75;filter:blur(2.2px)}}
+.glocked{position:relative;margin:4px 0 12px;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,.18);border:1px dashed rgba(185,199,160,.22);overflow:hidden}
+.glocked .ghint,.fxlock .ghint{display:block;margin:6px 0 0;font-style:italic;color:var(--ink-dim);opacity:1}
+.glocked .ghint::before,.fxlock .ghint::before{content:'🔒 ';font-style:normal;opacity:.8}
+li.fxlock{opacity:1;font-style:normal}span.fxlock{display:block}.fxlock .cipher{font-size:.95em}
+.cipher.cname{display:inline;animation:none;filter:blur(1.6px);opacity:.75}
+.gcount{color:#9fc4e8;font-size:13px}
+.garr{padding:10px 12px;border-radius:10px;background:rgba(159,196,232,.08);border:1px solid rgba(159,196,232,.22)}.garr p{margin:0 0 6px}.garr ul{margin:0 0 6px;padding-left:18px;display:grid;gap:4px;line-height:1.45}
+/* a paragraph unlocked since you last read it comes into focus once */
+.fresh{animation:unblur 1.6s ease-out both}
+@keyframes unblur{0%{filter:blur(4px);opacity:.3;background:rgba(207,220,132,.0)}40%{background:rgba(207,220,132,.16)}100%{filter:none;opacity:1;background:rgba(207,220,132,0)}}
+li.fresh,span.fresh{border-radius:6px}
+@media (prefers-reduced-motion:reduce){.cipher,.fresh{animation:none}}
 .gtag{font-size:12px;padding:3px 9px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--ink-dim)}
 .gtag.st{background:rgba(159,211,192,.12);color:#9fd3c0}.gtag.here{background:rgba(207,220,132,.14);color:var(--lichen)}.gtag.sec{background:rgba(226,184,108,.14);color:#e2b86c}
 .gseasons{display:flex;gap:8px;margin:14px 0 2px;flex-wrap:wrap}
@@ -342,6 +365,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 #jList .un{color:#e2b86c;font-size:12px}
 #jList em{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--smog)}
 #jList li.on em{color:var(--lichen)}
+.veil:not([hidden])~.veil:not([hidden])>.dialog{background:var(--panel-solid)}
 .veil{position:absolute;inset:0;background:rgba(14,20,18,.45);display:flex;align-items:center;justify-content:center;padding-top:max(16px, env(safe-area-inset-top, 0px));padding-bottom:max(16px, env(safe-area-inset-bottom, 0px));padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 .dialog{max-width:520px;width:100%;padding:22px 24px;background:var(--panel-hi)}
 .dialog .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--smog)}
@@ -647,7 +671,7 @@ body.touring #dock{visibility:hidden}
   #info:not(.open) .tool-head{grid-template-columns:30px 1fr auto auto;gap:8px}
   #info:not(.open) .tool-head canvas{width:30px;height:25px}
   #info:not(.open) .tool-head h2{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #info:not(.open) .tool-head em,#info:not(.open) #tileInfo .note,#info:not(.open) #tileInfo .kv{display:none}
+  #info:not(.open) .tool-head em,#info:not(.open) #tileInfo .note,#info:not(.open) #tileInfo .kv,#info:not(.open) #tileInfo .thist{display:none}
   #info:not(.open) .cost{font-size:12px}
   #info:not(.open) #tileInfo{padding-top:5px;gap:4px}
   #info:not(.open) #msg{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -844,7 +868,7 @@ body.touring #dock{visibility:hidden}
   <div id="guide" class="veil" hidden>
     <div class="dialog panel gpanel" role="dialog" aria-labelledby="gTitle">
       <header class="ghead2"><div><div class="eyebrow">How ecosystems work</div><h2 id="gTitle">Field guide</h2></div>
-        <input id="gSearch" type="search" placeholder="Search plants and animals" aria-label="Search the field guide"><button class="btn" id="gClose">Close</button></header>
+        <input id="gSearch" type="search" placeholder="Search plants and animals" aria-label="Search the field guide"><button class="btn" id="gClose">Close</button><div class="gprog" id="gProg"></div></header>
       <div class="gbody"><nav id="gNav" aria-label="Field guide contents"></nav><article id="gPage"></article></div>
     </div>
   </div>
@@ -1265,13 +1289,23 @@ const fxName=k=>{const F=FX[k];return F.name||`${FLORA[F.sp[0]].name} ${EFF_VERB
 // which effects belong to a species (a plant's levels list their own)
 const fxOf=k=>Object.keys(FX).filter(q=>FX[q].sp.includes(k));
 const fxSeen=k=>!!(S.fx&&S.fx[k]);
-function fxItems(k){return fxOf(k).map(q=>fxSeen(q)?`<li><b>${fxName(q)}.</b> ${FX[q].text}</li>`:`<li class="unseen"><b>Not yet seen.</b> ${FX[q].hint}</li>`).join('')}
+/* locked paragraphs: until you have seen it, a field guide entry shows its real text scrambled letter by letter and blurred,
+   so you can see how much there is to find but not read it. A paragraph you unlocked since you last read the guide comes into focus once. */
+const strHash=t=>{let h=7;for(const c of t)h=(h*31+c.charCodeAt(0))|0;return h>>>0};
+function cipher(t){t=t.replace(/<[^>]+>/g,'');let h=strHash(t)||1;
+  return t.replace(/[A-Za-z0-9]/g,c=>{h=(h*1103515245+12345)>>>0;const a=c>='A'&&c<='Z'?'ABCDEFGHKLMNOPRSTW':'abcdefghiklmnoprstuwy';return a[(h>>>8)%a.length]})}
+const cipherSpan=t=>`<span class="cipher" aria-hidden="true">${cipher(t)}</span>`;
+const lockedP=(t,hint)=>`<div class="glocked">${cipherSpan(t)}${hint?`<p class="ghint">${hint}</p>`:''}</div>`;
+let GREAD_NEW=null; // the unlocks the guide page being drawn shows for the first time
+function freshCls(key){if(!GREAD_NEW)return '';const R=S.gread||(S.gread={});if(R[key])return '';R[key]=1;GREAD_NEW.push(key);return ' fresh'}
+let FX_USED=null; // the effects an animal's own lines already show, so the guide lists the rest after them
+function fxItems(k){return fxOf(k).filter(q=>!FX_USED||!FX_USED.has(q)).map(q=>fxSeen(q)?`<li class="fxon${freshCls(q)}"><b>${fxName(q)}.</b> ${FX[q].text}</li>`:`<li class="unseen fxlock">${cipherSpan(fxName(q)+'. '+FX[q].text)}<span class="ghint">Not yet seen. ${FX[q].hint}</span></li>`).join('')}
 function fxText(k){const a=fxOf(k);if(!a.length)return VBASE[k]?`Earns more seeds than younger ${FLORA[VBASE[k]].name.toLowerCase()}.`:'';
   const s=a.filter(fxSeen),u=a.length-s.length;return [...s.map(q=>fxName(q)+'.'),u?`${u} effect${u>1?'s':''} not yet seen.`:''].filter(Boolean).join(' ')}
 function seeFx(k,x,y){
   if(!S.fx)S.fx={};if(S.fx[k]||!FX[k])return;S.fx[k]=1;if(offLog)offLog.push({k:'fx',id:k,x,y});histEvent('fx',k,x,y);
   if(x!=null&&!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy,'ring',1);mark(x,y,FX[k].cause,1)}
-  toast(`Discovered: ${fxName(k)}`,FX[k].text,'unlock');checkCascades();
+  toast(`Discovered: ${fxName(k)}`,FX[k].text,'unlock');checkCascades();checkAch();
 }
 // add to an effect's running total; it is discovered once the total is reached. p: chance of a floating sign
 function fxAdd(k,a,need,x,y,p){if(p&&Math.random()<p)mark(x,y,FX[k].cause);if(S.fx&&S.fx[k])return;const c=S.fxc||(S.fxc={});if((c[k]=(c[k]||0)+a)>=need){delete c[k];seeFx(k,x,y)}}
@@ -1506,7 +1540,11 @@ const PARKED_FAUNA={};
 for(const k of ['butterfly','moth','beetle','hoverfly','dragonfly','mayfly','stagbeetle','glowworm','skylark','swallow','swift','kingfisher','kestrel','barnowl','falcon','stork',
   'hedgehog','badger','squirrel','dormouse','marten','lynx','bison','otter','trout','frog','newt','watervole','bat']){PARKED_FAUNA[k]=FAUNA[k];delete FAUNA[k]}
 // field voles are a wild arrival: they move into long, ungrazed grass by themselves
-ARRIVE.vole={bio:30};
+ARRIVE.vole={bio:30,
+  // what drew them to the spot they moved into, for the field guide
+  why:(x,y)=>{const i=y*N+x,m=near(x,y,2,isP('meadow')),g=grazeOf(i),t=T(x,y),lv=t.p&&FLORA[t.p.id]?FLORA[t.p.id].name.toLowerCase():'grass';
+    return [`${m} tiles of grassland within 2, long enough to run tunnels through (they need 5)`,g<.05?'nothing grazing there to crop the grass short':`only light grazing there (${Math.round(g*100)}%), so the grass stood long`,
+      `their runs began in the ${lv}`,`a city of ${fmt(Math.floor(S.peak||0))} BIO, enough wild land for them to find it`]}};
 const TOOLS = {
   inspect:{name:'Survey',latin:'Read the land',desc:'Point at or tap a tile to read its soil, its succession stage and what it is waiting for. Drag to pan the map.',need:''},
   corridors:{name:'Corridors',latin:'Habitat network',desc:'Shows how habitat links up. Walking animals and creeping plants only spread through connected land, and river life only through connected water.',
@@ -2657,10 +2695,15 @@ function colonise(){
       const i0=UT[(Math.random()*UT.length)|0],x=i0%N,y=(i0/N)|0;
       if(!canStand(F.mv,T(x,y))||!habOk(sp,x,y))continue;
       for(let j=0;j<(F.cls==='insect'?1:2);j++)S.an.push({id:S.nid++,sp,x,y,hx:x,hy:y,tx:x,ty:y,w:1,f:1,bad:0,m:0});
-      const[sx,sy]=isoG(x,y);burst(sx,sy-6,'ring',1);discover('fauna',sp,'Moved in by itself');break;
+      const[sx,sy]=isoG(x,y);burst(sx,sy-6,'ring',1);mark(x,y,'home',1);noteArrival(sp,x,y,curSeason());discover('fauna',sp,'Moved in by itself');break;
     }
   }
+  // wild arrivals already living here from before arrivals were recorded: read what holds them where they live now
+  for(const sp in ARRIVE)if(D.fa[sp]&&!(S.arr&&S.arr[sp])){const a=S.an.find(b=>b.sp===sp);if(a)noteArrival(sp,a.hx,a.hy,null)}
 }
+// what drew a wild arrival in: kept for the field guide, newest arrival first
+function noteArrival(sp,x,y,n){const A=S.arr||(S.arr={}),o=A[sp],why=ARRIVE[sp].why?ARRIVE[sp].why(x,y):[FAUNA[sp].need];
+  A[sp]={n,x,y,why,c:(o?o.c:0)+1,first:o?o.first:n};if(n!=null){histEvent('arr',sp,x,y);if(o)delete (S.gread||{})['arr:'+sp]}if(!o)checkAch()}
 let leaveToastAt=-99,moveToastAt=-99;
 function habitatCheck(){
   const gone=[],moved=[];
@@ -4939,7 +4982,7 @@ const MODE_TXT={bird:'eats berries and drops the seeds far away, so hawthorn spr
   nut:'buries nuts and forgets some, so oak and beech spread across the city',graze:'carries meadow and heather seed in its fur and dung, so they spread across the city',
   water:'carries the seeds of waterside plants between ponds and along streams'};
 // an effect it has: told in full once seen in the city, as a hint before
-const fxLine=(k,html)=>fxSeen(k)?html:`<span class="unseen"><b>Not yet seen.</b> ${FX[k].hint}</span>`;
+const fxLine=(k,html)=>(FX_USED&&FX_USED.add(k),0)||fxSeen(k)?(GREAD_NEW&&freshCls(k)?`<span class="fxon fresh">${html}</span>`:html):`<span class="unseen fxlock">${cipherSpan(html)}<span class="ghint">Not yet seen. ${FX[k].hint}</span></span>`;
 function animalMechanics(sp){const F=FAUNA[sp],out=[];
   if(sp==='bee'){out.push(fxLine('colony:bee','<b>Colony.</b> A queen founds a nest and raises workers through spring and summer, as many as the flowers within 3 tiles can feed. Her pollination reaches 1 tile around a young nest, 2 with 3+ workers, 3 with 8+.'));
     out.push(fxLine('queens:bee','<b>New queens.</b> In late summer a colony raises 1 to 3 new queens, which fly off up to 6 tiles and sleep through the winter. In autumn the workers and the old queen die.'));
@@ -5743,28 +5786,59 @@ const eatenBy=k=>Object.keys(ENC).filter(a=>(ENC[a].eats||[]).includes(k));
 // a level of a plant shows in the guide only once it, or a richer level of the same line, has grown in the city
 const levelReached=k=>{if(!VBASE[k])return true;const seen=id=>!!S.seen[id]||(KIDS[id]||[]).some(v=>DEPTH[v.id]>DEPTH[id]&&seen(v.id));return seen(k)};
 const guideUnreached=k=>!!VBASE[k]&&!guideHidden(k)&&!levelReached(k);
+// a species you have not unlocked keeps its name to itself: the guide shows it scrambled
+const guideName=k=>{const n=(FLORA[k]||FAUNA[k]).name;return guideLocked(k)?`<span class="cipher cname" aria-label="Not yet unlocked">${cipher(n)}</span>`:n};
 function guideChip(k){
   if(LESSONS.find(l=>l.id===k)){const L=LESSONS.find(l=>l.id===k);return `<button class="gchip lesson" data-enc="${k}"><img src="${speciesPic(L.pics[0])}" alt="">${L.name}</button>`}
   if(guideHidden(k))return `<span class="gchip hid"><img src="${iconURL('?')}" alt="">Secret</span>`;
   if(guideUnreached(k))return `<span class="gchip hid"><img src="${iconURL('?')}" alt="">Not yet reached</span>`;
-  if(guideLocked(k))return `<button class="gchip lock" data-enc="${k}"><img src="${speciesPic(k)}" alt="">${(FLORA[k]||FAUNA[k]).name}</button>`;
+  if(guideLocked(k))return `<button class="gchip lock" data-enc="${k}"><img src="${speciesPic(k)}" alt="">${guideName(k)}</button>`;
   const n=(FLORA[k]||FAUNA[k]).name;return `<button class="gchip" data-enc="${k}"><img src="${speciesPic(k)}" alt="">${n}</button>`;
 }
 let guideCur='succession';
 function openGuide(k){$('guide').hidden=false;renderGuideNav();showGuide(k||guideCur);$('gSearch').value='';setTimeout(()=>$('gClose').focus(),0)}
 function renderGuideNav(){
-  const q=($('gSearch').value||'').trim().toLowerCase(),match=k=>{if(!q)return true;const d=FLORA[k]||FAUNA[k];return !guideHidden(k)&&(d.name+' '+d.latin).toLowerCase().includes(q)};
+  const q=($('gSearch').value||'').trim().toLowerCase(),match=k=>{if(!q)return true;const d=FLORA[k]||FAUNA[k];return !guideHidden(k)&&!guideLocked(k)&&(d.name+' '+d.latin).toLowerCase().includes(q)};
   let h=`<div class="gsec">Ecology</div>`+LESSONS.filter(l=>!q||l.name.toLowerCase().includes(q)).map(l=>`<button class="gitem${guideCur===l.id?' on':''}" data-enc="${l.id}"><img src="${speciesPic(l.pics[0])}" alt=""><span>${l.name}</span></button>`).join('');
   for(const[ln,label]of GUIDE_LANES){const ks=guideKeys().filter(k=>guideLane(k)===ln&&!guideUnreached(k)&&!(VBASE[k]&&guideHidden(k))&&match(k));if(!ks.length)continue;
     h+=`<div class="gsec">${label}</div>`+ks.map(k=>{const hid=guideHidden(k),seen=!!S.seen[k];
-      return `<button class="gitem${guideCur===k?' on':''}${hid?' hid':guideLocked(k)?' lock':''}" data-enc="${k}"><img src="${hid?iconURL('?'):speciesPic(k)}" alt=""><span>${hid?'Secret species':(FLORA[k]||FAUNA[k]).name}</span>${seen&&!hid?'<i title="Seen in your city"></i>':''}</button>`}).join('')}
+      return `<button class="gitem${guideCur===k?' on':''}${hid?' hid':guideLocked(k)?' lock':''}" data-enc="${k}"><img src="${hid?iconURL('?'):speciesPic(k)}" alt=""><span>${hid?'Secret species':guideName(k)}</span>${seen&&!hid?'<i title="Seen in your city"></i>':''}${(()=>{if(hid||guideLocked(k))return '';const f=findsOf(k);if(!f.length)return '';const n=f.filter(q=>q[1]).length;return `<small class="gn${n===f.length?' all':''}">${n===f.length?'✓':`${n}/${f.length}`}</small>`})()}</button>`}).join('')}
   $('gNav').innerHTML=h;
+  const[gn,ga]=guideFindsAll(),nx=guideAchDefs().find(a=>!(S.ach&&S.ach[a.id]));
+  $('gProg').innerHTML=ga?`<span><b>${Math.floor(gn/ga*100)}%</b> · ${gn} of ${ga} discoveries</span><i style="--p:${(gn/ga*100).toFixed(1)}%"></i>${nx?`<small title="${nx.text}">☆ ${nx.name} at ${nx.need}</small>`:'<small>★ 100%</small>'}`:'';
 }
-function showGuide(k){
+// what there is to find out about a species: its effects, and for a wild arrival what drew it in
+const findsOf=k=>{const f=fxOf(k).map(q=>[q,fxSeen(q)]);if(ARRIVE[k])f.push(['arr:'+k,!!(S.arr&&S.arr[k])]);return f};
+const findsTag=k=>{const f=findsOf(k);if(!f.length)return '';const n=f.filter(q=>q[1]).length;return `<span class="gtag finds${n===f.length?' all':''}">🔍 ${n} of ${f.length} found</span>`};
+// every discovery in the guide, secret species included: what a 100% field guide means
+function guideFindsAll(){let n=0,a=0;for(const k of guideKeys())for(const q of findsOf(k)){a++;if(q[1])n++}return [n,a]}
+// the facts box: drop any fact that says again what another fact or the page already says
+const factWords=t=>new Set((t.toLowerCase().replace(/<[^>]+>/g,'').match(/[a-z0-9]+/g)||[]).filter(w=>w.length>2));
+const sameFact=(a,b)=>{let c=0;for(const w of a)if(b.has(w))c++;return c/Math.max(1,Math.min(a.size,b.size))>=.75};
+function uniqueFacts(fs,body){const kept=[],seen=body.flatMap(t=>(t||'').split(/(?<=[.!?])\s+/)).map(factWords).filter(w=>w.size>=4);
+  for(const f of fs){if(!f)continue;const w=factWords(f);if(seen.some(b=>sameFact(w,b)))continue;seen.push(w);kept.push(f)}return kept}
+// a wild arrival's story: when it moved in and what drew it there; hidden until it has happened
+const ARR_SAMPLE='Year 3, spring: two of them moved in by themselves. What drew them: seven tiles of grassland within two, nothing grazing there, their runs in the meadow, and a city wild enough to find.';
+function arrivalHtml(k){const A=S.arr&&S.arr[k],F=FAUNA[k];
+  if(!A)return `<h3>What drew them in</h3>${lockedP(ARR_SAMPLE,`Hidden until ${F.pl} move in by themselves. Watch for them once their home is ready.`)}`;
+  const when=A.first!=null?`First moved in by themselves in ${seasonLbl(A.first).toLowerCase()}`:'Moved in by themselves before records began',
+    again=A.c>1&&A.n!=null?`, and came back ${A.c-1===1?'once':A.c-1+' times'} since, most recently in ${seasonLbl(A.n).toLowerCase()}`:'';
+  return `<h3>What drew them in</h3><div class="garr${freshCls('arr:'+k)}"><p>${when}${again}. What drew them to that spot:</p><ul>${A.why.map(w=>`<li>${w.charAt(0).toUpperCase()+w.slice(1)}.</li>`).join('')}</ul>
+    <button class="glink" data-arrspot="${k}">Show the spot ◎</button></div>`}
+// a species not yet unlocked: its sections show, but scrambled
+function lockedSections(k,hid){const E=ENC[k]||{},d=FLORA[k]||FAUNA[k],w=E.w||{},o=[];
+  o.push(`<h3>Natural history</h3>${lockedP(E.about||d.desc,'')}`);
+  const more=[w.habitat,w.diet,w.behaviour].filter(Boolean);if(more.length)o.push(`<h3>${hid?'Its secrets':'How it lives'}</h3>${lockedP(more.join(' '),'')}`);
+  const fx=fxOf(k);if(fx.length)o.push(`<h3>In the game</h3><ul class="ggame">${fx.map(q=>`<li class="unseen fxlock">${cipherSpan(fxName(q)+'. '+FX[q].text)}<span class="ghint">${FX[q].hint}</span></li>`).join('')}</ul>`);
+  if(ARRIVE[k]&&!hid)o.push(arrivalHtml(k));
+  const n=fx.length+(ARRIVE[k]?1:0);
+  return `<p class="gcount">${hid?'This page':'This entry'} unlocks ${n?`with ${n} thing${n>1?'s':''} to discover`:''}${n?' ':''}once you ${hid?'find the hidden ecosystem':ARRIVE[k]?'see it in your city':'grow it'}.</p>`+o.join('')}
+function showGuide(k){GREAD_NEW=[];try{showGuide0(k)}finally{GREAD_NEW=null}}
+function showGuide0(k){
   guideCur=k;const pg=$('gPage');pg.scrollTop=0;
   const L=LESSONS.find(l=>l.id===k);
   if(L){
-    const strip=L.pics.map((p,i)=>`${i&&L.arrows?'<span class="garrow">→</span>':''}<figure><img src="${speciesPic(p,160)}" alt=""><figcaption>${(FLORA[p]||FAUNA[p]).name}</figcaption></figure>`).join('');
+    const strip=L.pics.map((p,i)=>`${i&&L.arrows?'<span class="garrow">→</span>':''}<figure><img src="${speciesPic(p,160)}" alt=""><figcaption>${guideName(p)}</figcaption></figure>`).join('');
     pg.innerHTML=`<div class="eyebrow">Ecology lesson</div><h2>${L.name}</h2><div class="gstrip">${strip}</div>${L.text.map(t=>`<p>${t}</p>`).join('')}
       <h3>Meet the species</h3><div class="gchips">${L.pics.map(guideChip).join('')}</div>`;
   }else if(guideUnreached(k)){const B=FLORA[VBASE[k]];
@@ -5772,23 +5846,24 @@ function showGuide(k){
       <p>Grown ${B.name.toLowerCase()} tiles level up on their own into richer species, as far as each spot allows. This one has not grown in your city yet. Its entry opens the first time a tile reaches this level or a higher one.</p>`;
   }else if(guideLocked(k)){
     const hid=guideHidden(k),d=FLORA[k]||FAUNA[k],r=hid&&RECIPES.find(q=>q.id===(VSECRET[k]||(ARRIVE[k]&&ARRIVE[k].secret)||RES[k].secret)),R0=RES[k];
-    pg.innerHTML=`<div class="eyebrow">${hid?'Secret species':ARRIVE[k]?'Not yet seen':VBASE[k]?'Not yet growing':'Not yet researched'}</div><h2>${hid?'Not yet revealed':d.name}</h2><div class="ghero"><img class="gbig sil" src="${speciesPic(k,256)}" alt=""></div>
+    pg.innerHTML=`<div class="eyebrow">${hid?'Secret species':ARRIVE[k]?'Not yet seen':VBASE[k]?'Not yet growing':'Not yet researched'}</div><h2>${hid?'Not yet revealed':guideName(k)}</h2><div class="ghero"><img class="gbig sil" src="${speciesPic(k,256)}" alt=""></div>
       ${hid?`<p>This species is revealed by discovering a hidden ecosystem. Its hint: <i>${r.hint}</i></p>`
-        :ARRIVE[k]?`<p>${d.name} is a wild arrival: it cannot be released, but moves in by itself once its home is ready${ARRIVE[k].bio?` and the city has reached ${ARRIVE[k].bio} BIO`:''}. It needs ${FAUNA[k].need.charAt(0).toLowerCase()+FAUNA[k].need.slice(1)}</p>`:VBASE[k]?`<p>${d.name} is a level of ${FLORA[VBASE[k]].name}. Grow ${FLORA[VBASE[k]].name} in the Wood Wide Web and ${d.name.toLowerCase()} will appear on its own where it suits, unlocking this entry.</p>`:`<p>Grow ${d.name} in the Wood Wide Web to unlock its field guide entry: how it lives, what it eats, and where it fits in the ecosystem.</p>
-        ${R0?`<ul class="ggame"><li><b>Research</b> ${fmt(resCost(k))} seeds${bioNeed(k)?`, needs ${bioNeed(k)} BIO`:''}${(R0.req||[]).length?`, after ${(R0.req||[]).map(resName).join(' and ')}`:''}.</li></ul>`:''}`}`;
+        :ARRIVE[k]?`<p>This animal is a wild arrival: it cannot be released, but moves in by itself once its home is ready${ARRIVE[k].bio?` and the city has reached ${ARRIVE[k].bio} BIO`:''}. It needs ${FAUNA[k].need.charAt(0).toLowerCase()+FAUNA[k].need.slice(1)}</p>`:VBASE[k]?`<p>This is a level of ${FLORA[VBASE[k]].name}. Grow ${FLORA[VBASE[k]].name} in the Wood Wide Web and it will appear on its own where it suits, unlocking this entry.</p>`:`<p>Grow this ${FLORA[k]?'plant':'animal'} in the Wood Wide Web to unlock its field guide entry: its name, how it lives, what it eats, and where it fits in the ecosystem.</p>
+        ${R0?`<ul class="ggame"><li><b>Research</b> ${fmt(resCost(k))} seeds${bioNeed(k)?`, needs ${bioNeed(k)} BIO`:''}${(R0.req||[]).length?`, after ${(R0.req||[]).map(q=>guideLocked(q)?guideName(q):resName(q)).join(' and ')}`:''}.</li></ul>`:''}`}
+      ${lockedSections(k,hid)}`;
   }else{
     const isF=!!FLORA[k],d=isF?FLORA[k]:FAUNA[k],E=ENC[k]||{},n=isF?D.fl[k]:D.fa[k],R0=RES[k];
     const cls=isF?`Plant · ${roleOf(k)}${VBASE[k]?` · level ${levelOf(k)}`:''}`:{insect:k==='earthworm'?'Soil life':'Insect',bird:'Bird',mammal:'Mammal',water:'Water life'}[d.cls];
     const seasons=isF?`<div class="gseasons">${['Spring','Summer','Autumn','Winter'].map((s,i)=>`<figure><img src="${speciesPic(k,128,i+.5)}" alt=""><figcaption>${s}</figcaption></figure>`).join('')}</div>`:'';
     const eats=(E.eats||[]),by=eatenBy(k),lives=isF?Object.keys(FAUNA).filter(a=>{const src=FAUNA[a].ok.toString();return src.includes(`isP('${k}')`)||(d.base&&src.includes(`isP('${d.base}')`))}):[],
-      needs=!isF?WILD_FLORA.filter(p=>FAUNA[k].ok.toString().includes(`isP('${p}')`)):[];
+      needs=!isF?WILD_FLORA.filter(p=>!(E.eats||[]).includes(p)&&FAUNA[k].ok.toString().includes(`isP('${p}')`)):[];
     const lessons=LESSONS.filter(l=>l.pics.includes(k));
     const game=isF?`${POLLINATED.has(k)?`<li><b>Pollinators</b> its flowers need insects to set seed, so it only spreads where ${pollNames(k)} live within 4 tiles. Sowing by hand works anywhere.</li>`:''}${PARTNER[k]?`<li><b>Depends on</b> ${FAUNA[PARTNER[k][0]].name}: ${PARTNER[k][1]}.</li>`:''}<li><b>Earns</b> ${d.sps} seeds a second per grown tile.</li>${fxItems(k)}<li><b>Spreads</b> ${d.arrive}</li>${DISP[k]?`<li><b>Seed travels</b> ${seedTravel(k)}</li>`:''}${SOW_NEED[k]||SOW_NEED[d.base]?`<li><b>Sow on</b> ${sowNeed(k)} Costs ${sowCost(k)} seeds by hand.</li>`:''}`
-      :`<li><b>In the city</b> ${d.desc}</li>${animalMechanics(k).map(x=>`<li>${x}</li>`).join('')}<li><b>Room for</b> ${capOf(k)} right now: ${capInfo(k).text}.</li><li><b>Needs</b> ${d.need}</li><li><b>Moves</b> ${MV_TEXT[d.mv](d.reach)}</li>${ARRIVE[k]?`<li><b>Arrives</b> on its own once its home is ready${ARRIVE[k].bio?` and the city has reached ${ARRIVE[k].bio} BIO`:''}. It cannot be released by hand.</li>`:`<li><b>Release</b> ${relCost(k)} seeds each, ${k==='bee'?'you release a queen, who founds a colony':d.cls==='insect'?'one is enough to breed':'release two so they can breed'}.</li>`}`;
+      :`<li><b>In the city</b> ${d.desc}</li>${(()=>{FX_USED=new Set();try{return animalMechanics(k).map(x=>`<li>${x}</li>`).join('')+fxItems(k)}finally{FX_USED=null}})()}<li><b>Room for</b> ${capOf(k)} right now: ${capInfo(k).text}.</li><li><b>Needs</b> ${d.need}</li><li><b>Moves</b> ${MV_TEXT[d.mv](d.reach)}</li>${ARRIVE[k]?`<li><b>Arrives</b> on its own once its home is ready${ARRIVE[k].bio?` and the city has reached ${ARRIVE[k].bio} BIO`:''}. It cannot be released by hand.</li>`:`<li><b>Release</b> ${relCost(k)} seeds each, ${k==='bee'?'you release a queen, who founds a colony':d.cls==='insect'?'one is enough to breed':'release two so they can breed'}.</li>`}`;
     const res=R0?`<li><b>Wood Wide Web</b> ${has(k)?'researched':`${fmt(resCost(k))} seeds${bioNeed(k)?`, needs ${bioNeed(k)} BIO`:''}${(R0.req||[]).length?`, after ${(R0.req||[]).map(resName).join(' and ')}`:''}`}.</li>`:'';
     pg.innerHTML=`<div class="ghero"><img class="gbig" src="${speciesPic(k,256)}" alt=""><div>
         <div class="eyebrow">${cls}</div><h2>${d.name}</h2><em class="glatin">${d.latin}</em>
-        <div class="gtags">${rarTag(k)}${E.status?`<span class="gtag st">${E.status}</span>`:''}<span class="gtag ${n?'here':''}">${n?`In your city: ${n}${isF?' tiles':''}`:S.seen[k]?'Not in your city right now':'Not yet seen in your city'}</span>${R0&&R0.secret?'<span class="gtag sec">Secret species</span>':''}</div></div></div>
+        <div class="gtags">${rarTag(k)}${E.status?`<span class="gtag st">${E.status}</span>`:''}${findsTag(k)}<span class="gtag ${n?'here':''}">${n?`In your city: ${n}${isF?' tiles':''}`:S.seen[k]?'Not in your city right now':'Not yet seen in your city'}</span>${R0&&R0.secret?'<span class="gtag sec">Secret species</span>':''}</div></div></div>
       ${seasons}
       ${(()=>{const w=E.w||{},q=[['Size',w.size],['Lifespan',w.lifespan],['Range',w.range]].filter(r=>r[1]);
         return q.length?`<div class="gquick">${q.map(([a,b])=>`<div><span class="gk">${a}</span><p>${b}</p></div>`).join('')}</div>`:''})()}
@@ -5800,7 +5875,8 @@ function showGuide(k){
         ${needs.length?`<div><span class="gk">Lives among</span><div class="gchips">${needs.map(guideChip).join('')}</div></div>`:''}
         ${by.length?`<div><span class="gk">${isF?'Food for':'Eaten by'}</span><div class="gchips">${by.map(guideChip).join('')}</div></div>`:''}
         ${lives.length?`<div><span class="gk">Habitat for</span><div class="gchips">${lives.map(guideChip).join('')}</div></div>`:''}</div>`:''}
-      ${(()=>{const norm=t=>t.toLowerCase().replace(/[^a-z0-9]/g,''),seen=new Set(),fs=[E.fact,...((E.w&&E.w.facts)||[])].filter(f=>{if(!f)return false;const n=norm(f).slice(0,60);if(seen.has(n))return false;seen.add(n);return true});return fs.length?`<div class="gfact"><span class="gk">Did you know?</span><ul>${fs.map(f=>`<li>${f}</li>`).join('')}</ul></div>`:''})()}
+      ${(()=>{const w=E.w||{},fs=uniqueFacts([E.fact,...(w.facts||[])],[E.about||d.desc,w.identify,w.habitat,w.diet,w.lifecycle,w.behaviour,w.role,w.people]);return fs.length?`<div class="gfact"><span class="gk">Did you know?</span><ul>${fs.map(f=>`<li>${f}</li>`).join('')}</ul></div>`:''})()}
+      ${ARRIVE[k]?arrivalHtml(k):''}
       <h3>In the game</h3><ul class="ggame">${game}${res}</ul>
       ${isF&&!VBASE[k]&&PLANT_LINES.some(L=>L.base===k)&&S.seen[k]?`<h3>Levels</h3><p>Grown ${d.name.toLowerCase()} matures on its own, as far as its ground allows. Levels you have not reached yet show only the ground that leads there.</p>${levelsHtml(k)}`:''}
       ${isF&&VBASE[k]?`<p><button class="glink" data-enc="${VBASE[k]}">All levels of ${FLORA[VBASE[k]].name} ›</button></p>`:''}
@@ -5809,6 +5885,9 @@ function showGuide(k){
   }
   renderGuideNav();const on=$('gNav').querySelector('.on');if(on)on.scrollIntoView({block:'nearest'});
 }
+document.addEventListener('click',e=>{const b=e.target.closest('[data-arrspot]');if(!b)return;const A=S.arr&&S.arr[b.dataset.arrspot];if(!A)return;
+  $('guide').hidden=true;$('census').hidden=true;const[sx,sy]=iso(A.x,A.y,hAt(A.x,A.y));cam.x=sx;cam.y=sy;cam.z=Math.max(cam.z,1.4);clampCam();markDirty();interactAt=performance.now();
+  HL={k:b.dataset.arrspot,isF:true,pts:[[A.x,A.y]],until:time+4};mark(A.x,A.y,'home',1)});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-enc]');if(!b)return;e.preventDefault();if($('guide').hidden)openGuide(b.dataset.enc);else showGuide(b.dataset.enc)});
 
 /* ---------- UI ---------- */
@@ -6063,7 +6142,7 @@ function renderGoals(){
   // open goals first, finished ones after
   const list=[...GOALS.filter(g=>!S.done[g.id]),...GOALS.filter(g=>S.done[g.id])];
   $('goalList').innerHTML=list.map(g=>`<li class="${S.done[g.id]?'done':''}"><i></i><span>${g.text}</span><em>+${fmt(g.r*GOAL_K*mycMult())}</em></li>`).join('');
-  $('goalCount').textContent=`${GOALS.filter(g=>S.done[g.id]).length} of ${GOALS.length} milestones · ${Object.keys(S.ach||{}).length} of ${achDefs().length} achievements`;
+  $('goalCount').textContent=`${GOALS.filter(g=>S.done[g.id]).length} of ${GOALS.length} milestones · ${Object.keys(S.ach||{}).length} of ${achDefs().length+GUIDE_TIERS.length} achievements`;
   renderCollections();
 }
 
@@ -6330,7 +6409,7 @@ function migrateRoster(){
   if(moved||refund)setTimeout(()=>toast('A wilder, leaner city',`Your city now grows the plants and animals of Central Europe. Old plant varieties became the levels of the plant that fills their place, and ${refund?`${fmt(refund)} seeds came back for the species that left`:'nothing was lost'}. Open the Lens to read the ground.`,'unlock'),1200);
 }
 function boot(state){
-  S=state;migrateRoster();if(S.tiles[0].ph==null)startPh(true);worldDirty=true;SEEN_STAGE.clear();ROT=S.rot||0;
+  S=state;migrateRoster();if(!S.gread)S.gread={...(S.fx||{})};if(S.tiles[0].ph==null)startPh(true);worldDirty=true;SEEN_STAGE.clear();ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
   RACT={};CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   // saves from before stepped terrain kept smooth corner heights: turn them into levels
@@ -6616,6 +6695,7 @@ $('cClose').addEventListener('click',()=>{$('census').hidden=true});
 $('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').hidden=true;return}const l=e.target.closest('[data-loc]');if(l){locateSpecies(l.dataset.loc);return}
   const sp=e.target.closest('[data-sp]');if(sp){censusSp=sp.dataset.sp;renderCensus();$('cBody').scrollTop=0;return}
   if(e.target.closest('[data-back]')){censusSp=null;renderCensus();return}
+  const hz=e.target.closest('[data-hz]');if(hz){hzLen=+hz.dataset.hz;hzPan=0;chartRedraw();return}
   const t=e.target.closest('[data-ct]');if(t){censusTab=t.dataset.ct;censusSp=null;renderCensus();$('cBody').scrollTop=0}});
 $('census').addEventListener('input',e=>{if(e.target.id==='snapR'){snapAt=+e.target.value;drawSnap()}});
 $('census').addEventListener('keydown',e=>{if(e.key==='Escape')$('census').hidden=true});
@@ -6699,20 +6779,24 @@ function sparkline(pts){if(pts.length<2)return '<span class="cspark"></span>';co
   return `<svg class="cspark" viewBox="0 0 ${W0} ${H0}" aria-hidden="true"><polyline points="${d}" fill="none" stroke="${up>0?'#8fd06a':up<0?'#f09080':'#8b9488'}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`}
 // a chart across the seasons: drought years shaded amber, wet years blue, fires and mast years marked along the top
 function chartSVG(series,opt={}){
-  const Wc=340,Hc=opt.h||150,L=30,R=8,T0=18,B=20,n0=Math.min(...series.flatMap(s=>s.pts.map(p=>p[0]))),n1=Math.max(n0+1,...series.flatMap(s=>s.pts.map(p=>p[0])));
+  const Wc=340,Hc=opt.h||150,L=30,R=8,T0=18,B=20,n0=opt.n0??Math.min(...series.flatMap(s=>s.pts.map(p=>p[0]))),n1=opt.n1??Math.max(n0+1,...series.flatMap(s=>s.pts.map(p=>p[0])));
   const top=opt.stack?Math.max(1,...series[0].pts.map((p,j)=>series.reduce((a,s)=>a+s.pts[j][1],0))):Math.max(1,...series.flatMap(s=>s.pts.map(p=>p[1])));
   const ymax=niceMax(top),X0=n=>L+(n-n0)/(n1-n0)*(Wc-L-R),Y0=v=>Hc-B-v/ymax*(Hc-B-T0);let g='';
   for(let y=Math.floor(n0/4);y<=Math.floor(n1/4);y++){const ty=yearType(y);if(ty==='normal')continue;const a=X0(Math.max(n0,y*4)),b=X0(Math.min(n1,y*4+4));
     if(b>a)g+=`<rect x="${a.toFixed(1)}" y="${T0}" width="${(b-a).toFixed(1)}" height="${Hc-B-T0}" fill="${ty==='drought'?'rgba(230,170,70,.16)':'rgba(90,150,230,.18)'}"/>`}
   for(const f of [0,.5,1]){const yy=Y0(ymax*f);g+=`<line x1="${L}" x2="${Wc-R}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,${f?'.08':'.2'})"/><text x="${L-4}" y="${yy+3.5}" text-anchor="end" class="chl">${ymax*f>=1000?+(ymax*f/1000).toFixed(1)+'K':Number.isInteger(ymax*f)?ymax*f:''}</text>`}
   const yrs=Math.floor(n1/4)-Math.ceil(n0/4)+1,step=Math.max(1,Math.ceil(yrs/6));
+  // a window of a year or two also names the seasons
+  if(n1-n0<=9)for(let q=Math.ceil(n0);q<=n1;q++)if(q%4)g+=`<text x="${X0(q)}" y="${Hc-5}" text-anchor="middle" class="chl" opacity=".7">${['','Su','Au','Wi'][q%4]}</text><line x1="${X0(q)}" x2="${X0(q)}" y1="${Hc-B}" y2="${Hc-B+2}" stroke="rgba(255,255,255,.2)"/>`;
   for(let y=Math.ceil(n0/4);y*4<=n1;y+=step)g+=`<line x1="${X0(y*4)}" x2="${X0(y*4)}" y1="${Hc-B}" y2="${Hc-B+3}" stroke="rgba(255,255,255,.3)"/><text x="${X0(y*4)}" y="${Hc-5}" text-anchor="middle" class="chl">Y${y+1}</text>`;
+  const cid='chc'+(opt.ci??0);g+=`<clipPath id="${cid}"><rect x="${L}" y="0" width="${Wc-L-R}" height="${Hc-B}"/></clipPath><g clip-path="url(#${cid})">`;
   if(opt.stack){const base=series[0].pts.map(()=>0);
     for(const s of series){const lo=base.slice();s.pts.forEach((p,j)=>base[j]+=p[1]);if(!s.pts.some(p=>p[1]))continue;
       const upper=s.pts.map((p,j)=>`${X0(p[0]).toFixed(1)},${Y0(base[j]).toFixed(1)}`),lower=s.pts.map((p,j)=>`${X0(p[0]).toFixed(1)},${Y0(lo[j]).toFixed(1)}`).reverse();
       g+=`<polygon points="${upper.concat(lower).join(' ')}" fill="${s.c}" opacity=".85"/>`}}
   else for(const s of series){const d=s.pts.map(p=>`${X0(p[0]).toFixed(1)},${Y0(p[1]).toFixed(1)}`).join(' ');
     g+=`<polyline points="${d}" fill="none" stroke="${s.c}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;const lp=s.pts[s.pts.length-1];g+=`<circle cx="${X0(lp[0])}" cy="${Y0(lp[1])}" r="3" fill="${s.c}"/>`}
+  g+='</g>';
   for(const e of histOf().ev){if(e[0]<Math.floor(n0)||e[0]>n1)continue;const x=X0(e[0]+.5);
     if(e[1]==='fire'||e[1]==='mast'){g+=`<line x1="${x}" x2="${x}" y1="${T0}" y2="${Hc-B}" stroke="${e[1]==='fire'?'rgba(240,120,60,.5)':'rgba(200,170,90,.5)'}" stroke-dasharray="2 3"/><text x="${x}" y="${T0-3}" text-anchor="middle" font-size="11">${e[1]==='fire'?'🔥':'🌰'}</text>`;chartSeen[e[1]]=1}}
   for(let y=Math.floor(n0/4);y<=Math.floor(n1/4);y++){const ty=yearType(y);if(ty!=='normal')chartSeen[ty]=1}
@@ -6721,11 +6805,32 @@ function chartSVG(series,opt={}){
 let chartSeen={};
 function chartKey(){const k=chartSeen;chartSeen={};const it=[k.drought&&'<i style="background:rgba(230,170,70,.5)"></i>drought year',k.wet&&'<i style="background:rgba(90,150,230,.55)"></i>wet year',k.fire&&'<span>🔥</span> wildfire',k.mast&&'<span>🌰</span> mast year'].filter(Boolean);
   return it.length?`<p class="chkey">${it.join(' ')}</p>`:''}
+/* every chart on the page shares one window: a horizon (seasons, 0 = all of it) that ends hzPan seasons before now; swipe to scroll */
+let CHARTS=[],hzLen=0,hzPan=0;
+const HZ=[[4,'1 year'],[20,'5 years'],[40,'10 years'],[0,'All']];
+function chartBox(series,opt){const i=CHARTS.length;CHARTS.push({series,opt});return `<div class="chbox" data-ci="${i}">${chartDraw(i)}</div>`}
+function chartSpan(){let a=1e9,b=-1e9;for(const c of CHARTS)for(const s of c.series)for(const p of s.pts){a=Math.min(a,p[0]);b=Math.max(b,p[0])}return [a,Math.max(a+1,b)]}
+function chartWin(){const[a,b]=chartSpan();if(!hzLen||b-a<=hzLen){hzPan=0;return [a,b]}hzPan=clamp(hzPan,0,b-a-hzLen);return [b-hzPan-hzLen,b-hzPan]}
+function chartDraw(i){const c=CHARTS[i],[w0,w1]=chartWin();
+  // keep the points in the window, and one either side so the lines run to the edges
+  const P=c.series[0].pts,keep=P.map((p,j)=>(p[0]>=w0&&p[0]<=w1)||(P[j+1]&&P[j+1][0]>=w0&&p[0]<w0)||(P[j-1]&&P[j-1][0]<=w1&&p[0]>w1));
+  const ser=c.series.map(s=>({...s,pts:s.pts.filter((p,j)=>keep[j])}));
+  return chartSVG(ser,{...c.opt,n0:w0,n1:w1,ci:i})}
+function hzBar(){const[a,b]=chartSpan(),span=b-a;if(span<4)return '';
+  return `<div class="hz" role="group" aria-label="Time span">${HZ.filter(([n])=>!n||n<span).map(([n,l])=>`<button data-hz="${n}" aria-pressed="${hzLen===n||(n===0&&(!hzLen||hzLen>=span))}">${l}</button>`).join('')}</div>`}
+function chartRedraw(){chartSeen={};for(const el of document.querySelectorAll('#cBody .chbox'))el.innerHTML=chartDraw(+el.dataset.ci);const h=document.querySelector('#cBody .hzwrap');if(h)h.innerHTML=hzBar();const k=chartKey();for(const el of document.querySelectorAll('#cBody .chkeywrap'))el.innerHTML=k}
+// swiping a chart scrolls the window through the years
+{let drag=null,raf=0;const cb=$('cBody');
+  cb.addEventListener('pointerdown',e=>{const box=e.target.closest('.chbox');if(!box||!hzLen)return;drag={x:e.clientX,pan:hzPan,w:box.clientWidth}});
+  cb.addEventListener('pointermove',e=>{if(!drag)return;const[a,b]=chartSpan();hzPan=clamp(drag.pan+(e.clientX-drag.x)/drag.w*hzLen*1.12,0,Math.max(0,b-a-hzLen));
+    if(!raf)raf=requestAnimationFrame(()=>{raf=0;chartRedraw()})});
+  for(const ev of ['pointerup','pointercancel','pointerleave'])cb.addEventListener(ev,()=>{drag=null})}
 function niceMax(v){const p=10**Math.floor(Math.log10(v)),m=v/p;return ([1,1.5,2,2.5,3,4,5,6,8,10].find(q=>q>=m-1e-9)||10)*p}
 
 /* one species: its numbers over the years */
 let censusSp=null;
 function renderSpecies(k){
+  CHARTS=[];
   const isF=!!FLORA[k],kind=isF?'fl':'fa',d=isF?FLORA[k]:FAUNA[k],pts=histSeries(kind,k),now=pts[pts.length-1][1];
   let peak=pts[0];for(const p of pts)if(p[1]>=peak[1])peak=p;
   const yearAgo=pts.filter(p=>p[0]<=pts[pts.length-1][0]-4).pop(),dy=yearAgo?now-yearAgo[1]:null;
@@ -6737,9 +6842,9 @@ function renderSpecies(k){
   $('cBody').innerHTML=`<section class="csp"><button class="btn cback" data-back>‹ Census</button>
     <div class="csph"><img src="${speciesPic(k,96)}" alt=""><div><b>${d.name} ${rarTag(k)}</b><small>${firstSeen?`First here in ${seasonLbl(firstSeen[0]).toLowerCase()}`:pts.length>1?'Here since before records began':'Records begin this season'}</small></div></div>
     <div class="csum">${facts.map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
-    ${pts.length>1?chartSVG([{pts,c:isF?GROUP_C[bid(k)]||'#cfdc84':'#cfdc84'}],{label:`${d.name} over the years`})+chartKey():`<p class="cempty">The census counts every species once a season. Come back after a few seasons to see a chart.</p>`}
+    ${pts.length>1?'<div class="hzwrap"></div>'+chartBox([{pts,c:isF?GROUP_C[bid(k)]||'#cfdc84':'#cfdc84'}],{label:`${d.name} over the years`})+'<div class="chkeywrap"></div>':`<p class="cempty">The census counts every species once a season. Come back after a few seasons to see a chart.</p>`}
     ${ev.length?`<ul class="chron">${ev.map(e=>`<li>${chronText(e)}</li>`).join('')}</ul>`:''}
-    <div class="wi-links"><button class="glink" data-enc="${k}">Field guide ›</button><button class="glink" data-loc="${k}">Show on the map ◎</button></div></section>`}
+    <div class="wi-links"><button class="glink" data-enc="${k}">Field guide ›</button><button class="glink" data-loc="${k}">Show on the map ◎</button></div></section>`;chartRedraw()}
 
 /* the whole ecosystem: plants by stage over the years, the map then and now, and a chronicle */
 let snapAt=-1;
@@ -6747,18 +6852,20 @@ function chronText(e){const[n,k,a]=e,nm=q=>FLORA[q]?FLORA[q].name:FAUNA[q]?FAUNA
   switch(k){case 'new':return `<span>✨</span>${nm(a)} ${FAUNA[a]?'arrived':'first grew here'} <em>${when}</em>`;
     case 'fire':return `<span>🔥</span>A wildfire burnt ${a} tile${a===1?'':'s'} <em>${when}</em>`;
     case 'fx':return `<span>🔍</span>Discovered: ${FX[a]?fxName(a):a} <em>${when}</em>`;
+    case 'arr':return `<span>🏡</span>${FAUNA[a]?FAUNA[a].name:a} moved in by itself <em>${when}</em>`;
     case 'cas':{const r=CASCADES.find(q=>q.id===a);return `<span>🔗</span>Cascade: ${r?r.name:a} <em>${when}</em>`}
     case 'mast':return `<span>🌰</span>A mast year: oaks and beeches dropped a huge crop <em>${when}</em>`;}
   return `<span>·</span>${k} <em>${when}</em>`}
 function renderHistory(){
+  CHARTS=[];
   const h=histOf(),c=censusCount(),nowN=S.clock/SLEN;
   let o='';
   // plants by stage, stacked, so succession shows as bands moving up the chart
   const ns=h.s.map(q=>q.n).concat([nowN]),samples=h.s.concat([{fl:c.fl,fa:c.fa,an:S.an.length}]);
   if(samples.length>1){
     const ser=CSTAGE.map(([g,label])=>({c:GROUP_C[g],label,pts:samples.map((q,j)=>[ns[j],Object.keys(q.fl).filter(k=>bid(k)===g).reduce((a,k)=>a+q.fl[k],0)])})).filter(s=>s.pts.some(p=>p[1]));
-    o+=`<section>${ser.length?`<h3>Plants by stage</h3>${chartSVG(ser,{stack:1,h:170,label:'Wild plant tiles by stage'})}<p class="chkey">${ser.map(s=>`<b><i style="background:${s.c}"></i>${s.label}</b>`).join(' ')}</p>`:''}
-      <h3>Animals</h3>${chartSVG([{c:'#cfdc84',pts:samples.map((q,j)=>[ns[j],q.an??Object.values(q.fa).reduce((a,b)=>a+b,0)])}],{h:110,label:'Animals in the city'})}${chartKey()}</section>`}
+    o+=`<section><div class="hzwrap"></div>${ser.length?`<h3>Plants by stage</h3>${chartBox(ser,{stack:1,h:170,label:'Wild plant tiles by stage'})}<p class="chkey">${ser.map(s=>`<b><i style="background:${s.c}"></i>${s.label}</b>`).join(' ')}</p>`:''}
+      <h3>Animals</h3>${chartBox([{c:'#cfdc84',pts:samples.map((q,j)=>[ns[j],q.an??Object.values(q.fa).reduce((a,b)=>a+b,0)])}],{h:110,label:'Animals in the city'})}<div class="chkeywrap"></div></section>`}
   else o+=`<section><p class="cempty">The census is counted once a season. After a few seasons, this page shows how the city changed: charts, the map then and now, and a chronicle of every year.</p></section>`;
   // then and now
   if(h.snaps.length){const k=snapAt<0||snapAt>h.snaps.length?h.snaps.length:snapAt;
@@ -6777,7 +6884,7 @@ function renderHistory(){
     if(!lines.length&&ty==='normal')continue;
     ch+=`<li class="cy"><h4>Year ${y+1}${y===y1?' · this year':''}<em>${ty==='drought'?'☀️ drought year':ty==='wet'?'🌧️ wet year':''}</em></h4><ul class="chron">${lines.join('')||'<li class="dim">A quiet year.</li>'}</ul></li>`}
   o+=`<section><h3>Chronicle</h3>${ch?`<ol class="chy">${ch}</ol>`:'<p class="cempty">Nothing written yet. Fires, new arrivals, discoveries and the years that changed the land will appear here.</p>'}</section>`;
-  $('cBody').className='cbody history';$('cBody').innerHTML=o;
+  $('cBody').className='cbody history';$('cBody').innerHTML=o;chartRedraw();
   if(h.snaps.length)drawSnap();
 }
 function drawSnap(){
@@ -6826,11 +6933,16 @@ function achDefs(){const out=[];
       text:need===1?`See your first ${RARITY[r].n.toLowerCase()} species`:need===n?`See all ${n} ${RARITY[r].n.toLowerCase()} species`:`See ${need} of the ${n} ${RARITY[r].n.toLowerCase()} species`})})}
   out.push({id:'all',r:4,need:allSpecies().length,j:2,all:1,name:'The complete field guide',text:`See every one of the ${allSpecies().length} species`});
   return out}
-const achPay=a=>Math.round(Math.max(a.all?100000:ACH_PAY[a.r][a.j],(D&&D.income||0)*(a.all?3600:ACH_SECS[a.r][a.j]))*mycMult());
+// the field guide track: unlocking its paragraphs (effects seen, arrivals explained), up to a 100% guide
+const GUIDE_TIERS=[[.1,'Field notes',1,1],[.25,'Keen naturalist',2,1],[.5,'Half the guide',3,1],[.75,'Seasoned observer',4,1],[1,'Every page unlocked',4,2]];
+function guideAchDefs(){const tot=guideFindsAll()[1];return GUIDE_TIERS.map(([f,name,r,j])=>{const need=Math.ceil(tot*f);
+  return {id:'guide'+Math.round(f*100),guide:1,need,r,j,big:f===1,name,text:f===1?`Unlock all ${tot} discoveries in the field guide`:`Unlock ${Math.round(f*100)}% of the field guide (${need} of ${tot} discoveries)`}})}
+const achPay=a=>a.big?Math.round(Math.max(150000,(D&&D.income||0)*5400)*mycMult()):Math.round(Math.max(a.all?100000:ACH_PAY[a.r][a.j],(D&&D.income||0)*(a.all?3600:ACH_SECS[a.r][a.j]))*mycMult());
 function checkAch(silent){
   if(!S.ach)S.ach={};const got=[];
   for(const a of achDefs()){if(S.ach[a.id])continue;const have=a.all?seenOf(allSpecies()):seenOf(rarList(a.r));if(have<a.need)continue;
     const pay=achPay(a);S.ach[a.id]=1;S.seeds+=pay;got.push([a,pay])}
+  const gh=guideFindsAll()[0];for(const a of guideAchDefs()){if(S.ach[a.id]||gh<a.need)continue;const pay=achPay(a);S.ach[a.id]=1;S.seeds+=pay;got.push([a,pay])}
   if(!got.length)return;
   if(silent){const sum=got.reduce((n,g)=>n+g[1],0);toast(`${got.length} achievement${got.length>1?'s':''} from your collection`,`The species you had already seen earned ${got.map(g=>g[0].name).join(', ')}: +${fmt(sum)} seeds. See them under Milestones.`,'unlock')}
   else for(const[a,pay]of got){if(QUIET)toast(`Achievement: ${a.name}`,`${a.text}. +${fmt(pay)} seeds.`,'unlock');else revealAch(a,pay)}
@@ -6843,7 +6955,9 @@ function renderCollections(){
       <ul>${defs.map(a=>`<li class="${S.ach&&S.ach[a.id]?'done':''}" title="${a.text}"><i>${S.ach&&S.ach[a.id]?'★':'☆'}</i><span>${a.name}</span><em>${S.ach&&S.ach[a.id]?'earned':'+'+fmt(achPay(a))}</em></li>`).join('')}</ul></div>`}).join('');
   const all=achDefs().find(a=>a.all),tot=allSpecies().length,h=seenOf(allSpecies());
   $('collGrid').innerHTML=cards+`<div class="coll wide" style="--rc:#e8f0a8"><div class="coll-h"><span class="rtag">Every species</span><b>${h} / ${tot}</b></div><div class="coll-bar"><i style="width:${h/tot*100}%"></i></div>
-    <ul><li class="${S.ach&&S.ach.all?'done':''}"><i>${S.ach&&S.ach.all?'★':'☆'}</i><span>${all.name}</span><em>${S.ach&&S.ach.all?'earned':'+'+fmt(achPay(all))}</em></li></ul></div>`;
+    <ul><li class="${S.ach&&S.ach.all?'done':''}"><i>${S.ach&&S.ach.all?'★':'☆'}</i><span>${all.name}</span><em>${S.ach&&S.ach.all?'earned':'+'+fmt(achPay(all))}</em></li></ul></div>`
+    +(()=>{const[gn,ga]=guideFindsAll();return `<div class="coll wide" style="--rc:#9fc4e8"><div class="coll-h"><span class="rtag">Field guide</span><b>${gn} / ${ga} · ${Math.floor(gn/ga*100)}%</b></div><div class="coll-bar"><i style="width:${gn/ga*100}%"></i></div>
+    <ul>${guideAchDefs().map(a=>`<li class="${S.ach&&S.ach[a.id]?'done':''}" title="${a.text}"><i>${S.ach&&S.ach[a.id]?'★':'☆'}</i><span>${a.name}</span><em>${S.ach&&S.ach[a.id]?'earned':'+'+fmt(achPay(a))}</em></li>`).join('')}</ul></div>`})();
 }
 
 /* ---------- the reveal: a moment for every new species and achievement; it stays until clicked ---------- */
@@ -6855,11 +6969,11 @@ function revealAch(a,pay){if(QUIET)return;REVEALQ.push({type:'ach',a,pay});if(!r
 const sparksHtml=ri=>{let h='';const n=14+ri*8;for(let i=0;i<n;i++){const an=Math.random()*Math.PI*2,dist=120+Math.random()*(160+ri*50);h+=`<i style="--dx:${(Math.cos(an)*dist).toFixed(0)}px;--dy:${(Math.sin(an)*dist).toFixed(0)}px;--d:${(Math.random()*.35).toFixed(2)}s;--s:${(.5+Math.random()*1.1).toFixed(2)}"></i>`}return h};
 function nextReveal(){
   const r=REVEALQ.shift();if(!r){revealOn=false;$('reveal').hidden=true;return}revealOn=true;
-  if(r.type==='ach'){const a=r.a,ri=a.r,R=a.all?{n:'Every species',c:'#e8f0a8'}:RARITY[ri],el=$('reveal');
+  if(r.type==='ach'){const a=r.a,ri=a.r,R=a.all?{n:'Every species',c:'#e8f0a8'}:a.guide?{n:'Field guide',c:'#9fc4e8'}:RARITY[ri],el=$('reveal');
     el.style.setProperty('--rc',R.c);el.className='rv r'+ri+' ach';
     el.innerHTML=`<div class="rv-rays"></div><div class="rv-sparks">${sparksHtml(ri+1)}</div>
       <div class="rv-card" role="status"><div class="rv-tag">Achievement unlocked</div><div class="rv-medal"><span>★</span></div>
-        <span class="rv-rar">${a.all?'Complete collection':R.n+' collection'}</span><h2>${a.name}</h2><em>${a.text}</em><p class="rv-pay">+${fmt(r.pay)} seeds</p>
+        <span class="rv-rar">${a.all?'Complete collection':a.big?'100% field guide':a.guide?'Field guide':R.n+' collection'}</span><h2>${a.name}</h2><em>${a.text}</em><p class="rv-pay">+${fmt(r.pay)} seeds</p>
         <div class="rv-act"><button class="rv-ok">Wonderful</button></div><small class="rv-hint">Click to continue${REVEALQ.length?` · ${REVEALQ.length} more`:''}</small></div>`;
     el.hidden=false;void el.offsetWidth;el.classList.add('in');sfx('reveal',Math.min(4,ri+1));return}
   const d=r.kind==='flora'?FLORA[r.id]:FAUNA[r.id],ri=rarityOf(r.id),R=RARITY[ri],el=$('reveal');
