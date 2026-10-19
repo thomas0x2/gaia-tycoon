@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i < 0 ? d : (process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : true) };
-const YEARS = +arg('years', 4), SEED = +arg('seed', 12345), K = +arg('k', 2), POOR = !!arg('poor', false), OUT = arg('out', null);
+const IDLE = +arg('idle', 0), VISITS = +arg('visits', 2), YEARS = +arg('years', 4), SEED = +arg('seed', 12345), K = +arg('k', 2), POOR = !!arg('poor', false), OUT = arg('out', null);
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml' };
 const server = http.createServer((req, res) => {
@@ -60,14 +60,14 @@ const BOT = `(()=>{
   B.flagIt=(kind,key,msg,extra)=>{const id=kind+':'+key;const f=B.flag[id];
     if(f){f.n++;f.last=B.when();return}
     B.flag[id]={kind,key,msg,first:B.when(),last:B.when(),n:1,...(extra||{})}};
-  B.when=()=>{const y=Math.floor(S.clock/YEAR),s=SEA.idx;return 'y'+(y+1)+' '+['spring','summer','autumn','winter'][s]+' (p '+SEA.p.toFixed(2)+')'};
+  B.when=()=>{if(B.day!=null)return 'day '+(B.day+1).toFixed(1).padStart(4)+' (year '+Math.floor(S.clock/YEAR+1)+')';const y=Math.floor(S.clock/YEAR),s=SEA.idx;return 'y'+(y+1)+' '+['spring','summer','autumn','winter'][s]+' (p '+SEA.p.toFixed(2)+')'};
   // one player session: research, blocks, demolish, sow, release
   B.play=()=>{
     if(!B.poor)S.seeds=Math.max(S.seeds,1e7);
     let changed=false;
     const order=Object.keys(RES).filter(k=>resOpen(k)&&!(RES[k].max?lvl(k)>=RES[k].max:has(k))).sort((a,b)=>resCost(a)-resCost(b));
     for(const k of order){const R0=RES[k];if(R0.max?lvl(k)>=R0.max:has(k))continue;if(!resOpen(k))continue;const c=resCost(k);if(S.seeds<c)continue;S.seeds-=c;S.res[k]=lvl(k)+1;changed=true;B.log.push([B.when(),'research '+k+(RES[k].max?' '+lvl(k):''),c])}
-    if(S.blocks)for(let b=0;b<S.blocks.length;b++){const st=blockStatus(b);if(st.ok&&S.seeds>=st.cost){S.seeds-=st.cost;S.blocks[b].u=true;refreshUnlock();changed=true;B.log.push([B.when(),'block '+S.blocks[b].name,st.cost]);break}}
+    if(S.blocks)for(let more=true;more;){more=false;for(let b=0;b<S.blocks.length;b++){const st=blockStatus(b);if(st.ok&&S.seeds>=st.cost){S.seeds-=st.cost;S.blocks[b].u=true;refreshUnlock();changed=true;more=true;B.log.push([B.when(),'block '+(ownedBlocks())+' '+S.blocks[b].name,st.cost]);break}}}
     if(changed)computeDerived();
     const U=[];for(let i=0;i<N*N;i++)if(S.tiles[i].u)U.push(i);
     // demolish: a few buildings and some paving each session
@@ -145,8 +145,20 @@ await page.evaluate(s => window.__G(s), BOT);
 console.log(`Playing ${name} (seed ${SEED}) for ${YEARS} game years at ${K} s per tick${POOR ? ', earning seeds' : ', with plenty of seeds'}`);
 
 const DAYS = await page.evaluate(() => window.__G('YEAR/DAY'));
+if (IDLE) {
+  // a mostly idle player: a few short visits a day, the game catching up on the time between, exactly as on the phone
+  const gap = 24 * 3600 / VISITS;
+  console.log(`Idle play: ${VISITS} visits a day for ${IDLE} days, ${gap / 3600} hours apart (catch-up covers 12 h, then a seed trickle)`);
+  for (let v = 0; v < IDLE * VISITS; v++) {
+    await page.evaluate(d => window.__G(`(__B.day=${d},__B.play(),__B.hour(),__B.play())`), v / VISITS);
+    await page.evaluate(g => window.__G(`(catchUp(${g},false),0)`), gap);
+    await page.waitForFunction(() => window.__G('!catching'), null, { timeout: 600000, polling: 200 });
+    const s = await page.evaluate(() => window.__G(`(QUIET=true,__B.check(),(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),bio:r.bio,inc:r.inc,own:r.owned,wild:r.wild,seeds:r.seeds,stage:r.stage,an:Object.values(r.an).reduce((a,b)=>a+b,0),flags:Object.keys(__B.flag).length}})())`));
+    if (v % VISITS === 0) console.log(`${s.when}  blocks ${String(s.own).padStart(2)} (${s.wild} wild)  bio ${String(s.bio).padStart(4)}  stage ${s.stage}  income ${s.inc}/s  seeds ${s.seeds}  animals ${s.an}  flags ${s.flags}`);
+  }
+}
 let lastLine = '';
-for (let d = 0; d < YEARS * DAYS; d++) {
+for (let d = 0; d < (IDLE ? 0 : YEARS * DAYS); d++) {
   await page.evaluate(() => window.__G('__B.play()'));
   for (let h = 0; h < 24; h++) await page.evaluate(() => window.__G('(__B.hour(),__B.check())'));
   const s = await page.evaluate(() => window.__G(`(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),an:r.an,bee:r.bee,bio:r.bio,flags:Object.keys(__B.flag).length,ms:__B.tickMs/Math.max(1,__B.ticks)}})()`));
