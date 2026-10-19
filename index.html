@@ -1875,7 +1875,7 @@ function blockAdj(b){const bx=b%NB,by=(b/NB)|0;return [[1,0],[-1,0],[0,1],[0,-1]
 // each block owned makes the next dearer: 40% a block at first, then more gently (a power of the count), so a city of 64
 // blocks takes about four weeks of mostly idle play. Each Land Trust level takes the edge off both.
 const BLOCK_EARLY=16;
-function blockMult(n){const L=lvl('trust'),r=1.4-.03*L,p=4.25-.1*L;return n<=BLOCK_EARLY?Math.pow(r,n-1):Math.pow(r,BLOCK_EARLY-1)*Math.pow(n/BLOCK_EARLY,p)}
+function blockMult(n){const L=lvl('trust'),r=1.4-.03*L,p=4.4-.1*L;return n<=BLOCK_EARLY?Math.pow(r,n-1):Math.pow(r,BLOCK_EARLY-1)*Math.pow(n/BLOCK_EARLY,p)}
 function blockCost(b){return Math.round(4*BT[S.blocks[b].t].cost*blockMult(ownedBlocks()))}
 function blockStatus(b){
   const B=S.blocks[b],T0=BT[B.t];
