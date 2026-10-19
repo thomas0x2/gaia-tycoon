@@ -805,6 +805,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   </div>
 </div>
 
+<script src="sprites/sprites.js"></script>
 <script>
 (() => {
 'use strict';
@@ -2601,7 +2602,7 @@ function glowSprite(rgb){const k=rgb.join();if(GLOW[k])return GLOW[k];const c=do
   gr.addColorStop(0,`rgba(${rgb},1)`);gr.addColorStop(.3,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,64,64);return GLOW[k]=c}
 const WARM=[255,210,140],FIREFLY=[205,255,120],REDL=[255,90,70];
 let RPDARK=false;
-function glow(x,y,r,col,a,sq=1){if(a<=.01||!TINT_ON||OCC||FOG===2||RPDARK)return;X.globalCompositeOperation='lighter';X.globalAlpha=Math.min(1,a);X.drawImage(glowSprite(col),x-r,y-r*sq,r*2,r*2*sq);X.globalAlpha=1;X.globalCompositeOperation='source-over'}
+function glow(x,y,r,col,a,sq=1){if(a<=.01||!TINT_ON||BAKE||OCC||FOG===2||RPDARK)return;X.globalCompositeOperation='lighter';X.globalAlpha=Math.min(1,a);X.drawImage(glowSprite(col),x-r,y-r*sq,r*2,r*2*sq);X.globalAlpha=1;X.globalCompositeOperation='source-over'}
 let flakes=[],drops=[];
 function updateWeather(dt){
   const snowing=SEA.snow>.15&&SEA.p>2.95&&SEA.p<3.7,target=snowing?Math.round(150*Math.min(1,SEA.snow*1.5)):0;
@@ -2924,7 +2925,7 @@ function tier(cx,yy,w,hh,C){
   blob([[cx,yy-hh],[cx-w*.5,yy-hh*.2],[cx-w,yy+hh*.38],[cx-w*.3,yy+hh*.52],[cx+w*.3,yy+hh*.52],[cx+w,yy+hh*.38],[cx+w*.5,yy-hh*.2]],C[1]);
   blob([[cx+w*.04,yy-hh*.9],[cx+w*.5,yy-hh*.2],[cx+w,yy+hh*.38],[cx+w*.3,yy+hh*.52],[cx+w*.08,yy+hh*.46],[cx+w*.16,yy]],C[0]);
   blob([[cx-w*.08,yy-hh*.82],[cx-w*.45,yy-hh*.18],[cx-w*.82,yy+hh*.3],[cx-w*.42,yy+hh*.12]],C[2])}
-function shadowAt(sx,sy,rx,ry){if(OCC)return;ell(sx+rx*.45,sy+1.5,rx,ry,'rgba(22,34,18,.24)')}
+function shadowAt(sx,sy,rx,ry){if(SHREC){const m=X.getTransform(),x=sx+rx*.45,y=sy+1.5;SHREC.push([m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f,rx*m.a,ry*m.d]);return}if(OCC)return;ell(sx+rx*.45,sy+1.5,rx,ry,'rgba(22,34,18,.24)')}
 function twigs(x,y,r,col,sd){for(let k=0;k<7;k++){const a=-Math.PI*(.1+.8*k/6)+(hash(sd,k,3)-.5)*.3,len=r*(.75+.45*hash(sd,k,4)),bx=x,by=y+r*.55;
   curve(bx,by,bx+Math.cos(a)*len*.45,by+Math.sin(a)*len*.55,bx+Math.cos(a)*len,by+Math.sin(a)*len*.95,col,.8)}}
 // a deciduous canopy: colours through autumn, thins to bare twigs in winter, leafs out again in spring
@@ -3763,6 +3764,99 @@ function screenToTile(px,py){
   return inb(bx,by)&&SEEN[by*N+bx]?[bx,by]:null;
 }
 const SKY={st:hx('#7d6a56'),sb:hx('#c9a477'),dt:hx('#4f8fc0'),db:hx('#f0e2c4'),nt:hx('#081230'),nb:hx('#1c2a50'),wt:hx('#56618f'),wb:hx('#f39a5c'),glow:hx('#6a4c4a')};
+/* ---------- sprites ----------
+   Plants and animals are drawn from PNG sprite sheets in sprites/, listed in sprites/sprites.js.
+   The sheets are baked from the drawing code above (npm run sprites); replace a PNG to change how a species looks,
+   sprites/README.md explains the layout. A species without a sheet, or whose sheet has not loaded, is drawn by its code.
+   plant sheet: one row per part of the year, one column per growth stage and look (stage*variants+variant)
+   animal sheet: row 0 moving, row 1 still, frames left to right through one cycle of its gait or wingbeat */
+const SHEETS={plant:{},animal:{}},TINTS=new Map();let TINT_LK='',SHREC=null,BAKE=false;
+const SPRITE_ICONS=location.protocol!=='file:'; // a sprite read from file:// would stop icon canvases from being saved
+// sprites have no light of their own: these animals keep hiding when their code would
+const ANIM_HIDE={butterfly:()=>NIGHT>.5||SEA.snow>.4,moth:()=>DAYL>.75,mayfly:()=>SEA.snow>.3,bat:()=>NIGHT<.15&&DAYL>.9};
+function loadSprites(){
+  const M=window.SPRITE_SHEETS;if(!M||/[?&](nosprites|bake)\b/.test(location.search))return Promise.resolve();
+  const jobs=[];
+  for(const kind of['plant','animal'])for(const[id,d]of Object.entries(M[kind+'s']||{}))jobs.push(new Promise(done=>{
+    const img=new Image();img.onerror=()=>done();
+    img.onload=()=>{const cols=Math.floor(img.width/d.w),rows=Math.floor(img.height/d.h);if(cols&&rows){SHEETS[kind][id]={...d,id:kind+id,img,cols,rows};worldDirty=true}done()};
+    img.src='sprites/'+d.file+(M.v?'?v='+M.v:'')}));
+  return Promise.all(jobs);
+}
+// one frame of a sheet in the light of the hour (and the haze over unexplored ground): [image, x, y]
+function frameSrc(sh,i){
+  const c=i%sh.cols,r=(i/sh.cols)|0;
+  if(!TINT_ON||(!FOG&&LV[0]===1&&LV[1]===1&&LV[2]===1))return[sh.img,c*sh.w,r*sh.h];
+  if(TINT_LK!==LKEY){TINT_LK=LKEY;TINTS.clear()}
+  const k=sh.id+'|'+i+'|'+FOG;let cv=TINTS.get(k);
+  if(!cv){cv=document.createElement('canvas');cv.width=sh.w;cv.height=sh.h;const g=cv.getContext('2d'),w=sh.w,h=sh.h;
+    g.drawImage(sh.img,c*w,r*h,w,h,0,0,w,h);
+    if(FOG){g.globalCompositeOperation='saturation';g.globalAlpha=FOG===1?.18:.45;g.fillStyle='#808080';g.fillRect(0,0,w,h);
+      g.globalCompositeOperation='source-atop';g.globalAlpha=FOG===1?.1:.26;g.fillStyle='rgb(78,84,92)';g.fillRect(0,0,w,h);g.globalAlpha=1}
+    g.globalCompositeOperation='multiply';g.fillStyle=`rgb(${LV.map(v=>Math.min(255,Math.round(v*255))).join()})`;g.fillRect(0,0,w,h);
+    g.globalCompositeOperation='destination-in';g.drawImage(sh.img,c*w,r*h,w,h,0,0,w,h);TINTS.set(k,cv)}
+  return[cv,0,0];
+}
+function blit(sh,i,x,y){const[src,fx,fy]=frameSrc(sh,i),s=1/sh.scale;X.drawImage(src,fx,fy,sh.w,sh.h,x-sh.ax*s,y-sh.ay*s,sh.w*s,sh.h*s)}
+// a plant: the row for the time of year, the column for how grown it is and which of its looks this tile wears
+function plantSprite(id,sx,sy,g,sd){
+  const sh=SHEETS.plant[id];if(!sh||(!TINT_ON&&!SPRITE_ICONS))return false;
+  const st=sh.stages||[1],vs=sh.variants>1&&sh.cols===st.length*sh.variants?sh.variants:1,ns=Math.floor(sh.cols/vs),G=ns===st.length?st:Array.from({length:ns},(_,i)=>(i+1)/ns);
+  let s=0;while(s<ns-1&&g>(G[s]+G[s+1])/2)s++;
+  const i=(Math.floor(SEA.p/4*sh.rows)%sh.rows)*sh.cols+s*vs+(vs>1?Math.floor(hash(sd,0,61)*vs):0);
+  if(sh.shadow&&sh.shadow.length===sh.rows*sh.cols)for(const[cx,cy,rx,ry]of sh.shadow[i])shadowAt(sx+cx-rx*.45,sy+cy-1.5,rx,ry);
+  const k=(SLY-SLX)/TW; // lean with the slope it stands on, as the code-drawn plants do
+  if(k){X.save();X.transform(1,k,0,1,sx,sy);blit(sh,i,0,0);X.restore()}else blit(sh,i,sx,sy);
+  return true;
+}
+function plantArt(id,sx,sy,g,sd,x,y){if(!plantSprite(id,sx,sy,g,sd))FDRAW[id](sx,sy,g,sd,0,x,y)}
+// an animal at the origin, facing right: the frame for where it is in its stride, offset by its id so a herd is not in step
+function animalArt(k,a,tm){
+  const sh=SHEETS.animal[k];if(!sh||(!TINT_ON&&!SPRITE_ICONS)){ADRAW[k](a,tm);return}
+  if(TINT_ON&&ANIM_HIDE[k]&&ANIM_HIDE[k]())return;
+  const row=sh.rows>1&&!(a.m&&TINT_ON)?1:0,ph=TINT_ON&&sh.omega?(tm*sh.omega+a.id)/(Math.PI*2):0;
+  blit(sh,row*sh.cols+Math.floor((ph-Math.floor(ph))*sh.cols)%sh.cols,0,0);
+}
+
+// baking: draws every plant and animal from its code into sheets for scripts/bake-sprites.mjs (only on index.html?bake)
+function bakeSprites(o={}){
+  const S=o.scale||3,only=o.only&&new Set(o.only),R=256*S,AX=R/2,AY=Math.round(R*.8);
+  const wc=document.createElement('canvas');wc.width=wc.height=R;const w=wc.getContext('2d',{willReadFrequently:true});
+  const sv={SEA:{...SEA},LV,LKEY,TINT_ON,FOG,NIGHT,DAYL,ROT,X};
+  BAKE=true;TINT_ON=true;LV=[1,1,1];LKEY='bake';TC.clear();FC[1].clear();FC[2].clear();FOG=0;NIGHT=0;DAYL=1;ROT=0;SLX=SLY=0;X=w;
+  const frame=draw=>{w.setTransform(1,0,0,1,0,0);w.clearRect(0,0,R,R);w.setTransform(S,0,0,S,AX,AY);SHREC=[];w.save();draw();w.restore();
+    const sh=SHREC.map(([x,y,rx,ry])=>[(x-AX)/S,(y-AY)/S,rx/S,ry/S].map(v=>+v.toFixed(2)));SHREC=null;
+    const d=w.getImageData(0,0,R,R).data;let x0=R,y0=R,x1=-1,y1=-1;
+    for(let y=0;y<R;y++)for(let x=0;x<R;x++)if(d[(y*R+x)*4+3]>2){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
+    if(x1<0)return{empty:true,sh};
+    const c=document.createElement('canvas');c.width=x1-x0+1;c.height=y1-y0+1;c.getContext('2d').drawImage(wc,-x0,-y0);return{c,x0,y0,x1,y1,sh}};
+  const sheet=(grid,meta)=>{ // grid: rows of frames, all the same size, anchored at the same foot point
+    const all=grid.flat().filter(f=>!f.empty);if(!all.length)return null;
+    const x0=Math.min(...all.map(f=>f.x0))-1,y0=Math.min(...all.map(f=>f.y0))-1,fw=Math.max(...all.map(f=>f.x1))+2-x0,fh=Math.max(...all.map(f=>f.y1))+2-y0;
+    const c=document.createElement('canvas');c.width=fw*grid[0].length;c.height=fh*grid.length;const g=c.getContext('2d');
+    grid.forEach((row,r)=>row.forEach((f,i)=>{if(!f.empty)g.drawImage(f.c,i*fw+f.x0-x0,r*fh+f.y0-y0)}));
+    return{png:c.toDataURL('image/png'),meta:{w:fw,h:fh,ax:AX-x0,ay:AY-y0,scale:S,...meta}}};
+  const out={plants:{},animals:{}};
+  try{
+    const ROWS=12,STAGES=[.2,.55,1],VAR=2,SEEDS=[7,1234]; // a row for each day of the year (3 days a season)
+    for(const id of Object.keys(FLORA)){if(!FDRAW[id]||(only&&!only.has(id)))continue;
+      const grid=[],shadow=[];let anyShadow=false;
+      for(let r=0;r<ROWS;r++){Object.assign(SEA,seasonFields((r+.5)*4/ROWS));const row=[];
+        for(const g of STAGES)for(const sd of SEEDS.slice(0,VAR)){const f=frame(()=>FDRAW[id](0,0,g,sd,0,-9,-9));row.push(f);shadow.push(f.sh);if(f.sh.length)anyShadow=true}
+        grid.push(row)}
+      const s=sheet(grid,{stages:STAGES,variants:VAR,...(anyShadow?{shadow}:{})});if(s)out.plants[id]=s}
+    Object.assign(SEA,seasonFields(1.2));
+    for(const id of Object.keys(ADRAW)){if(only&&!only.has(id))continue;
+      const fq=[...ADRAW[id].toString().matchAll(/tm\*([\d.]+)/g)].map(m=>+m[1]).filter(v=>v>=2.5),om=fq.length?Math.min(...fq):0,
+        n=om?clamp(Math.ceil(Math.max(...fq)/om*6),12,48):1; // one loop of its slowest motion, 6 frames for each beat of its fastest
+      const bake=()=>[1,0].map(m=>Array.from({length:n},(_,k)=>frame(()=>ADRAW[id]({id:0,m,f:1},om?k/n*Math.PI*2/om:0))));
+      let grid=bake();if(grid.flat().every(f=>f.empty)){NIGHT=1;DAYL=0;grid=bake();NIGHT=0;DAYL=1}  // night animals
+      const s=sheet(grid,{omega:om});if(s)out.animals[id]=s}
+  }finally{Object.assign(SEA,sv.SEA);({LV,LKEY,TINT_ON,FOG,NIGHT,DAYL,ROT,X}=sv);TC.clear();FC[1].clear();FC[2].clear();BAKE=false;SHREC=null}
+  return out;
+}
+if(/[?&]bake\b/.test(location.search))window.bakeSprites=bakeSprites;
+
 let time=0;
 /* The still parts of the world (sky, terrain, buildings, plants) are painted into an offscreen cache
    that is rebuilt only when the world changes: a sim tick, a player action, a change of light,
@@ -3775,7 +3869,7 @@ const markDirty=()=>{if(IN_TICK)softDirty=true;else worldDirty=true};
 function drawTileObjects(x,y){
   const t=T(x,y);drawGroundExtras(t,x,y);
   if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
-  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else FDRAW[t.p.id](sx,sy,t.p.g,x*97+y*13,0,x,y);SLX=SLY=0}
+  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);SLX=SLY=0}
 }
 // inside a forest a tile holds a close stand of trees over ferns and leaf litter, mixing in the species next door
 const FOREST_SUB=[[-.26,-.26],[.26,-.18],[-.18,.26],[.04,.02],[.27,.27]];
@@ -3787,7 +3881,7 @@ function drawForestTile(t,x,y,sx,sy){
     for(let j=-2;j<=2;j++){X.beginPath();X.moveTo(fx,fy);X.quadraticCurveTo(fx+j*1.6,fy-4,fx+j*2.6,fy-3+Math.abs(j)*.6);X.strokeStyle=tc(fc[(j+k)&1]);X.lineWidth=1.1;X.stroke()}}
   for(let k=0;k<FOREST_SUB.length;k++){const[u,v]=FOREST_SUB[k];if(k===4&&hash(x,y,9)<.5)continue;
     const sp=ids[(hash(x,y,k+3)*ids.length)|0],gg=Math.max(.35,g*(.62+.22*hash(y,x,k))),ox=(u-v)*HW,oy=(u+v)*HH-(SLX*u+SLY*v);
-    FDRAW[sp](sx+ox,sy+oy,gg,sd+k*31,0,x,y)}
+    plantArt(sp,sx+ox,sy+oy,gg,sd+k*31,x,y)}
 }
 // ivy climbing the walls, and cracks from every hit
 function drawWear(t,x,y){
@@ -3885,7 +3979,7 @@ function drawMovers(){
     const[mx,my]=isoG(o.x,o.y);
     // animals off screen are skipped: their shaded sprites are the costliest thing drawn each frame
     if(o.sp){const z=cam.z,px=(mx-cam.x)*z+W/2,py=(my-cam.y)*z+H/2,m=18*z+8;if(px<-m||px>W+m||py<-6*z-8||py>H+42*z+8)continue}
-    if(o.sp){X.save();X.translate(mx,my);X.scale(o.f,1);LO=cam.z<.75;ADRAW[o.sp](o,time);LO=false;X.restore()}else drawCar(o);
+    if(o.sp){X.save();X.translate(mx,my);X.scale(o.f,1);LO=cam.z<.75;animalArt(o.sp,o,time);LO=false;X.restore()}else drawCar(o);
     const half=o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(o.sp?MOVER_H[o.sp]:9),bot=my+3;
     const tx=Math.round(o.x),ty=Math.round(o.y);let occ=null;
     for(let dv=-1;dv<=5;dv++)for(let du=-1;du<=5;du++){
@@ -4844,7 +4938,7 @@ function drawPortrait(cvs,k){
   const g=c.createRadialGradient(w/2,h*.8,2,w/2,h*.8,w*.42);g.addColorStop(0,water?'rgba(63,147,181,.55)':'rgba(111,154,70,.5)');g.addColorStop(1,'rgba(0,0,0,0)');
   c.fillStyle=g;c.beginPath();c.ellipse(w/2,h*.8,w*.42,h*.16,0,0,7);c.fill();
   const sc=w/64*(TINY.has(k)?4:LARGE.has(k)?1.9:2.7);
-  c.setTransform(sc,0,0,sc,w/2,h*.8);c.translate(0,ICON_DY[k]||0);ADRAW[k]({id:4,m:0,f:1},1.3);
+  c.setTransform(sc,0,0,sc,w/2,h*.8);c.translate(0,ICON_DY[k]||0);animalArt(k,{id:4,m:0,f:1},1.3);
   c.setTransform(1,0,0,1,0,0);Object.assign(SEA,sv);TINT_ON=true;
 }
 const GUIDE_LANES=[['plant','Plants'],['insect','Small life'],['bird','Birds'],['mammal','Mammals'],['water','Water life']];
@@ -5097,9 +5191,9 @@ function drawIcon0(cvs,tl,season){
   const sc=cvs.width/64;X=c;const sv={...SEA},ps=season??ICON_SEASON[tl.id];Object.assign(SEA,ps!=null?seasonFields(ps):{aut:0,leaves:1,snow:0,bloom:1,spring:0,blossom:0,summer:1,dry:0,p:1.2});TINT_ON=false;c.setTransform(sc,0,0,sc,32*sc,40*sc);
   const key=tl.id;
   const animal=id=>{c.scale(1.55,1.55);const cl=FAUNA[id].cls,mv=FAUNA[id].mv;poly(diamond(0,0,.45),mv==='swim'||cl==='water'?'#3f93b5':cl==='insect'?'#7a9a46':'#5d7d3a');c.save();
-    const small=cl==='insect'||['earthworm','vole','dormouse','newt','glowworm'].includes(id);if(small)c.scale(1.6,1.6);c.translate(0,ICON_DY[id]||0);ADRAW[id]({id:4,m:0,f:1},1.3);c.restore()};
+    const small=cl==='insect'||['earthworm','vole','dormouse','newt','glowworm'].includes(id);if(small)c.scale(1.6,1.6);c.translate(0,ICON_DY[id]||0);animalArt(id,{id:4,m:0,f:1},1.3);c.restore()};
   if((tl.type==='guide'&&tl.kind==='flora')||tl.type==='sow'){const f=FLORA[tl.id],tall=f.kind==='tree';c.scale(tall?.95:1.25,tall?.95:1.25);c.translate(0,tall?8:-2);
-    poly(diamond(0,0,.62),f.kind==='aquatic'?'#3f93b5':f.kind==='ground'?'#6f9a46':'#5a3f28');FDRAW[tl.id](0,0,1,7,0,0,0)}
+    poly(diamond(0,0,.62),f.kind==='aquatic'?'#3f93b5':f.kind==='ground'?'#6f9a46':'#5a3f28');plantArt(tl.id,0,0,1,7,0,0)}
   else if(tl.type==='guide'||tl.type==='reintro')animal(tl.id);
   else if(key==='inspect'){c.scale(1.2,1.2);poly(diamond(0,0,.6),'#8b8c87');c.strokeStyle='#cfdc84';c.lineWidth=2.4;c.beginPath();c.arc(-2,-12,7,0,Math.PI*2);c.stroke();seg(3,-7,9,-1,'#cfdc84',3)}
   else if(key==='lens'){c.scale(1.2,1.2);poly(diamond(0,0,.62),'#6e5a48');poly(diamond(-7,-2,.26),'rgba(50,140,220,.85)');poly(diamond(6,3,.2),'rgba(250,232,150,.85)');poly(diamond(2,-6,.16),'rgba(230,90,70,.7)');
@@ -5722,7 +5816,8 @@ function start(data){
   requestAnimationFrame(t=>{last=t;requestAnimationFrame(frame)});
 }
 window.claude?.hot?.snapshot?.(()=>({S}));
-window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {});
+// the sprite sheets load first (or give up after a few seconds) so the icons are drawn from them too
+Promise.race([loadSprites(),new Promise(r=>setTimeout(r,4000))]).then(()=>window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude?.hot?.data ?? {}));
 })();
 </script>
 <script>
