@@ -6210,13 +6210,16 @@ function toast(title,body,kind){
   setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),450)},kind==='unlock'?6500:kind==='full'?9000:4500);
 }
 function fmt(n){const neg=n<0;n=Math.floor(Math.abs(n));let o;if(n<1e4)o=n.toLocaleString('en-US');else{const u=['K','M','B','T','Qa'];let i=-1;while(n>=1e3&&i<4){n/=1e3;i++}o=(n<100?n.toFixed(1):Math.round(n))+u[i]}return(neg?'−':'')+o}
-// the top bar keeps three digits, then K, M, B, T, so the numbers always fit on a phone
+// the top bar falls back to three digits, then K, M, B, T, so the numbers always fit on a phone
 function fmtC(n){n=Math.floor(Math.max(0,n));if(n<1e3)return String(n);const u=['K','M','B','T','Qa'];let i=-1;while(n>=1e3&&i<4){n/=1e3;i++}return(n<100?(Math.floor(n*10)/10).toFixed(1).replace(/\.0$/,''):Math.floor(n))+u[i]}
+// the seed count is written out in full when the top bar has room for it
+addEventListener('resize',()=>{$('sSeeds')._k=''});
 function updateHUD(){
-  $('sSeeds').textContent=fmtC(S.seeds);$('sSeeds').parentNode.title=`${fmt(S.seeds)} seeds`;$('sIncome').textContent=`+${D.income<100?D.income.toFixed(1):fmtC(D.income)}/s`;
+  $('sSeeds').parentNode.title=`${fmt(S.seeds)} seeds`;$('sIncome').textContent=`+${D.income<100?D.income.toFixed(1):fmtC(D.income)}/s`;
   $('mycStat').hidden=!S.myc;$('sMyc').textContent=S.myc||0;$('sMycS').textContent=`×${mycMult().toFixed(1)}`;
   const ready=!!S.blocks&&wildBlocks()>=NB*NB;$('newBtn').hidden=!ready;if(ready)$('newBtn').textContent=`Next city +${mycReward()}`;
-  $('sBio').textContent=fmtC(D.bio);$('sWF').textContent=D.W;$('sWFs').textContent=`×${D.F.toFixed(1)}`;if(!$('web').hidden&&S.t!==renderWeb.t){renderWeb.t=S.t;renderWeb()}
+  $('sBio').textContent=fmtC(D.bio);
+  {const el=$('sSeeds'),full=Math.floor(S.seeds).toLocaleString('en-US'),k=full+'|'+D.bio;if(el._k!==k){el._k=k;el.textContent=full;const st=$('stats');if(st.scrollWidth>st.clientWidth+1)el.textContent=fmtC(S.seeds)}}$('sWF').textContent=D.W;$('sWFs').textContent=`×${D.F.toFixed(1)}`;if(!$('web').hidden&&S.t!==renderWeb.t){renderWeb.t=S.t;renderWeb()}
   $('blkStat').hidden=!S.blocks;if(S.blocks){$('sBlk').textContent=ownedBlocks();$('sBlkS').textContent=`/${NB*NB} · ${wildBlocks()} wild`}
   const pm=$('sPm');pm.textContent=D.pm<10?D.pm.toFixed(1):Math.round(D.pm);pm.className=D.pm>25?'pm-bad':D.pm<10?'pm-ok':'';
   $('sConc').textContent=Math.round(D.conc/(N*N)*100);$('sCan').textContent=Math.round(D.trees/(N*N)*100);$('sCanS').textContent=D.forests.length?`% · ${D.forests.length} wood${D.forests.length>1?'s':''}`:'%';$('sWat').textContent=Math.round(D.water/(N*N)*100);
