@@ -1,7 +1,7 @@
 # Sprites
 
-Every plant and animal in the game is drawn from a PNG sprite sheet in this folder. Change a PNG and the game
-draws the new picture, on the map and in the field guide. Sheets are made from the game's own drawing code by
+Every plant, animal and building in the game is drawn from a PNG sprite sheet in this folder, and the ground and
+water can wear textures from it too. Change a PNG and the game draws the new picture, on the map and in the field guide. Sheets are made from the game's own drawing code by
 `npm run sprites`, so they always start out looking exactly like the code-drawn art.
 
 ```
@@ -10,6 +10,8 @@ sprites/
   plants/<id>.png   one sheet per plant and plant level (oak.png, oak2.png, meadow3.png …)
   animals/<id>.png  one sheet per animal (fox.png, heron.png …)
   homes/<id>.png    one sheet per animal home, named for its animal (fox.png is the fox earth)
+  buildings/<look>.png  one sheet per building look (house-2-1-r3.png, tower-0-12.png …)
+  textures/<surface>.png  optional ground and water textures you draw yourself (soil.png, water.png …)
 ```
 
 The file name is the species id from `FLORA` or `FAUNA` in `index.html`. A species with no sheet is simply drawn by
@@ -52,6 +54,42 @@ The warrens, dens, nests and wallows drawn on an animal's home tile.
 - The anchor is the spot on the ground (or the branch, for nests) where the home sits. Re-bake one with
   `npm run sprites -- home-fox`.
 
+## Building sheets
+
+Each look of a building has its own sheet, named `<kind>-<colour>-<floors>` plus what else sets it apart:
+
+- `tower-2-11.png`: a tower in colour scheme 2 (of 0–3), 11 floors high. Kinds without colour schemes skip the colour
+  (`warehouse-2.png`, `farm-2.png`).
+- `-spire` marks the one tall tower with a spire, `-rp` a garage, mast or flyover being reclaimed by nature.
+- Houses and terraces add their roof colour, `-r0` to `-r3`, and houses without a fruit tree in the garden end in `-bare`.
+
+The grid is small:
+
+- **4 rows, one per season**: spring, summer, autumn, winter (snow on the roofs). One row is used all year.
+- **Column 1 is the building, column 2 its night lights**: only the parts that glow after dark (lit windows, shop
+  windows, lamps), on a transparent background. The game fades them in at dusk. Leave column 2 out and the building stays dark.
+
+Buildings stand on the middle of their tile (the anchor), and the game adds a foundation under them on slopes.
+Ivy, cracks from demolition and nests on reclaimed buildings are still drawn on top by the game. A city only loads the
+sheets for the buildings it actually has.
+
+## Ground and water textures
+
+The ground and water take their shape from the terrain and their colour from what is happening on each tile (toxic
+brown turning green, water clearing as reeds filter it), so they are not sprites. Instead you can give each surface a
+texture that the game lays over every tile of it, bent to follow the slope:
+
+- Draw a diamond the shape of one tile, twice as wide as it is high (for example 192 × 96 pixels), on a transparent
+  background, and save it as `textures/<surface>.png`. Surfaces: `soil`, `garden`, `pave`, `road`, `runway`, `path`,
+  `rubble`, `water`.
+- Run `npm run sprites` to add it to `sprites.js`.
+- `mode` in `sprites.js` says how it mixes with the tile's own colour. `overlay` (the default) keeps the colour and adds
+  your light and dark detail, so draw it around mid grey. `multiply` only darkens. `normal` paints your texture as it is,
+  so that surface no longer changes colour with the soil or the seasons.
+- More rows spread over the year like plant rows (a snowy last row, say); more columns are looks picked at random per tile.
+
+Without a texture a surface keeps its plain colour.
+
 ## Size and anchor
 
 Each entry in `sprites.js` looks like this:
@@ -76,6 +114,7 @@ You need Node.js and, once, `npx playwright install chromium` (or Google Chrome 
 ```
 npm run sprites                bake sheets for any species that has none yet
 npm run sprites -- oak fox     re-bake just these (overwrites their PNGs)
+npm run sprites -- house       re-bake every look of one building kind
 npm run sprites -- --force     re-bake everything (overwrites every PNG)
 npm run sprites -- --scale=4   bake at 4 pixels per game unit
 ```

@@ -2640,7 +2640,8 @@ function glowSprite(rgb){const k=rgb.join();if(GLOW[k])return GLOW[k];const c=do
   gr.addColorStop(0,`rgba(${rgb},1)`);gr.addColorStop(.3,`rgba(${rgb},.45)`);gr.addColorStop(1,`rgba(${rgb},0)`);g.fillStyle=gr;g.fillRect(0,0,64,64);return GLOW[k]=c}
 const WARM=[255,210,140],FIREFLY=[205,255,120],REDL=[255,90,70];
 let RPDARK=false;
-function glow(x,y,r,col,a,sq=1){if(a<=.01||!TINT_ON||BAKE||OCC||FOG===2||RPDARK)return;X.globalCompositeOperation='lighter';X.globalAlpha=Math.min(1,a);X.drawImage(glowSprite(col),x-r,y-r*sq,r*2,r*2*sq);X.globalAlpha=1;X.globalCompositeOperation='source-over'}
+function glow(x,y,r,col,a,sq=1){if(GLREC){if(a>.01){const m=X.getTransform();GLREC.push([m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f,r*m.a,col,+clamp(a,.6,1).toFixed(2),sq])}return}
+  if(a<=.01||!TINT_ON||BAKE||OCC||FOG===2||RPDARK)return;X.globalCompositeOperation='lighter';X.globalAlpha=Math.min(1,a);X.drawImage(glowSprite(col),x-r,y-r*sq,r*2,r*2*sq);X.globalAlpha=1;X.globalCompositeOperation='source-over'}
 let flakes=[],drops=[];
 function updateWeather(dt){
   const snowing=SEA.snow>.15&&SEA.p>2.95&&SEA.p<3.7,target=snowing?Math.round(150*Math.min(1,SEA.snow*1.5)):0;
@@ -2762,7 +2763,7 @@ function drawReclaimed(b,x,y){
   const z=Math.max(...corners(x,y)),nest=(p)=>{ell(p[0],p[1],6.5,3,'#5e4630');X.strokeStyle=tc('#7a5c3c');X.lineWidth=.8;X.beginPath();
     for(let i=0;i<9;i++){const a=hash(x,y,i)*6.28;X.moveTo(p[0]+Math.cos(a)*3,p[1]+Math.sin(a)*1.4-1);X.lineTo(p[0]+Math.cos(a)*8,p[1]+Math.sin(a)*3.4-1)}X.stroke();ell(p[0],p[1]-1.2,3.6,1.4,'#3e2e20')};
   if(b.k==='garage'){const Hh=b.h*FL,e=.46;
-    poly([iso(x-e,y-e,z+Hh),iso(x+e,y-e,z+Hh),iso(x+e,y+e,z+Hh),iso(x-e,y+e,z+Hh)],seasonGround(hx('#6f8f4a'),'g'));
+    poly([iso(x-e,y-e,z+Hh),iso(x+e,y-e,z+Hh),iso(x+e,y+e,z+Hh),iso(x-e,y+e,z+Hh)],shade(seasonGround(hx('#6f8f4a'),'g'),1));
     for(let i=0;i<6;i++){const u=(hash(x,y,i)-.5)*.7,v=(hash(y,x,i)-.5)*.7,p=iso(x+u,y+v,z+Hh);ell(p[0],p[1]-2,3+2*hash(i,y,x),2.2,i%2?'#4f7a3a':'#62903f')}
     X.strokeStyle=tc('#3f6e34');X.lineWidth=1.2;X.beginPath();
     for(let f=1;f<=b.h;f++)for(let i=0;i<6;i++){const u=-.4+i*.16+hash(x,f,i)*.05,top=z+f*FL,len=3+6*hash(f,i,x),p=i%2?iso(x+u,y+e+.01,top):iso(x+e+.01,y+u,top);X.moveTo(p[0],p[1]);X.lineTo(p[0],p[1]+len)}X.stroke();
@@ -2772,8 +2773,8 @@ function drawReclaimed(b,x,y){
   else if(b.k==='farm'){const p=iso(x+.26,y+.08,z+FL*1.4+3);circ(p[0],p[1],2.2,'#1e1610');const q=iso(x+.28,y-.3,z+30);nest(q)}
 }
 function drawBuilding(t,x,y){
-  const b=t.b,v=b.v||0,tint=.93+hash(x,y,9)*.14,cs=corners(x,y),lo=Math.min(...cs),hi=Math.max(...cs);
-  if(hi-lo>.4&&b.k!=='house'&&b.k!=='terrace')plinth(x,y,x,y,.47,.47,hi+.5,'#8d8a82','#7c786f','#67645c');
+  const b=t.b,v=b.v||0,tint=.93+bh(x,y,9)*.14,cs=corners(x,y),lo=Math.min(...cs),hi=Math.max(...cs);
+  bPlinth(b,x,y,lo,hi);
   const z=hi;
   if(b.k==='tower'){
     const P=TPAL[v%4],Hh=b.h*FL,T3=(c,f)=>shade(c,tint*f);
@@ -2875,7 +2876,7 @@ function drawBuilding(t,x,y){
   }else if(b.k==='flyover'){
     const dz=16;
     for(const px of [-.25,.25])isoBox(x+px,y,.07,.07,z,dz,'#9a9b96','#8a8b86','#74756f');
-    if(b.rp){isoBox(x,y,.5,.42,z+dz,4,seasonGround(hx('#6f8f4a'),'g'),'#8d8e8a','#76776f');
+    if(b.rp){isoBox(x,y,.5,.42,z+dz,4,shade(seasonGround(hx('#6f8f4a'),'g'),1),'#8d8e8a','#76776f');
       for(let i=0;i<7;i++){const u=(hash(x,y,i)-.5)*.8,v=(hash(y,x,i)-.5)*.7,p=iso(x+u,y+v,z+dz+4);ell(p[0],p[1]-2,3+2*hash(i,x,y),2.2,i%2?'#4f7a3a':'#5f8a40')}
     }else{isoBox(x,y,.5,.42,z+dz,4,'#55585c','#8d8e8a','#76776f');
     X.setLineDash([4,4]);const a=iso(x-.5,y,z+dz+4),c2=iso(x+.5,y,z+dz+4);seg(a[0],a[1],c2[0],c2[1],'#d8c76e',1);X.setLineDash([]);
@@ -2913,12 +2914,16 @@ function drawBuilding(t,x,y){
     isoBox(x-.22,y-.22,.093,.093,z+Hh+24,4,'#a8473a','#a8473a','#8a3a30');
   }
 }
+// the random touches that make each building its own (baking a sprite sets them through BKH)
+let BKH=null;const bh=(x,y,k)=>BKH&&BKH[k]!=null?BKH[k]:hash(x,y,k);
+// a foundation under a building on a slope
+function bPlinth(b,x,y,lo,hi){if(hi-lo<=.4)return;
+  if(b.k!=='house'&&b.k!=='terrace'){plinth(x,y,x,y,.47,.47,hi+.5,'#8d8a82','#7c786f','#67645c');return}
+  const v=b.v||0,ter=b.k==='terrace';plinth(x,y,x-.05,y-.07,(ter?.43:.25+.04*(v%2))+.02,(ter?.22:.21)+.02,hi+.3,'#9a958a','#8a857a','#77736a')}
 function drawHouse(b,x,y,lo,hi,tint){
-  const v=b.v||0,ter=b.k==='terrace',wallC=ter?hx(['#a86a52','#b98060','#8f5a46','#c4a07a'][v]):HOUSEWALL[v],roofC=ROOF[(v+(hash(x,y,2)*4|0))%4];
-  const wcol=NIGHT>.35&&hash(x,y,31)<.75?'#f6cf7e':'#3c4650';
+  const v=b.v||0,ter=b.k==='terrace',wallC=ter?hx(['#a86a52','#b98060','#8f5a46','#c4a07a'][v]):HOUSEWALL[v],roofC=ROOF[(v+(bh(x,y,2)*4|0))%4];
+  const wcol=NIGHT>.35&&bh(x,y,31)<.75?'#f6cf7e':'#3c4650';
   const cx=x-.05,cy=y-.07,ex=ter?.43:.25+.04*(v%2),ey=ter?.22:.21,z=hi,wh=b.h*FL*.85+2,zr=z+wh,rh=8;
-  // foundation on slopes
-  if(hi-lo>.4)plinth(x,y,cx,cy,ex+.02,ey+.02,hi+.3,'#9a958a','#8a857a','#77736a');
   isoBox(cx,cy,ex,ey,z,wh,shade(wallC,tint),shade(wallC,tint*.92),shade(wallC,tint*.76));
   // door and windows
   const dc=['#2f5e8c','#7a2e2a','#2f5a3a','#d9a93a'][v];
@@ -2942,9 +2947,9 @@ function drawHouse(b,x,y,lo,hi,tint){
   if(!ter){
     // garden: a fruit tree and a clipped hedge along the front
     const gx=x+.3,gy=y+.26,gh=hAt(gx,gy),[tx,ty]=iso(gx,gy,gh);
-    if(hash(x,y,6)<.75){ell(tx+3,ty+1,6,2.6,'rgba(25,35,20,.22)');seg(tx,ty,tx,ty-6,'#5a4030',1.6);canopy(tx,ty-10,5,['#3f6b30','#55883e','#7aac58'],AUTUMN.fruit,x*7+y,(P,k)=>crown(tx,ty-10,5*k,P));
+    if(bh(x,y,6)<.75){ell(tx+3,ty+1,6,2.6,'rgba(25,35,20,.22)');seg(tx,ty,tx,ty-6,'#5a4030',1.6);canopy(tx,ty-10,5,['#3f6b30','#55883e','#7aac58'],AUTUMN.fruit,x*7+y,(P,k)=>crown(tx,ty-10,5*k,P));
       if(SEA.blossom>.2)for(let i=0;i<6;i++)circ(tx-4+hash(x,y,i)*8,ty-13+hash(y,x,i)*6,.9,'#f6d6e2');
-      else if(SEA.aut>.2&&SEA.leaves>.3&&hash(x,y,7)<.6)for(let i=0;i<4;i++)circ(tx-3+hash(x,y,i)*6,ty-12+hash(y,x,i)*5,.9,'#d9452e')}
+      else if(SEA.aut>.2&&SEA.leaves>.3&&bh(x,y,7)<.6)for(let i=0;i<4;i++)circ(tx-3+hash(x,y,i)*6,ty-12+hash(y,x,i)*5,.9,'#d9452e')}
   }
   const hz=hAt(x,y+.44);isoBox(x,y+.44,.44,.035,hz,3,'#4f7d3a','#3f6a2f','#335826');
   if(!ter){const hz2=hAt(x+.44,y);isoBox(x+.44,y-.06,.035,.38,hz2,3,'#4f7d3a','#3f6a2f','#335826')}
@@ -3666,6 +3671,7 @@ function drawGround(t,x,y,tm,wc){
   const q=quad(x,y),[dx,dy]=slope(x,y),f=1+(clamp(1+.035*dx+.012*dy,.68,1.3)-1)*(1-SEA.snow*.65);
   if(t.gd==='water'){
     const c=shade(wc.top,f);X.fillStyle=tc(c);X.strokeStyle=tc(c);X.lineWidth=.8;X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let i=1;i<4;i++)X.lineTo(q[i][0],q[i][1]);X.closePath();X.fill();X.stroke();
+    if(SHEETS.texture.water)texQuad(SHEETS.texture.water,q,x,y);
     // shallows where water meets land
     const sides=[[0,1,0,-1],[1,2,1,0],[2,3,0,1],[3,0,-1,0]];
     X.strokeStyle=tc(wc.edge);X.lineWidth=2.2;X.globalAlpha=.55;X.beginPath();
@@ -3679,6 +3685,7 @@ function drawGround(t,x,y,tm,wc){
   }
   const c=shade(groundRGB(t,x,y),f);
   X.fillStyle=tc(c);X.strokeStyle=tc(c);X.lineWidth=.8;X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let i=1;i<4;i++)X.lineTo(q[i][0],q[i][1]);X.closePath();X.fill();X.stroke();
+  {const tx=SHEETS.texture[t.gd==='road'&&t.rw?'runway':t.gd];if(tx)texQuad(tx,q,x,y)}
   if(t.p&&t.p.id==='lawn'){ // mower stripes
     X.strokeStyle=tc('rgba(255,255,255,.09)');X.lineWidth=4;X.beginPath();for(let k=-1;k<=1;k+=2){const p=isoG(x+k*.22,y-.45),r=isoG(x+k*.22,y+.45);X.moveTo(p[0],p[1]);X.lineTo(r[0],r[1])}X.stroke()}
   if(t.gd==='pave'||t.gd==='road'){X.strokeStyle=tc('rgba(0,0,0,.12)');X.lineWidth=.6;X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let i=1;i<4;i++)X.lineTo(q[i][0],q[i][1]);X.closePath();X.stroke()}
@@ -3807,35 +3814,42 @@ const SKY={st:hx('#7d6a56'),sb:hx('#c9a477'),dt:hx('#4f8fc0'),db:hx('#f0e2c4'),n
    The sheets are baked from the drawing code above (npm run sprites); replace a PNG to change how a species looks,
    sprites/README.md explains the layout. A species without a sheet, or whose sheet has not loaded, is drawn by its code.
    plant sheet: one row per part of the year, one column per growth stage and look (stage*variants+variant)
-   animal sheet: row 0 moving, row 1 still, frames left to right through one cycle of its gait or wingbeat */
-const SHEETS={plant:{},animal:{},home:{}},TINTS=new Map();let TINT_LK='',SHREC=null,BAKE=false;
+   animal sheet: row 0 moving, row 1 still, frames left to right through one cycle of its gait or wingbeat
+   building sheet: one row per season, column 0 the building, column 1 its lit windows at night
+   texture: a tile-sized diamond laid over the ground or water of every tile of its surface */
+const SHEETS={plant:{},animal:{},home:{},building:{},texture:{}},TINTS=new Map(),PEND=new Set();let TINT_LK='',SHREC=null,GLREC=null,BAKE=false;
+const SPR_ON=!/[?&](nosprites|bake)\b/.test(location.search);
 const SPRITE_ICONS=location.protocol!=='file:'; // a sprite read from file:// would stop icon canvases from being saved
 // sprites have no light of their own: these animals keep hiding when their code would
 const ANIM_HIDE={butterfly:()=>NIGHT>.5||SEA.snow>.4,moth:()=>DAYL>.75,mayfly:()=>SEA.snow>.3,bat:()=>NIGHT<.15&&DAYL>.9};
+function loadSheet(kind,id,d){const M=window.SPRITE_SHEETS;PEND.add(kind+id);return new Promise(done=>{
+  const img=new Image();img.onerror=()=>done();
+  img.onload=()=>{const cols=Math.floor(img.width/d.w),rows=Math.floor(img.height/d.h);if(cols&&rows){SHEETS[kind][id]={...d,id:kind+id,img,cols,rows};worldDirty=true}done()};
+  img.src='sprites/'+d.file+(M.v?'?v='+M.v:'')})}
+// plants, animals, homes and textures load before the game starts; buildings the first time a city needs them
 function loadSprites(){
-  const M=window.SPRITE_SHEETS;if(!M||/[?&](nosprites|bake)\b/.test(location.search))return Promise.resolve();
-  const jobs=[];
-  for(const kind of['plant','animal','home'])for(const[id,d]of Object.entries(M[kind+'s']||{}))jobs.push(new Promise(done=>{
-    const img=new Image();img.onerror=()=>done();
-    img.onload=()=>{const cols=Math.floor(img.width/d.w),rows=Math.floor(img.height/d.h);if(cols&&rows){SHEETS[kind][id]={...d,id:kind+id,img,cols,rows};worldDirty=true}done()};
-    img.src='sprites/'+d.file+(M.v?'?v='+M.v:'')}));
+  const M=window.SPRITE_SHEETS;if(!M||!SPR_ON)return Promise.resolve();
+  const jobs=[];for(const kind of['plant','animal','home','texture'])for(const[id,d]of Object.entries(M[kind+'s']||{}))jobs.push(loadSheet(kind,id,d));
   return Promise.all(jobs);
 }
+function sheetOf(kind,id){const sh=SHEETS[kind][id];if(sh||PEND.has(kind+id))return sh;
+  const M=window.SPRITE_SHEETS,d=SPR_ON&&M&&M[kind+'s']&&M[kind+'s'][id];if(d)loadSheet(kind,id,d);else PEND.add(kind+id);return null}
 // one frame of a sheet in the light of the hour (and the haze over unexplored ground): [image, x, y]
-function frameSrc(sh,i){
+// (f darkens it further: buildings vary a little in shade)
+function frameSrc(sh,i,f=1){
   const c=i%sh.cols,r=(i/sh.cols)|0;
-  if(!TINT_ON||(!FOG&&LV[0]===1&&LV[1]===1&&LV[2]===1))return[sh.img,c*sh.w,r*sh.h];
+  if(!TINT_ON||(!FOG&&f===1&&LV[0]===1&&LV[1]===1&&LV[2]===1))return[sh.img,c*sh.w,r*sh.h];
   if(TINT_LK!==LKEY){TINT_LK=LKEY;TINTS.clear()}
-  const k=sh.id+'|'+i+'|'+FOG;let cv=TINTS.get(k);
+  const k=sh.id+'|'+i+'|'+FOG+'|'+f;let cv=TINTS.get(k);
   if(!cv){cv=document.createElement('canvas');cv.width=sh.w;cv.height=sh.h;const g=cv.getContext('2d'),w=sh.w,h=sh.h;
     g.drawImage(sh.img,c*w,r*h,w,h,0,0,w,h);
     if(FOG){g.globalCompositeOperation='saturation';g.globalAlpha=FOG===1?.18:.45;g.fillStyle='#808080';g.fillRect(0,0,w,h);
       g.globalCompositeOperation='source-atop';g.globalAlpha=FOG===1?.1:.26;g.fillStyle='rgb(78,84,92)';g.fillRect(0,0,w,h);g.globalAlpha=1}
-    g.globalCompositeOperation='multiply';g.fillStyle=`rgb(${LV.map(v=>Math.min(255,Math.round(v*255))).join()})`;g.fillRect(0,0,w,h);
+    g.globalCompositeOperation='multiply';g.fillStyle=`rgb(${LV.map(v=>Math.min(255,Math.round(v*f*255))).join()})`;g.fillRect(0,0,w,h);
     g.globalCompositeOperation='destination-in';g.drawImage(sh.img,c*w,r*h,w,h,0,0,w,h);TINTS.set(k,cv)}
   return[cv,0,0];
 }
-function blit(sh,i,x,y){const[src,fx,fy]=frameSrc(sh,i),s=1/sh.scale;X.drawImage(src,fx,fy,sh.w,sh.h,x-sh.ax*s,y-sh.ay*s,sh.w*s,sh.h*s)}
+function blit(sh,i,x,y,f){const[src,fx,fy]=frameSrc(sh,i,f),s=1/sh.scale;X.drawImage(src,fx,fy,sh.w,sh.h,x-sh.ax*s,y-sh.ay*s,sh.w*s,sh.h*s)}
 // a plant: the row for the time of year, the column for how grown it is and which of its looks this tile wears
 function plantSprite(id,sx,sy,g,sd){
   const sh=SHEETS.plant[id];if(!sh||(!TINT_ON&&!SPRITE_ICONS))return false;
@@ -3855,26 +3869,70 @@ function animalArt(k,a,tm){
   const row=sh.rows>1&&!(a.m&&TINT_ON)?1:0,ph=TINT_ON&&sh.omega?(tm*sh.omega+a.id)/(Math.PI*2):0;
   blit(sh,row*sh.cols+Math.floor((ph-Math.floor(ph))*sh.cols)%sh.cols,0,0);
 }
+// a building: the sheet for its kind, colour, height and the random touches it was given (roof colour, garden tree)
+const BV=new Set(['tower','office','block','shop','house','terrace','mall','terminal']); // kinds coloured by b.v
+function bKey(b,x,y){const k=b.k;if(k==='mast'&&b.ivy)return null; // ivy climbs the mast as it is taken down: drawn in code
+  let s=k+(BV.has(k)?'-'+(b.v||0)%4:'')+'-'+b.h+(b.spire?'-spire':'')+(b.rp&&(k==='garage'||k==='mast'||k==='flyover')?'-rp':'');
+  if(k==='house'||k==='terrace')s+='-r'+((b.v||0)+(hash(x,y,2)*4|0))%4+(k==='house'&&hash(x,y,6)>=.75?'-bare':'');
+  return s}
+function buildingSprite(t,x,y){
+  const b=t.b,key=bKey(b,x,y),sh=key&&sheetOf('building',key);if(!sh)return false;
+  const cs=corners(x,y),lo=Math.min(...cs),hi=Math.max(...cs);bPlinth(b,x,y,lo,hi);
+  const[sx,sy]=iso(x,y,hi),row=Math.floor(SEA.p/4*sh.rows)%sh.rows,i=row*sh.cols;
+  blit(sh,i,sx,sy,Math.round((.93+hash(x,y,9)*.14)/1.07*25)/25);
+  // lit windows glow at night in their own colours, untouched by the darkness
+  if(sh.cols>1&&TINT_ON&&NIGHT>.3&&FOG!==2&&(b.k!=='house'&&b.k!=='terrace'||hash(x,y,31)<.75)){const s=1/sh.scale;
+    X.globalAlpha=Math.min(1,(NIGHT-.3)/.25);X.drawImage(sh.img,sh.w,row*sh.h,sh.w,sh.h,sx-sh.ax*s,sy-sh.ay*s,sh.w*s,sh.h*s);X.globalAlpha=1}
+  if(sh.glow&&!b.rp)for(const[gx,gy,r,col,a,sq]of sh.glow)glow(sx+gx,sy+gy,r,col,a*NIGHT,sq); // beacons and lamps
+  return true;
+}
+// a surface texture laid over one tile (q: its back, right, front and left corners) as two triangles,
+// so it follows the slope; the frame is a diamond with its corners at the middle of each side
+function texQuad(sh,q,x,y){
+  const w=sh.w,h=sh.h,T=[[w/2,0],[w,h/2],[w/2,h],[0,h/2]],mode=sh.mode||'overlay',
+    i=(Math.floor(SEA.p/4*sh.rows)%sh.rows)*sh.cols+(sh.cols>1?Math.floor(hash(x,y,63)*sh.cols):0),
+    [src,fx,fy]=mode==='normal'?frameSrc(sh,i):[sh.img,(i%sh.cols)*w,((i/sh.cols)|0)*h];
+  if(mode!=='normal')X.globalCompositeOperation=mode;
+  for(const[a,b,c]of[[0,1,2],[0,2,3]]){
+    const u1=T[b][0]-T[a][0],v1=T[b][1]-T[a][1],u2=T[c][0]-T[a][0],v2=T[c][1]-T[a][1],det=u1*v2-u2*v1,
+      x1=q[b][0]-q[a][0],y1=q[b][1]-q[a][1],x2=q[c][0]-q[a][0],y2=q[c][1]-q[a][1],
+      A=(x1*v2-x2*v1)/det,C=(x2*u1-x1*u2)/det,B=(y1*v2-y2*v1)/det,D=(y2*u1-y1*u2)/det;
+    X.save();X.beginPath();X.moveTo(q[a][0],q[a][1]);X.lineTo(q[b][0],q[b][1]);X.lineTo(q[c][0],q[c][1]);X.closePath();X.clip();
+    X.transform(A,B,C,D,q[a][0]-A*T[a][0]-C*T[a][1],q[a][1]-B*T[a][0]-D*T[a][1]);X.drawImage(src,fx,fy,w,h,0,0,w,h);X.restore()}
+  X.globalCompositeOperation='source-over';
+}
+// every building look the city builder can make, with the random touches that pick it
+function buildingLooks(){const L=[],V=[0,1,2,3],R=[0,1,2,3];
+  const add=(k,vs,hs,more=[{}])=>{for(const v of vs)for(const h of hs)for(const m of more){const b={k,v,h,...m.b},key=bKey({...b,ivy:0},0,0).replace(/-r\d(-bare)?$/,'')+(m.s||'');
+    L.push({key,b,bkh:{9:1,31:0,7:.1,...(m.r!=null?{2:((m.r-v+4)%4+.5)/4}:{}),6:m.bare?.9:.1}})}};
+  const roofs=bare=>R.map(r=>({r,bare,s:'-r'+r+(bare?'-bare':'')}));
+  add('tower',V,[8,9,10,11,12,13,14]);add('tower',[0],[11,12,13,14,15,16,17],[{b:{spire:1}}]);add('office',V,[5,6,7]);add('block',V,[3,4,5]);add('shop',V,[1,2]);
+  add('house',V,[1,2],roofs(false).concat(roofs(true)));add('terrace',V,[1,2],roofs(false));add('mall',V,[1]);add('terminal',[0,1],[2]);
+  const rp=[{},{b:{rp:1}}];add('garage',[0],[3,4,5],rp);add('mast',[0],[1],rp);add('flyover',[0],[2],rp);
+  add('farm',[0],[2]);add('greenhouse',[0],[1]);add('ctower',[0],[6]);add('factory',[0],[2]);add('warehouse',[0],[2]);
+  return L}
 
-// baking: draws every plant and animal from its code into sheets for scripts/bake-sprites.mjs (only on index.html?bake)
+// buildings are baked on level ground: returns the way back to the real terrain
+function flatTerrain(){const vh=S.vh;S.vh=vh.map(()=>0);return()=>{S.vh=vh}}
+// baking: draws every plant, animal and building from its code into sheets for scripts/bake-sprites.mjs (only on index.html?bake)
 function bakeSprites(o={}){
   const S=o.scale||3,only=o.only&&new Set(o.only),R=256*S,AX=R/2,AY=Math.round(R*.8);
   const wc=document.createElement('canvas');wc.width=wc.height=R;const w=wc.getContext('2d',{willReadFrequently:true});
   const sv={SEA:{...SEA},LV,LKEY,TINT_ON,FOG,NIGHT,DAYL,ROT,X};
   BAKE=true;TINT_ON=true;LV=[1,1,1];LKEY='bake';TC.clear();FC[1].clear();FC[2].clear();FOG=0;NIGHT=0;DAYL=1;ROT=0;SLX=SLY=0;X=w;
-  const frame=draw=>{w.setTransform(1,0,0,1,0,0);w.clearRect(0,0,R,R);w.setTransform(S,0,0,S,AX,AY);SHREC=[];w.save();draw();w.restore();
-    const sh=SHREC.map(([x,y,rx,ry])=>[(x-AX)/S,(y-AY)/S,rx/S,ry/S].map(v=>+v.toFixed(2)));SHREC=null;
-    const d=w.getImageData(0,0,R,R).data;let x0=R,y0=R,x1=-1,y1=-1;
+  const crop=img=>{const d=img.data;let x0=R,y0=R,x1=-1,y1=-1;
     for(let y=0;y<R;y++)for(let x=0;x<R;x++)if(d[(y*R+x)*4+3]>2){if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y}
-    if(x1<0)return{empty:true,sh};
-    const c=document.createElement('canvas');c.width=x1-x0+1;c.height=y1-y0+1;c.getContext('2d').drawImage(wc,-x0,-y0);return{c,x0,y0,x1,y1,sh}};
+    if(x1<0)return{empty:true};
+    const c=document.createElement('canvas');c.width=x1-x0+1;c.height=y1-y0+1;c.getContext('2d').putImageData(img,-x0,-y0);return{c,x0,y0,x1,y1}};
+  const paint=draw=>{w.setTransform(1,0,0,1,0,0);w.clearRect(0,0,R,R);w.setTransform(S,0,0,S,AX,AY);w.save();draw();w.restore();return w.getImageData(0,0,R,R)};
+  const frame=draw=>{SHREC=[];const img=paint(draw),sh=SHREC.map(([x,y,rx,ry])=>[(x-AX)/S,(y-AY)/S,rx/S,ry/S].map(v=>+v.toFixed(2)));SHREC=null;return{...crop(img),sh}};
   const sheet=(grid,meta)=>{ // grid: rows of frames, all the same size, anchored at the same foot point
     const all=grid.flat().filter(f=>!f.empty);if(!all.length)return null;
     const x0=Math.min(...all.map(f=>f.x0))-1,y0=Math.min(...all.map(f=>f.y0))-1,fw=Math.max(...all.map(f=>f.x1))+2-x0,fh=Math.max(...all.map(f=>f.y1))+2-y0;
     const c=document.createElement('canvas');c.width=fw*grid[0].length;c.height=fh*grid.length;const g=c.getContext('2d');
     grid.forEach((row,r)=>row.forEach((f,i)=>{if(!f.empty)g.drawImage(f.c,i*fw+f.x0-x0,r*fh+f.y0-y0)}));
     return{png:c.toDataURL('image/png'),meta:{w:fw,h:fh,ax:AX-x0,ay:AY-y0,scale:S,...meta}}};
-  const out={plants:{},animals:{},homes:{}};
+  const out={plants:{},animals:{},homes:{},buildings:{}};
   try{
     const ROWS=12,STAGES=[.2,.55,1],VAR=2,SEEDS=[7,1234]; // a row for each day of the year (3 days a season)
     for(const id of Object.keys(FLORA)){if(!FDRAW[id]||(only&&!only.has(id)))continue;
@@ -3893,6 +3951,18 @@ function bakeSprites(o={}){
     for(const id of Object.keys(HOME_ART)){if(only&&!only.has('home-'+id))continue; // a row for each season, a column for each look
       const h=HOME_ART[id],grid=[0,1,2,3].map(r=>{Object.assign(SEA,seasonFields(r+.5));return Array.from({length:h.variants||1},(_,v)=>frame(()=>h.draw(0,0,-9,-9,v)))});
       const s=sheet(grid,{});if(s)out.homes[id]=s}
+    // buildings on flat ground, in each season by day, and what changes when night falls (the lit windows)
+    const unflat=flatTerrain(),EMITC=[...EMIT].map(hx);HT=-1;
+    try{for(const{key,b,bkh}of buildingLooks()){if(only&&!only.has(key)&&!only.has(b.k))continue;BKH=bkh;
+      const draw=()=>{SPR=[0,0,RC,RC];try{drawBuilding({b,gd:'pave'},RC,RC)}finally{SPR=null}},grid=[];let glows;
+      for(let r=0;r<4;r++){Object.assign(SEA,seasonFields(r+.5));const day=paint(draw);NIGHT=1;DAYL=0;GLREC=[];const night=paint(draw);NIGHT=0;DAYL=1;glows=glows||GLREC;GLREC=null;
+        // the night layer keeps what lights up after dark, and the colours that always glow (shop windows, lamps)
+        const a=day.data,n=night.data;
+        for(let p=0;p<n.length;p+=4)if(Math.abs(n[p]-a[p])+Math.abs(n[p+1]-a[p+1])+Math.abs(n[p+2]-a[p+2])+Math.abs(n[p+3]-a[p+3])<24&&!(n[p+3]>0&&EMITC.some(e=>Math.abs(n[p]-e[0])+Math.abs(n[p+1]-e[1])+Math.abs(n[p+2]-e[2])<10)))n[p+3]=0;
+        grid.push([crop(day),crop(night)])}
+      const glow=glows.map(([x,y,r,col,a,sq])=>[+((x-AX)/S).toFixed(2),+((y-AY)/S).toFixed(2),+(r/S).toFixed(2),col,a,sq]);
+      const s=sheet(grid,glow.length?{glow}:{});if(s)out.buildings[key]=s}}
+    finally{unflat();BKH=null}
   }finally{Object.assign(SEA,sv.SEA);({LV,LKEY,TINT_ON,FOG,NIGHT,DAYL,ROT,X}=sv);TC.clear();FC[1].clear();FC[2].clear();BAKE=false;SHREC=null}
   return out;
 }
@@ -3989,7 +4059,7 @@ function homeNote(h){const F=FAUNA[h.sp],art=HOME_ART[h.sp],shown=h.lodge||homeS
   return `<b style="color:var(--lichen);font-weight:600">${h.lodge?'Beaver lodge':shown?art.name:'Resting place'}.</b> Home of ${who}.${rest}${!shown&&HOME_NONE[h.sp]?' '+HOME_NONE[h.sp]:''}`}
 function drawTileObjects(x,y){
   const t=T(x,y);drawGroundExtras(t,x,y);
-  if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
+  if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{if(!buildingSprite(t,x,y))drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
   else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);SLX=SLY=0}
   if(!t.b)drawHomes(t,x,y);
 }
