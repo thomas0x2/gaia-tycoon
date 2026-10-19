@@ -5254,8 +5254,8 @@ function tourShow(i){
 }
 function tourEnd(){TOUR=null;FLY=null;$('tour').hidden=true;document.body.classList.remove('touring');markDirty()}
 function drawTour(){
-  if(!TOUR)return;const e=TOUR.e,pts=tourPts(e),age=time-TOUR.at,a=Math.min(1,age*2)*(.6+.3*Math.sin(time*5)),[r,g,b]=hx(e.c);
-  X.save();X.globalAlpha=a;X.strokeStyle=e.c;X.lineWidth=2/cam.z;X.fillStyle=`rgba(${r},${g},${b},.3)`;
+  if(!TOUR)return;const e=TOUR.e,pts=tourPts(e),age=time-TOUR.at,a=Math.min(1,age*2)*(.75+.25*Math.sin(time*5)),[r,g,b]=hx(e.c);
+  X.save();X.globalAlpha=a;X.strokeStyle=e.c;X.lineWidth=2.5/cam.z;X.fillStyle=`rgba(${r},${g},${b},.42)`;
   for(const[x,y]of pts){if(e.an){const[sx,sy]=isoG(x,y);X.beginPath();X.ellipse(sx,sy,14,7,0,0,7);X.stroke()}
     else{const q=quad(Math.round(x),Math.round(y),.5);X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let k=1;k<4;k++)X.lineTo(q[k][0],q[k][1]);X.closePath();X.fill();X.stroke()}}
   // a single spot gets a beacon of rings so it can't be missed
