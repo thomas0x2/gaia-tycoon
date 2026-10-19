@@ -310,6 +310,12 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 #jList li{display:flex;flex-direction:row;align-items:flex-start;gap:12px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.035);font-size:13px;line-height:1.45;color:var(--ink-dim)}
 #jList li b{font-family:var(--display);font-weight:400;font-size:16px;color:var(--ink-dim)}
 #jList li.found b{color:var(--ink)}
+#soonList{list-style:none;margin:6px 0 14px;padding:0;overflow:auto;display:grid;gap:6px;min-height:0}
+#soonList button{all:unset;box-sizing:border-box;width:100%;display:grid;gap:2px;padding:9px 11px;border-radius:8px;background:rgba(255,255,255,.035);font-size:13px;line-height:1.45;color:var(--ink-dim);cursor:pointer}
+#soonList button:hover,#soonList button:focus-visible{background:rgba(207,220,132,.08);box-shadow:inset 0 0 0 1px rgba(207,220,132,.35)}
+#soonList b{font-family:var(--display);font-weight:400;font-size:16px;color:var(--ink)}
+#soonList small{color:var(--lichen);font-size:12px}
+#soonList .empty{font-size:13px;color:var(--ink-dim);padding:8px 2px}
 #jList li.on{background:rgba(207,220,132,.08);box-shadow:inset 0 0 0 1px rgba(207,220,132,.35)}
 #jList li.on b{color:var(--lichen)}
 #jList .need{color:var(--ink)}
@@ -548,6 +554,11 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   #webBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2012C3%207%207%204%2012%204s9%203%209%208z%22/%3E%3Cpath%20d%3D%22M9.5%2012v6.5a2.5%202.5%200%200%200%205%200V12%22/%3E%3Ccircle%20cx%3D%229%22%20cy%3D%228%22%20r%3D%22.6%22/%3E%3Ccircle%20cx%3D%2214.5%22%20cy%3D%227.5%22%20r%3D%22.6%22/%3E%3C/svg%3E")}
   #charterBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2021V4%22/%3E%3Cpath%20d%3D%22M5%204h11l-2%204%202%204H5%22/%3E%3C/svg%3E")}
   #censusBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2020V10M10%2020V4M16%2020v-7M21%2020H3%22/%3E%3C/svg%3E")}
+  #soonBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M2%2012s3.6-7%2010-7%2010%207%2010%207-3.6%207-10%207S2%2012%202%2012z%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%223%22/%3E%3C/svg%3E")}
+  /* on a phone the eye only takes a place in the strip when something is about to change */
+  #soonBtn.has{display:grid;position:relative}
+  #soonBtn.has::after{content:attr(data-n);position:absolute;top:3px;right:4px;min-width:15px;height:15px;border-radius:8px;background:var(--lichen);color:#1d2614;font:600 10px/15px var(--body);text-align:center}
+  #hud.more #soonBtn.has::after{content:attr(data-lbl);position:static;min-width:0;height:auto;background:none;color:inherit;font:500 11px var(--body)}
   #recBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2019c0-8%205-14%2015-14%200%2010-6%2015-14%2015%22/%3E%3Cpath%20d%3D%22M5%2019%2013%2011%22/%3E%3C/svg%3E")}
   #guideBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%206c-2-1.5-5-2-8-1.5V19c3-.5%206%200%208%201.5%202-1.5%205-2%208-1.5V4.5c-3-.5-6%200-8%201.5zM12%206v14.5%22/%3E%3C/svg%3E")}
   #newBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012h15M13%206l6%206-6%206%22/%3E%3C/svg%3E")}
@@ -667,6 +678,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <button id="charterBtn" data-lbl="Milestones" title="Milestones">Milestones</button>
       <button id="censusBtn" data-lbl="Census" title="Census: every plant and animal in the city, and how many">Census</button>
       <button id="recBtn" data-lbl="Ecosystems" title="Ecosystems you have discovered">Ecosystems</button>
+      <button id="soonBtn" data-lbl="Coming soon" title="What is about to change in your city">Coming soon</button>
       <button id="guideBtn" data-lbl="Guide" title="Field guide: every plant and animal, and how ecosystems work">Field guide</button>
       <button id="newBtn" data-lbl="Next city" title="Move on to the next city" hidden>Next city</button>
     </div>
@@ -802,6 +814,15 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <p>A cascade is a chain of effects: one species changes the ground, and that changes what lives there next. Each one is written here once every link in it has happened somewhere in your city. Nobody hands you the chains: here is what you have found, and a hint for each one you haven't.</p>
       <ol id="jList"></ol>
       <div class="row"><button class="btn primary" id="jClose">Close</button></div>
+    </div>
+  </div>
+  <div id="soon" class="veil" hidden>
+    <div class="dialog panel jpanel" role="dialog" aria-labelledby="soonTitle">
+      <div class="eyebrow">Coming soon</div>
+      <h2 id="soonTitle">What to watch</h2>
+      <p>Changes that are about to happen in your city. Tap one to go there.</p>
+      <ol id="soonList"></ol>
+      <div class="row"><button class="btn primary" id="soonClose">Close</button></div>
     </div>
   </div>
   <div id="away" class="veil" hidden>
@@ -2290,7 +2311,7 @@ function tick(){
   IN_TICK=true;try{tick0()}finally{IN_TICK=false}
 }
 function tick0(){
-  S.t++;fireTick();if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();
+  S.t++;fireTick();if(!QUIET&&S.t%30===0)updateSoon();if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();
   const smogF=1-.3*S.smog;
   let shaded=0,drowned=0,parched=0,parchedAt=0;
   for(let i=0;i<N*N;i++){
@@ -2844,6 +2865,57 @@ function updateWxUI(){
   const b=$('wxBtn');b.className=alert?`alert k-${alert}`:'';b.dataset.ic=WX_ICON[f[0].kind];b.setAttribute('aria-label',`Weather: ${WX_WORD[f[0].kind].toLowerCase()}`);
 }
 function showWx(){const w=wxText();toast(w.title,w.body,'full')}
+/* ---------- coming soon: what is about to change, so there is a reason to look again ----------
+   Read from the same rules the simulation runs on, a few times a minute. An effect you have not seen yet stays a teaser:
+   the list says where to watch, never what will happen. Times are game time, so they hold whatever speed the clock runs at. */
+let SOON=[];
+function soonWhen(dt){if(dt==null)return '';const p=Math.floor((S.clock+dt)/SLEN)-Math.floor(S.clock/SLEN);
+  if(dt<DAY)return 'any day now';if(p===0)return `this ${SEASONS[SEA.idx].toLowerCase()}`;if(p===1)return `next ${SEASONS[(SEA.idx+1)%4].toLowerCase()}`;
+  if(dt<YEAR)return 'within a year';const y=Math.round(dt/YEAR);return y<=1?'in about a year':`in about ${y} years`}
+function comingSoon(){
+  const out=[],K=SUCC(),best={},keep=(it)=>{const o=best[it.key];if(!o||(it.dt??1e12)<(o.dt??1e12))best[it.key]=it};
+  // the first cascade with one link left to see (one at a time, so the map's own changes keep their place)
+  {const c=CASCADES.find(c=>!S.rec[c.id]&&c.steps.filter(st=>!stepSeen(st)).length===1);
+    if(c)out.push({key:'c:'+c.id,cause:'leaf',title:`One link left: ${c.name}`,text:c.hint,pri:2})}
+  const fuel=[];
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u||t.b||!t.p)continue;const k=t.p.id,f=FLORA[k];if(f.pre||f.managed||f.crop)continue;const x=i%N,y=(i/N)|0,g=t.p.g;
+    // a level the city does not have yet
+    if(g>=.95&&DISP[k]){const v=nextLevel(t,x,y,i);if(v&&DEPTH[v.id]>levelOf(k)&&!D.fl[v.id]){const nb=near(x,y,1,n=>!!n.p&&atLeast(n.p.id,v.id)),nm=FLORA[v.id].name;
+      keep({key:'lv:'+v.id,x,y,cause:'leaf',title:S.seen[v.id]?`The first ${nm}`:'Something new is growing',dt:1/(LV_RATE*K*(1+Math.min(3,nb))),pri:2,
+        text:S.seen[v.id]?`This ${f.name.toLowerCase()} is maturing into the city’s first ${nm.toLowerCase()}.`:`This ${f.name.toLowerCase()} is maturing into a level you have not seen yet.`})}}
+    // heather moving into the acid grassland beside it
+    if(k==='meadowA'&&has('heath')&&phOf(t)<5.25&&near(x,y,1,n=>!!n.p&&bid(n.p.id)==='heath'&&n.p.g>=.6)){const seen=S.fx['heath:acid'];
+      keep({key:'heath:acid',x,y,cause:'soil',title:seen?'Heather on the move':'Watch the heath edge',dt:(phOf(t)<5?0:YEAR)+1/(2*LV_RATE*K),pri:2,
+        text:seen?'The soil here is sour enough: the heather beside it will take this acid grassland.':'The grassland beside the heather is changing. Something is about to happen here.'})}
+    // an old tree near the end of its life
+    if(f.kind==='tree'&&g>=1&&t.p.age!=null){const life=treeLife(k,i);if(t.p.age>.85*life){const seen=S.fx['fall:age'];
+      keep({key:'fall',x,y,cause:'light',title:'An old tree',dt:Math.max(0,life-t.p.age)+1/.0006,pri:1,
+        text:seen?`This ${f.name.toLowerCase()} is near the end of its life. When it falls, light will reach the ground beneath it.`:`This ${f.name.toLowerCase()} is very old.`})}}
+    if((FLAM[k]||0)>=.7&&g>=.4)fuel.push(i)}
+  // fire weather: a drought summer ahead, with dry heather, broom or pine to burn
+  if(fuel.length>=6){const thisYear=WX.type==='drought'&&SEA.p<2.6,nextYear=yearType(Math.floor(WX.n/4)+1)==='drought';
+    if(thisYear||nextYear){const i=fuel[(fuel.length/2)|0];out.push({key:'fire',x:i%N,y:(i/N)|0,cause:'fire',title:'Fire weather ahead',pri:3,
+      dt:thisYear?Math.max(0,.8-SEA.p)*SLEN:(4-SEA.p+.8)*SLEN,text:`A drought summer is coming. The city has ${fuel.length} tiles of dry heather, broom and pine that could catch fire.`})}}
+  // bumblebee queens
+  for(const a of S.an){if(a.sp!=='bee')continue;const x=Math.round(a.x),y=Math.round(a.y);
+    if(a.st==='nest'&&(a.col||0)>=2&&SEA.p>=.5&&SEA.p<1.6)keep({key:'queens',x,y,cause:'bloom',title:S.fx['queens:bee']?'New queens':'A growing colony',dt:(1.6-SEA.p)*SLEN,pri:1,
+      text:S.fx['queens:bee']?'This colony will raise new queens in late summer, and they will look for places to sleep through the winter.':'This bumblebee colony is growing. Watch it in late summer.'});
+    else if(a.st==='hib'&&SEA.p>=2.6){const ok=!!earlyNectar(x,y);keep({key:ok?'wake':'cold',x,y,cause:'bloom',title:ok?'A sleeping queen':'A queen without spring flowers',dt:(4-SEA.p)*SLEN,pri:ok?1:3,
+      text:ok?'A bumblebee queen sleeps here. She will wake in spring and found a nest.':'A bumblebee queen sleeps here, but no willow catkins or dandelions grow within 3 tiles. Without them she will not survive the spring.'})}}
+  // at most two new levels, the nearest first, so one busy meadow does not crowd out the rest
+  const lv=Object.values(best).filter(o=>o.key.startsWith('lv:')).sort((a,b)=>a.dt-b.dt);
+  for(const k in best)if(!k.startsWith('lv:'))out.push(best[k]);out.push(...lv.slice(0,2));
+  return out.sort((a,b)=>b.pri-a.pri||(a.dt??1e12)-(b.dt??1e12)).slice(0,5);
+}
+function updateSoon(){SOON=comingSoon();const b=$('soonBtn');b.dataset.n=SOON.length||'';b.textContent=SOON.length?`Coming soon · ${SOON.length}`:'Coming soon';b.classList.toggle('has',SOON.length>0);
+  if(!$('soon').hidden)renderSoon()}
+function renderSoon(){
+  $('soonList').innerHTML=SOON.length?SOON.map((s,n)=>`<li><button data-n="${n}"><b>${s.title}</b><span>${s.text}</span>${s.dt!=null?`<small>${soonWhen(s.dt)}</small>`:''}</button></li>`).join('')
+    :'<li class="empty">Nothing is about to change right now. Sow, release animals and break up more ground, then look again.</li>'}
+function goSoon(n){const s=SOON[n];if(!s)return;$('soon').hidden=true;
+  if(s.x==null){$('journal').hidden=false;renderJournal();return}
+  const[sx,sy]=iso(s.x,s.y,hAt(s.x,s.y));cam.x=sx;cam.y=sy;cam.z=Math.max(cam.z,1.6);clampCam();
+  selectTool({type:'inspect',id:'inspect'});pinned=[s.x,s.y];if(matchMedia('(max-width: 760px)').matches)$('info').classList.add('open');updateInfo();burst(...isoG(s.x,s.y),'ring',1);markDirty()}
 
 /* ---------- drawing primitives ---------- */
 function poly(pts,fill){X.beginPath();X.moveTo(pts[0][0],pts[0][1]);for(let i=1;i<pts.length;i++)X.lineTo(pts[i][0],pts[i][1]);X.closePath();X.fillStyle=tc(fill);X.fill()}
@@ -5531,6 +5603,7 @@ function updateInfo(){
   else if(t.ash)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89a8a;font-weight:600">Burnt ground.</b> The ash makes the soil richer, and the bare ground is open to fireweed and birch.</p>`;
   if(t.dw)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#c9a77a;font-weight:600">Dead wood.</b> A fallen trunk is rotting here (${Math.round(t.dw*100)}% left). Beetles and fungi are turning it back into rich soil while flowers and young growth fill the gap.</p>`;
   if(t.p&&!t.b&&DISP[t.p.id]){const up=upgradeNote(t,x,y,i);if(up)notes+=`<p class="note">${up}</p>`}
+  for(const s of SOON)if(s.x===x&&s.y===y)notes+=`<p class="note" style="color:var(--ink)"><b style="color:var(--lichen);font-weight:600">Coming soon${s.dt!=null?`, ${soonWhen(s.dt)}`:''}.</b> ${s.text}</p>`;
   if(passable(t))notes+=`<p class="note">${TCONN[TCOMP[i]]?'Part of a large, connected habitat patch.':'A small habitat patch, cut off by roads or buildings.'}</p>`;
   else if(t.gd==='water')notes+=`<p class="note">${WCONN[WCOMP[i]]?'Part of a stretch of 15+ connected water tiles.':'A small, isolated pond.'}</p>`;
   if(FID[i]>=0){const f=D.forests[FID[i]];if(f)notes+=`<p class="note" style="color:var(--lichen)">${f.name} · ${f.size} trees, ${f.species} species. Forest bonus: +25% growth, +50% seeds.</p>`}
@@ -5760,6 +5833,9 @@ $('slotList').addEventListener('click',e=>{const b=e.target.closest('button');if
     if(b.dataset.sure!=='1'){b.dataset.sure='1';b.textContent='Sure?';setTimeout(()=>{if(b.isConnected){b.dataset.sure='';b.textContent='Delete'}},3000);return}
     deleteSlot(id);if(id===S.slot){const rest=slots();if(rest.length){const st=readSlot(rest[0].id);if(st){boot(st);focusCity()}}else{boot(newGame());S.slot=0;save();focusCity()}}renderMenu()}});
 $('recBtn').addEventListener('click',()=>{$('journal').hidden=false;renderJournal();$('jClose').focus()});
+$('soonBtn').addEventListener('click',()=>{updateSoon();$('soon').hidden=false;renderSoon();$('soonClose').focus()});
+$('soonClose').addEventListener('click',()=>{$('soon').hidden=true});
+$('soonList').addEventListener('click',e=>{const b=e.target.closest('button[data-n]');if(b)goSoon(+b.dataset.n)});
 $('jClose').addEventListener('click',()=>{$('journal').hidden=true});
 $('journal').addEventListener('click',e=>{if(e.target.id==='journal')$('journal').hidden=true});
 $('journal').addEventListener('keydown',e=>{if(e.key==='Escape')$('journal').hidden=true});
