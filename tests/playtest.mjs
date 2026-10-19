@@ -66,9 +66,11 @@ const BOT = `(()=>{
   B.play=()=>{
     if(!B.poor)S.seeds=Math.max(S.seeds,1e7);
     let changed=false;
+    // a sensible player: blocks first (cheapest open one), then species, then Forces, keeping most seeds for the next block
+    if(S.blocks)for(let more=true;more;){more=false;{let b=-1,bc=Infinity;for(let j=0;j<S.blocks.length;j++){const st=blockStatus(j);if(st.ok&&st.cost<bc){b=j;bc=st.cost}}const st=b<0?null:blockStatus(b);if(st&&S.seeds>=st.cost){S.seeds-=st.cost;S.blocks[b].u=true;refreshUnlock();changed=true;more=true;B.log.push([B.when(),'block '+(ownedBlocks())+' '+S.blocks[b].name,st.cost])}}}
+    let nextBlock=Infinity;if(S.blocks)for(let j=0;j<S.blocks.length;j++){const st=blockStatus(j);if(st.ok)nextBlock=Math.min(nextBlock,st.cost)}
     const order=Object.keys(RES).filter(k=>resOpen(k)&&!(RES[k].max?lvl(k)>=RES[k].max:has(k))).sort((a,b)=>resCost(a)-resCost(b));
-    for(const k of order){const R0=RES[k];if(R0.max?lvl(k)>=R0.max:has(k))continue;if(!resOpen(k))continue;const c=resCost(k);if(S.seeds<c)continue;S.seeds-=c;S.res[k]=lvl(k)+1;changed=true;B.log.push([B.when(),'research '+k+(RES[k].max?' '+lvl(k):''),c])}
-    if(S.blocks)for(let more=true;more;){more=false;for(let b=0;b<S.blocks.length;b++){const st=blockStatus(b);if(st.ok&&S.seeds>=st.cost){S.seeds-=st.cost;S.blocks[b].u=true;refreshUnlock();changed=true;more=true;B.log.push([B.when(),'block '+(ownedBlocks())+' '+S.blocks[b].name,st.cost]);break}}}
+    for(const k of order){const R0=RES[k];if(R0.max?lvl(k)>=R0.max:has(k))continue;if(!resOpen(k))continue;const c=resCost(k),share=RES[k].g==='force'?.25:.5;if(S.seeds<c||nextBlock<Infinity&&c>share*S.seeds)continue;S.seeds-=c;S.res[k]=lvl(k)+1;changed=true;B.log.push([B.when(),'research '+k+(RES[k].max?' '+lvl(k):''),c])}
     if(changed)computeDerived();
     const U=[];for(let i=0;i<N*N;i++)if(S.tiles[i].u)U.push(i);
     // demolish: a few buildings and some paving each session
@@ -125,7 +127,9 @@ const BOT = `(()=>{
     for(const id in ah)if(!alive.has(+id))delete ah[id];
     // cleaning is local: a water tile only gets cleaner with a cleaning plant within 1 tile, and its colour follows its own water
     const wt=B.wt||(B.wt=new Float32Array(N*N).fill(-1));
-    for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.gd!=='water'||!t.u){wt[i]=-1;continue}const was=wt[i];wt[i]=t.tox;if(was<0||t.tox>=was-.01)continue; // a cleaner that died within the hour leaves a trace, so only a real drop counts
+    const wp=B.wp||(B.wp=new Uint8Array(N*N));
+    for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.gd!=='water'||!t.u){wt[i]=-1;continue}const was=wt[i],hadP=wp[i];wt[i]=t.tox;wp[i]=t.p?1:0;if(hadP)continue; // a plant drowned since cleans its tile until it dies
+      if(was<0||t.tox>=was-.01)continue; // a cleaner that died within the hour leaves a trace, so only a real drop counts
       const x=i%N,y=(i/N)|0;let cleaner=!!(t.p&&!FLORA[t.p.id].crop); // a plant growing in the water (water-lily) cleans its own tile
       for(let dy=-1;dy<=1&&!cleaner;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=T(nx,ny);if(n.p&&EFF[n.p.id]&&EFF[n.p.id].dt){cleaner=true;break}}
       if(!cleaner)B.flagIt('non-local','water-clean','water at '+x+','+y+' got cleaner ('+was.toFixed(2)+' to '+t.tox.toFixed(2)+') with nothing cleaning it within 1 tile')}
@@ -170,8 +174,8 @@ let lastLine = '';
 for (let d = 0; d < (IDLE ? 0 : YEARS * DAYS); d++) {
   await page.evaluate(() => window.__G('__B.play()'));
   for (let h = 0; h < 24; h++) await page.evaluate(() => window.__G('(__B.hour(),__B.check())'));
-  const s = await page.evaluate(() => window.__G(`(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),an:r.an,bee:r.bee,bio:r.bio,flags:Object.keys(__B.flag).length,ms:__B.tickMs/Math.max(1,__B.ticks)}})()`));
-  const line = `${s.when.padEnd(26)} bio ${String(s.bio).padStart(5)}  animals ${Object.values(s.an).reduce((a, b) => a + b, 0)}${s.bee ? `  bees ${s.bee.nests} nests/${s.bee.hib} queens of ${s.bee.cap}` : ''}  flags ${s.flags}  ${s.ms.toFixed(1)} ms/tick`;
+  const s = await page.evaluate(() => window.__G(`(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),an:r.an,bee:r.bee,bio:r.bio,flags:Object.keys(__B.flag).length,ms:__B.tickMs/Math.max(1,__B.ticks),land:(()=>{let g=0,sc=0,n=0;for(const t of S.tiles){if(!t.u||t.b||t.gd!=='soil')continue;n++;if(!t.p)continue;const b=bid(t.p.id);if(b==='meadow')g++;else if(b==='hawthorn'||b==='broom')sc++}return {g:Math.round(100*g/Math.max(1,n)),s:Math.round(100*sc/Math.max(1,n))}})()}})()`));
+  const line = `${s.when.padEnd(26)} bio ${String(s.bio).padStart(5)}  animals ${Object.values(s.an).reduce((a, b) => a + b, 0)}${s.bee ? `  bees ${s.bee.nests} nests/${s.bee.hib} queens of ${s.bee.cap}` : ''}  meadow ${s.land.g}% scrub ${s.land.s}%  rabbits ${s.an.rabbit || 0} ponies ${s.an.konik || 0}  flags ${s.flags}  ${s.ms.toFixed(1)} ms/tick`;
   if (d % 3 === 0 || s.flags && line !== lastLine) console.log(line);
   lastLine = line;
 }
