@@ -1,4 +1,4 @@
-// Copies the game into www/, the folder Capacitor bundles into the iOS app.
+// Copies the game (with its sprite sheets) into www/, the folder Capacitor bundles into the iOS app.
 // The service worker is left out: the app already ships every file it needs.
 // The Google Fonts are downloaded into www/fonts/ so the app looks right offline;
 // without a network connection the build keeps the online font link instead.
@@ -7,7 +7,7 @@ import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 const OUT = 'www';
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT);
-for (const f of ['manifest.webmanifest', 'icons']) cpSync(f, `${OUT}/${f}`, { recursive: true });
+for (const f of ['manifest.webmanifest', 'icons', 'sprites']) cpSync(f, `${OUT}/${f}`, { recursive: true });
 
 let html = readFileSync('index.html', 'utf8');
 const link = html.match(/<link rel="stylesheet" href="(https:\/\/fonts\.googleapis\.com\/[^"]+)">/);
