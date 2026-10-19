@@ -1224,11 +1224,19 @@ const FX={
   stump:{sp:['willow'],cause:'leaf',name:'Willow sprouts from the stump',hint:'Watch a willow that has been cut down.',
     text:'A felled willow sprouts again from its stump, so beavers never run out of food.'},
   'fall:age':{sp:['birch','willow','pine','oak','beech'],cause:'light',name:'Old trees fall',hint:'Watch an old wood.',
-    text:'Trees grow old and die. The fallen trunk rots back into the soil, and the gap fills with willowherb and woodland flowers, then scrub and young trees.'},
+    text:'Trees grow old and die. The dead tree stands for a year or so as a bare snag, then falls and rots back into the soil, and the gap fills with willowherb and woodland flowers, then scrub and young trees.'},
   'fall:storm':{sp:['oak','beech','pine'],cause:'light',name:'A storm opens the wood',hint:'Watch a big wood.',
     text:'Wind tears gaps in big woods. Gaps like these are how a forest renews itself: light reaches the floor and pioneers move in.'},
   'fall:drought':{sp:['beech','willow'],cause:'water',name:'Drought kills trees',hint:'Watch beech and willow in a dry year.',
-    text:'A dry year is too much for beech and willow, which need damp ground. The dead tree opens a gap where heather, broom and pine, the plants that hold on in drought, can move in.'},
+    text:'A dry year is too much for beech and willow, which need damp ground. The dead tree stands on as a snag and opens a gap where heather, broom and pine, the plants that hold on in drought, can move in.'},
+  'hole:woodpecker':{sp:['woodpecker','birch','willow'],cause:'home',name:'Woodpeckers carve nest holes',hint:'Watch dead and soft trees near a woodpecker in spring.',
+    text:'Each spring a woodpecker carves a new nest hole into the deadest or softest wood within 2 tiles: a standing dead tree first, then birch, willow or an old tree. The old holes stay when it moves on, up to 2 in a living tree and 3 in a dead one, and other animals move into them. A hole is lost when its tree comes down.'},
+  'home:owl':{sp:['owl','woodpecker','oak','beech'],cause:'home',name:'Owls need a hole',hint:'Watch where an owl makes its home.',
+    text:'Tawny owls cannot dig or carve: they only nest in a tree hole, an old woodpecker hole or the hollow of an old oak or beech. Each hole holds one pair, so the holes in the city cap the owls. Keep dead and old trees standing and let woodpeckers work.'},
+  'hunt:owl':{sp:['owl','vole'],cause:'graze',name:'Owls keep the voles down',hint:'Watch the voles in the long grass near an owl.',
+    text:'At night an owl hunts the voles within 3 tiles of its hole, so young trees in the long grass there escape being gnawed in winter. Owls eat mice and beetles too, so they stay when the voles are gone.'},
+  'gnaw:vole':{sp:['vole','birch','oak','hawthorn'],cause:'graze',name:'Voles gnaw saplings',hint:'Watch young trees in long grass through a winter.',
+    text:'In winter, voles in ungrazed long grass gnaw the bark of young trees and scrub within 1 tile of their runs, setting them back and sometimes killing them. Grazers keep the grass short and the voles out; owls hunt them.'},
   parch:{sp:['meadow','reed','beech','willow'],cause:'water',name:'The land dries out',hint:'Watch lush meadows and beech in a drought.',
     text:'In a drought, beech, willow, reeds away from the water and lush meadows wither: wet and herb-rich meadow slip back, and on poor soil they turn to dry grassland. Heather, broom, pine and dry grassland hold on. Fen and wet meadow keep the ground around them damp.'},
 };
@@ -1259,6 +1267,7 @@ function drawMark(p,k){
     case 'graze':ell(x-.8,y,.65,1.2,'#d9b48a');ell(x+.8,y,.65,1.2,'#d9b48a');break;
     case 'dig':circ(x-.9,y+.5,.9,'#a07850');circ(x+.8,y+.3,.8,'#8a6440');circ(x,y-.6,.8,'#b08a60');break;
     case 'fire':X.beginPath();X.moveTo(x,y-2.5);X.quadraticCurveTo(x+2.2,y,x+1,y+1.8);X.lineTo(x-1,y+1.8);X.quadraticCurveTo(x-2.2,y,x,y-2.5);X.fillStyle=tc('#f08a2c');X.fill();circ(x,y+.7,.8,'#ffd35c');break;
+    case 'home':ell(x,y+.2,1.9,2.3,'#b08a60');ell(x,y,1.2,1.6,'#120c08');break;
     case 'bloom':for(let r=0;r<5;r++){const an=r*1.257;circ(x+Math.cos(an)*1.1,y+Math.sin(an)*1.1,.75,'#e59ad6')}circ(x,y,.6,'#ffd76a');break;
   }
   X.restore();X.globalAlpha=1}
@@ -1302,6 +1311,25 @@ const isFlower=t=>t.p&&FLORA[t.p.id].flower&&t.p.g>=.4;
 const isTree=t=>t.p&&FLORA[t.p.id].kind==='tree'&&t.p.g>=.4;
 const isGraze=t=>t.p&&FLORA[t.p.id].graze&&t.p.g>=.4;
 const isCrop=t=>t.p&&FLORA[t.p.id].crop;
+/* ---------- standing dead wood and tree holes (homes) ----------
+   A tree that dies of age, drought or fire stands on as a snag (t.sn, 1 down to 0) for about a year, then falls and
+   lies rotting (t.dw). Woodpeckers carve nest holes (t.ho) into snags and into soft or old trees; a veteran oak or an
+   old beech holds a hollow of its own. Holes outlast the woodpecker that made them, and owls can only live in one.
+   A hole is lost when its tree comes down. */
+const SOFT_WOOD=new Set(['birch','willow']);
+const isSnag=t=>!!t.sn||(t.gd==='water'&&!!t.snag);
+// a veteran pasture oak is hollow, and so is any oak or beech late in its life (t.p.hol, set as it ages)
+const hollowOf=t=>t.p&&t.p.g>=1&&(t.p.id==='oak3'||t.p.hol)?1:0;
+const holeTree=t=>!!t.p&&FLORA[t.p.id].kind==='tree'&&!FLORA[t.p.id].pre;
+// how good a tile's wood is for carving: 3 dead, 2 soft or old, 0 not at all
+const holeWood=(t,i)=>{if(isSnag(t))return 3;if(!holeTree(t)||t.p.g<.8)return 0;
+  return SOFT_WOOD.has(bid(t.p.id))||hollowOf(t)||(t.p.age!=null&&t.p.age>.6*treeLife(t.p.id,i))?2:0};
+const holesAt=t=>isSnag(t)||holeTree(t)?(t.ho||0)+hollowOf(t):0;
+const HOLE_MAX=t=>isSnag(t)?3:2;
+// a snag stands about a game year before it falls
+const SNAG_RATE=.0004/(CAL/2);
+// a hole holds one pair (two owls): how many owls already live in the holes of (x,y)
+const holeUsers=(x,y)=>{let n=0;for(const a of S.an)if(a.sp==='owl'&&a.hx===x&&a.hy===y)n++;return n};
 const isP=id=>t=>t.p&&(t.p.id===id||FLORA[t.p.id].base===id)&&t.p.g>=.4;
 const isForest=n=>(t,i)=>FS[i]>=n;
 const isScrubby=t=>t.p&&(bid(t.p.id)==='hawthorn'||FLORA[t.p.id].kind==='tree')&&t.p.g>=.4;
@@ -1343,8 +1371,8 @@ const FAUNA = {
     need:'3+ scrub or trees within 3 tiles, and 2+ rabbits living within 5.',desc:'A clever hunter of rabbits and voles that dens under scrub. Copes well with people.',
     ok:(x,y)=>near(x,y,3,isScrubby)>=3&&preyNear('rabbit',x,y,5)>=2,cap:()=>Math.floor(D.fa.rabbit/3)},
   owl:{name:'Tawny Owl',pl:'owls',latin:'Strix aluco',mv:'fly',reach:8,spd:1.4,range:3,yield:.7,
-    need:'The edge of a forest of 10+ trees, and field voles in the city.',desc:'A woodland hunter. It roosts in old trees by day and hunts voles along the forest edge at night.',
-    ok:(x,y)=>near(x,y,1,isForest(10))>=1&&D.fa.vole>0,cap:()=>1+Math.floor(D.forestTiles/15)},
+    need:'A free tree hole to nest in (an old woodpecker hole, or the hollow of an old oak or beech), and 4+ grassland tiles within 4 to hunt over.',desc:'A woodland hunter that cannot dig or carve a nest of its own. It roosts in a hollow tree by day and hunts voles and mice in the grass at night.',
+    ok:(x,y)=>holesAt(T(x,y))>0&&near(x,y,4,isGraze)>=4,cap:()=>2*(D.holes||0)},
   deer:{name:'Red Deer',pl:'red deer',latin:'Cervus elaphus',mv:'land',spd:.9,range:5,yield:.85,
     need:'A forest of 8+ trees within 2 tiles, away from busy streets (human pressure under 60%).',desc:'Europe’s largest deer, browsing young shoots at the woodland edge. Stags roar in the autumn rut.',
     ok:(x,y)=>near(x,y,2,isForest(8))>=1&&HUM[y*N+x]<.6,cap:()=>Math.floor(D.forestTiles/6*(D.fa.wolf?.55:1))},
@@ -1397,8 +1425,8 @@ const FAUNA = {
     need:'A farmstead or owl barn within 5 tiles, water within 3, and mayflies or hoverflies in the city.',desc:'Nests on the beams of barns and hunts flies low over water and pasture. Back from Africa every April.',
     ok:(x,y)=>near(x,y,5,t=>!!t.b&&t.b.k==='farm')>=1&&near(x,y,3,isWater)>=1&&D.fa.mayfly+D.fa.hoverfly>0,cap:()=>1+Math.floor(D.water/6)},
   woodpecker:{cls:'bird',name:'Great Spotted Woodpecker',pl:'woodpeckers',latin:'Dendrocopos major',mv:'fly',reach:8,spd:1.6,range:3,yield:.5,
-    need:'A forest of 8+ trees within 1 tile, and beetles in the city.',desc:'Drums on dead branches and digs beetle larvae out of rotten wood. Its old nest holes house bats and tits.',
-    ok:(x,y)=>near(x,y,1,isForest(8))>=1&&D.fa.beetle+D.fa.stagbeetle>0,cap:()=>1+Math.floor(D.forestTiles/12)},
+    need:'3+ trees within 2 tiles, and dead or soft wood within 2: a standing dead tree, a birch, a willow or an old tree.',desc:'Drums on dead branches in spring to claim its wood and digs beetle larvae out of rotten timber with its chisel bill.',
+    ok:(x,y)=>near(x,y,2,isTree)>=3&&near(x,y,2,holeWood)>=1,cap:()=>1+Math.floor(D.trees/12)},
   heron:{cls:'bird',name:'Grey Heron',pl:'herons',latin:'Ardea cinerea',mv:'fly',reach:12,spd:1.2,range:4,yield:.5,
     need:'6+ water tiles within 2, salmon living within 8, and calm banks (human pressure under 60%).',desc:'Stands motionless in the shallows, then strikes. It flies between ponds and rivers, often far from its nest.',
     ok:(x,y)=>near(x,y,2,isWater)>=6&&preyNear('salmon',x,y,8)>0&&HUM[y*N+x]<.6,cap:()=>1+Math.floor(D.water/12)},
@@ -1413,8 +1441,8 @@ const FAUNA = {
     ok:(x,y)=>near(x,y,3,t=>isWater(t)||isP('reed')(t))>=10&&D.fa.frog>=3,cap:()=>Math.floor(D.fa.frog/3)},
   // mammals
   vole:{cls:'mammal',name:'Field Vole',pl:'field voles',latin:'Microtus agrestis',mv:'land',spd:.7,range:2,yield:.15,
-    need:'5+ rough grassland tiles within 2.',desc:'A blunt-nosed vole of long grass: prey for barn owls, tawny owls, kestrels and foxes. Its numbers boom and bust every few years.',
-    ok:(x,y)=>near(x,y,2,isP('meadow'))>=5,cap:()=>1+Math.floor(D.gw.meadow/6)},
+    need:'Long, ungrazed grass: 5+ grassland tiles within 2, and little grazing on its own tile.',desc:'A blunt-nosed vole that runs along tunnels through long grass. Prey for owls, kestrels and foxes; its numbers boom and bust every few years.',fast:true,
+    ok:(x,y)=>near(x,y,2,isP('meadow'))>=5&&grazeOf(y*N+x)<.3,cap:()=>1+Math.floor(D.gw.meadow/6)},
   badger:{cls:'mammal',name:'European Badger',pl:'badgers',latin:'Meles meles',mv:'land',spd:.7,range:4,yield:.7,
     need:'Woodland edge: 3+ trees and 4+ grassland tiles within 3, and beetles in the city.',desc:'Digs its sett at the edge of a wood and forages beetles and earthworms in the grass at night.',
     ok:(x,y)=>near(x,y,3,isTree)>=3&&near(x,y,3,isGraze)>=4&&D.fa.beetle>0,cap:()=>1+Math.floor(D.forestTiles/20)},
@@ -1454,8 +1482,10 @@ const FAUNA = {
 for(const[k,c]of Object.entries({bee:'insect',dragonfly:'insect',frog:'water',rabbit:'mammal',hedgehog:'mammal',trout:'water',thrush:'bird',jay:'bird',kingfisher:'bird',fox:'mammal',owl:'bird',deer:'mammal',beaver:'water',wolf:'mammal',bison:'mammal',bat:'mammal',falcon:'bird',barnowl:'bird'}))FAUNA[k].cls=c;
 // parked for now: these return in later waves, each bringing a mechanic of its own (homes, pests and their controllers, fire, invaders)
 const PARKED_FAUNA={};
-for(const k of ['butterfly','moth','beetle','hoverfly','dragonfly','mayfly','stagbeetle','glowworm','skylark','swallow','swift','kingfisher','kestrel','owl','barnowl','falcon','stork','woodpecker',
-  'vole','hedgehog','badger','squirrel','dormouse','marten','lynx','bison','otter','trout','frog','newt','watervole','bat']){PARKED_FAUNA[k]=FAUNA[k];delete FAUNA[k]}
+for(const k of ['butterfly','moth','beetle','hoverfly','dragonfly','mayfly','stagbeetle','glowworm','skylark','swallow','swift','kingfisher','kestrel','barnowl','falcon','stork',
+  'hedgehog','badger','squirrel','dormouse','marten','lynx','bison','otter','trout','frog','newt','watervole','bat']){PARKED_FAUNA[k]=FAUNA[k];delete FAUNA[k]}
+// field voles are a wild arrival: they move into long, ungrazed grass by themselves
+ARRIVE.vole={bio:30};
 const TOOLS = {
   inspect:{name:'Survey',latin:'Read the land',desc:'Point at or tap a tile to read its soil, its succession stage and what it is waiting for. Drag to pan the map.',need:''},
   corridors:{name:'Corridors',latin:'Habitat network',desc:'Shows how habitat links up. Walking animals and creeping plants only spread through connected land, and river life only through connected water.',
@@ -1617,7 +1647,7 @@ function levelWater(){
     const m=Math.min(...body.map(k=>lv[k]));for(const k of body){wet.add(k);if(lv[k]>m){lv[k]=m;changed=true}}}
   if(changed)settleLevels(lv,[],(x,y,nx,ny)=>split(y*N+x,ny*N+nx),wet);
 }
-function unWater(x,y){const t=T(x,y);t.gd='soil';delete t.bv;delete t.snag;buildTerrain()}
+function unWater(x,y){const t=T(x,y);t.gd='soil';delete t.bv;delete t.snag;delete t.ho;buildTerrain()}
 
 /* ---------- city generation ---------- */
 /* ---------- city blocks ---------- */
@@ -1922,9 +1952,9 @@ function computeDerived(){
   computeNetworks();computeFields();
   const forests=computeForests();
   const fl={},gw={},fa={},flB={},gwB={};for(const k in FLORA){fl[k]=0;gw[k]=0;flB[k]=0;gwB[k]=0}for(const k in FAUNA)fa[k]=0;
-  let trees=0,flowers=0,grazing=0,water=0,conc=0,factories=0,bldg=0,roads=0,grown=0,income=0,A=0,E=0,parkMeadow=0,crops=0,farmWild=0;
+  let holes=0,trees=0,flowers=0,grazing=0,water=0,conc=0,factories=0,bldg=0,roads=0,grown=0,income=0,A=0,E=0,parkMeadow=0,crops=0,farmWild=0;
   const chim=[],flowerTiles=[],treeTiles=[],rp={batroost:0,nestmast:0,owlbarn:0,greenbridge:0};
-  for(let i=0;i<N*N;i++){const t=S.tiles[i];
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.u&&(t.ho||t.p))holes+=holesAt(t);
     if(t.b){if(t.b.rp){rp[REP[t.b.k].id]++;income+=.5;A+=.01;continue}bldg++;conc++;E+=EM[t.b.k];if(t.b.k==='factory'){factories++;chim.push(i)}}
     else if(t.gd==='road'||t.gd==='pave'||t.gd==='rubble'||t.gd==='path'){conc++;if(t.gd==='road')roads++;if(t.hw)E+=.03;if(t.rw)E+=.05}
     else if(t.gd==='water'){if(t.u)water++;A+=.004}
@@ -1950,7 +1980,7 @@ function computeDerived(){
   // biodiversity counts kinds of life far more than sheer numbers
   const bio=Math.round(flSpecies*10+flLevels*4+faSpecies*24+4*Math.sqrt(grown)+4*Math.sqrt(faTotal)+forestBio*.5+rpN*6+rb.bio);
   const pm=4+64*S.smog;
-  D={rp,rpN,fl,gw,fa,trees,flowers,grazing,water,conc,factories,bldg,roads,grown,income,A,E,bio,pm,flSpecies,faSpecies,faTotal,W,F:1+Math.sqrt(W)/6,chim,flowerTiles,treeTiles,parkMeadow,crops,farmWild,forests,forestTiles,bigForest,riverLinked:S.tiles.filter((t,i)=>t.gd==='water'&&WCONN[WCOMP[i]]).length>=6,
+  D={rp,rpN,holes,fl,gw,fa,trees,flowers,grazing,water,conc,factories,bldg,roads,grown,income,A,E,bio,pm,flSpecies,faSpecies,faTotal,W,F:1+Math.sqrt(W)/6,chim,flowerTiles,treeTiles,parkMeadow,crops,farmWild,forests,forestTiles,bigForest,riverLinked:S.tiles.filter((t,i)=>t.gd==='water'&&WCONN[WCOMP[i]]).length>=6,
      smogT:clamp((E-A*.6)/(S.E0||1),0,1)};
 }
 
@@ -2057,10 +2087,10 @@ const CAPS={
   earthworm:['grown plants',Object.assign(()=>D.grown,{ids:['grown']}),15],salmon:['water tiles',tilesOf('water'),12],
   thrush:['scrub and tree tiles',tilesOf('hawthorn','trees'),30],skylark:['grassland, lawn and pasture tiles',tilesOf('graze'),40],swallow:['water tiles',tilesOf('water'),20],
   jay:['tree tiles',tilesOf('trees'),50],kingfisher:['brown trout',animals('trout'),4],heron:['water tiles',tilesOf('water'),30],
-  woodpecker:['forest tiles',tilesOf('forest'),30],kestrel:['field voles',animals('vole'),4],owl:['forest tiles',tilesOf('forest'),40],
+  woodpecker:['tree tiles',tilesOf('trees'),25],kestrel:['field voles',animals('vole'),4],owl:{what:'tree hole with hunting ground around it (up to a pair for every 15 grassland tiles)',n:()=>Math.min(D.holes||0,Math.floor((D.grazing||0)/15)),each:2},
   falcon:{what:'falcon mast or tower',n:()=>D.rp.nestmast,each:2},barnowl:{what:'owl barn',n:()=>D.rp.owlbarn,each:2},bat:{what:'bat roost',n:()=>D.rp.batroost,each:4},
   swift:{what:'reclaimed structure',n:()=>D.rpN,each:2},stork:['frogs',animals('frog'),4],
-  rabbit:['grassland, lawn and pasture tiles',tilesOf('graze'),30,['fox','each fox hunting them']],vole:['grassland tiles',tilesOf('meadow'),20,['kestrel','owl','barnowl','each owl or kestrel hunting them']],
+  rabbit:['grassland, lawn and pasture tiles',tilesOf('graze'),30,['fox','each fox hunting them']],vole:['grassland tiles',tilesOf('meadow'),8,['kestrel','owl','barnowl','each owl or kestrel hunting them']],
   hedgehog:['grassland and scrub tiles',tilesOf('meadow','hawthorn'),40],fox:['rabbits',animals('rabbit'),6],
   badger:['forest tiles',tilesOf('forest'),50],deer:['forest tiles',tilesOf('forest'),40,['wolf','each wolf hunting them']],
   squirrel:['pine tiles',tilesOf('pine'),15],dormouse:['hazel tiles',tilesOf('hazel'),6],marten:['forest tiles',tilesOf('forest'),60],
@@ -2294,13 +2324,18 @@ const soilCap=(t,x,y)=>Math.min(1-.75*(t.stony||0),1-.5*(t.poor||0),hAt(x,y)>=HI
 const LIFE={birch:7200,willow:7200,pine:10800,oak:18000,beech:18000};
 const treeLife=(k,i)=>(LIFE[bid(k)]||7200)*(.75+.5*hash(i,7,3));
 function fallTree(x,y,why){
-  const t=T(x,y);if(!t.p)return false;if(offLog)offLog.push({k:'fall',why,id:t.p.id,x,y});const name=FLORA[t.p.id].name,stump=bid(t.p.id)==='willow'&&why!=='age';t.p=stump?{id:'willow',g:.3}:{id:'weeds',g:.35};t.dw=1;t.ds=Math.max(t.ds||0,.8);t.fert=Math.min(1,t.fert+.1);
+  const t=T(x,y);if(!t.p)return false;if(offLog)offLog.push({k:'fall',why,id:t.p.id,x,y});const name=FLORA[t.p.id].name,stump=bid(t.p.id)==='willow'&&why!=='age';
+  // a tree that dies on its feet (old age, drought) stands on as a snag, its holes and hollow with it; one blown or felled down is lying wood at once
+  const stand=(why==='age'||why==='drought')&&!stump&&t.p.g>=.6,hollow=hollowOf(t);
+  t.p=stump?{id:'willow',g:.3}:{id:'weeds',g:.35};t.ds=Math.max(t.ds||0,.8);t.fert=Math.min(1,t.fert+.1);
+  if(stand){t.sn=1;if(hollow)t.ho=Math.max(t.ho||0,1)}else{t.dw=1;delete t.ho}
   if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-10,'leaf',8);burst(sx,sy,'dust',4)}markDirty();
   if(why!=='browse')seeFx(why==='beaver'?'fell:beaver':'fall:'+why,x,y);if(stump)seeFx('stump',x,y);
   return stump;
 }
 // a level that no longer suits its ground slips back to the one it grew from, or onto another branch (rank grassland)
 function levelDown(t,x,y,k,to){
+  if(k==='oak3')t.p.hol=1; // a veteran stays hollow
   if(to==='meadowR')seeFx('rank',x,y);else if(k==='meadowR'&&BROWSE[y*N+x]>.05)seeFx('unrank',x,y);
   t.p.id=to;discover('flora',to);markDirty();
   if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-4,'dust',3)}
@@ -2342,7 +2377,7 @@ function burnOut(x,y){
   if(t.p){const k=t.p.id,b=bid(k),f=FLORA[k];
     if(k==='oak3'||k==='pine3'){seeFx('bark:fire',x,y)}
     else if(b==='heath'||b==='broom'){t.p={id:b,g:.12};seeFx('renew:fire',x,y)}
-    else{if(f.kind==='tree'&&t.p.g>=.6)t.dw=1;t.p=null}}
+    else{if(f.kind==='tree'&&t.p.g>=.6){t.sn=1;if(hollowOf(t))t.ho=Math.max(t.ho||0,1)}else delete t.ho;t.p=null}}
   // bare ash: fireweed first, or birch where its seed can blow in
   if(!t.p){if(has('birch')&&DIST.birch[i]<=6&&Math.random()<.35){t.p={id:'birch',g:.05};seeFx('ash:birch',x,y)}
     else{t.p={id:'weeds',g:.1};seeFx('fireweed',x,y)}}
@@ -2359,6 +2394,9 @@ function tick0(){
     const t=S.tiles[i];if(!t.u)continue;
     // a fallen trunk rots away in about twenty-five minutes, feeding the soil
     if(t.dw){t.dw=Math.max(0,t.dw-.0007*TICK_K);if(t.fert<1)t.fert=Math.min(1,t.fert+.0006*TICK_K);if(t.dw<=0){delete t.dw;markDirty()}}
+    // a dead tree stands about a year, then comes down and lies rotting; holes go with the tree they were in
+    if(t.sn){t.sn-=SNAG_RATE*TICK_K;if(t.sn<=0){delete t.sn;delete t.ho;t.dw=1;t.ds=Math.max(t.ds||0,.5);markDirty()}}
+    if(t.ho&&!t.sn&&!holesAt(t)){delete t.ho;markDirty()}
     if(t.ash){t.ash-=.0015*TICK_K/(CAL/2);if(t.ash<=0){delete t.ash;markDirty()}}
     // disturbed ground heals within about half a day
     if(t.ds){t.ds-=.003*TICK_K;if(t.ds<=0)delete t.ds}
@@ -2401,7 +2439,8 @@ function tick0(){
       // grassland holds its soil as it is: what makes a meadow rank or poor is dung, grazing and the plants around it
       else if(!f.crop){t.tox=Math.max(0,t.tox-.002*g*K*(f.stage===2?1+.5*lvl('deep'):1));const cap=soilCap(t,x,y);if(t.fert<cap&&bid(t.p.id)!=='meadow')t.fert=Math.min(cap,t.fert+(f.kind==='tree'?.002*(FS[i]?2:1):f.kind==='shrub'?.003:.0015)*g*K)}
       if(t.gd==='soil')t.gr=Math.min(1,t.gr+.006*g*K);
-      if(f.kind==='tree'&&!f.pre&&g>=1){if(t.p.age==null)t.p.age=Math.random()*treeLife(t.p.id,i)*.9;t.p.age+=K;if(t.p.age>treeLife(t.p.id,i)&&Math.random()<.0006*K){fallTree(x,y,'age');continue}}
+      if(f.kind==='tree'&&!f.pre&&g>=1){if(t.p.age==null)t.p.age=Math.random()*treeLife(t.p.id,i)*.9;t.p.age+=K;const life=treeLife(t.p.id,i);if(t.p.age>life&&Math.random()<.0006*K){fallTree(x,y,'age');continue}
+        if(!t.p.hol&&t.p.age>.7*life&&(bid(t.p.id)==='oak'||bid(t.p.id)==='beech')){t.p.hol=1;markDirty()}}
     }else if(t.gd==='soil'&&!t.b){t.gr=Math.min(1,t.gr+.003*(1-t.tox)*(.3+t.fert)*TICK_K);if(t.stony)t.stony=Math.max(0,t.stony-.00005*TICK_K*(1+.3*lvl('roots')))}
   }
   if(shaded)seeFx('shade',(shaded-1)%N,((shaded-1)/N)|0);if(drowned)seeFx('drown',(drowned-1)%N,((drowned-1)/N)|0);
@@ -2419,7 +2458,7 @@ function tick0(){
       if(E.dt&&n.tox>0){const v=n.tox;n.tox=Math.max(0,n.tox-E.dt*t.p.g*K);fxAdd('dt:'+b0,v-n.tox,.15,nx,ny,.006)}
       if(E.ac&&n.gd==='soil'){const v=phOf(n);acidify(n,E.ac*t.p.g*K);fxAdd('ac:'+b0,v-n.ph,.4,nx,ny,.006)}}}}
   // earthworms mix the soil and speed up cleaning; boar root it up; rabbits scrape it; spawned-out salmon feed the banks in autumn
-  {const K=TICK_K;for(const a of S.an){const cx=Math.round(a.hx),cy=Math.round(a.hy);
+  {const K=TICK_K,eaten=[];for(const a of S.an){const cx=Math.round(a.hx),cy=Math.round(a.hy);
     if(a.sp==='earthworm'){let sum=0,sp=0,n=0;for(const[dx,dy]of [[0,0],...N8]){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;sum+=t.fert;sp+=phOf(t);n++}
       const avg=n?sum/n:0,aph=n?sp/n:6.5;for(const[dx,dy]of [[0,0],...N8]){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;const w=dx||dy?.5:1;
         t.tox=Math.max(0,t.tox-.0012*w*K);t.fert+=(avg-t.fert)*Math.min(1,.004*w*K);t.ph=phOf(t)+(aph-phOf(t))*Math.min(1,.002*w*K)}fxAdd('mix:earthworm',1,200,cx,cy,.01)}
@@ -2428,7 +2467,20 @@ function tick0(){
         if(a.sp==='boar'&&t.p&&t.p.g>.3&&FLORA[t.p.id].stage===2)t.p.g=Math.max(.3,t.p.g-.2)}}}
     if(a.sp==='rabbit'||a.sp==='deer'||a.sp==='boar'){const t=T(cx,cy);if(t.gd==='soil'){const cap=soilCap(t,cx,cy);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.0004*K)}}
     if(a.sp==='salmon'&&SEA.idx===2){fxAdd('feed:salmon',1,40,cx,cy,.05);for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;
-      const cap=soilCap(t,x,y);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.0005*(Math.max(Math.abs(dx),Math.abs(dy))<=1?1:.5)*K)}}}}
+      const cap=soilCap(t,x,y);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.0005*(Math.max(Math.abs(dx),Math.abs(dy))<=1?1:.5)*K)}}
+    // each spring a woodpecker carves a new nest hole into the deadest or softest wood within 2 tiles, and nests in it
+    if(a.sp==='woodpecker'&&SEA.idx===0&&Math.random()<.004*K/CAL){let best=null,bs=0;
+      for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(!t.u||t.b)continue;
+        const w=holeWood(t,y*N+x),n=t.ho||0;if(!w||n>=HOLE_MAX(t))continue;const v=w-n+Math.random();if(v>bs){bs=v;best=[x,y]}}
+      if(best){const[x,y]=best,t=T(x,y);t.ho=(t.ho||0)+1;a.hx=x;a.hy=y;markDirty();seeFx('hole:woodpecker',x,y);mark(x,y,'home')}}
+    // owls hunt the voles within 3 tiles of their hole at night
+    else if(a.sp==='owl'){fxAdd('home:owl',1,40,cx,cy,.004);
+      if(Math.random()<.002*K){const v=S.an.find(b=>b.sp==='vole'&&!eaten.includes(b)&&Math.max(Math.abs(b.hx-cx),Math.abs(b.hy-cy))<=3);if(v){eaten.push(v);fxAdd('hunt:owl',1,2,v.hx,v.hy,.5)}}}
+    // in winter voles gnaw the bark of young trees and scrub in the long grass around their runs
+    else if(a.sp==='vole'&&SEA.idx===3&&Math.random()<.02*K/CAL){const young=[];
+      for(const[dx,dy]of [[0,0],...N8]){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.u&&t.p&&!FLORA[t.p.id].pre&&(FLORA[t.p.id].kind==='tree'||FLORA[t.p.id].kind==='shrub')&&t.p.g<1)young.push([x,y,t])}
+      if(young.length){const[x,y,t]=young[(Math.random()*young.length)|0];t.p.g-=.25;fxAdd('gnaw:vole',1,3,x,y,.3);if(t.p.g<.05)t.p={id:has('meadow')?'meadow':'weeds',g:.4};markDirty()}}}
+  for(const v of eaten)removeAnimal(v)}
   // herbivory: young growth gets eaten back; heavy browsers open glades in mature woodland
   let eaten=0,glades=0,overgrazed=0;
   for(let i=0;i<N*N;i++){
@@ -2501,7 +2553,7 @@ function tick0(){
     if((t.dmt=(t.dmt||0)+10*TICK_K)<900)continue;
     delete t.dam;delete t.dmt;let k=0;
     for(let yy=y-4;yy<=y+4;yy++)for(let xx=x-4;xx<=x+4;xx++){if(!inb(xx,yy))continue;const w=T(xx,yy);if(!w.bv)continue;
-      delete w.bv;delete w.snag;w.gd='soil';w.fert=Math.max(w.fert,.6);w.tox=Math.min(w.tox,.1);w.p={id:has('meadow')?'meadow':'weeds',g:.3};k++}
+      delete w.bv;delete w.snag;delete w.ho;w.gd='soil';w.fert=Math.max(w.fert,.6);w.tox=Math.min(w.tox,.1);w.p={id:has('meadow')?'meadow':'weeds',g:.3};k++}
     buildTerrain();computeMoist();markDirty();if(k)seeFx('meadow:beaver',x,y)}
   if(flooded){computeMoist();seeFx('dam:beaver',flooded[0],flooded[1])}
   naturalForces();
@@ -2536,16 +2588,19 @@ function habitatNear(sp,x,y){const F=FAUNA[sp],r=F.range,c=TCOMP[y*N+x];
   return false}
 // a home sits on open ground: no bee nest or warren out on the water or the tarmac (salmon live in the water, beavers in their lodge)
 const HOME_GD=new Set(['soil','garden','path']);
-function homeOk(sp,x,y){const t=T(x,y);if(!t.u||t.b)return false;return sp==='salmon'?t.gd==='water':sp==='beaver'||HOME_GD.has(t.gd)}
+function homeOk(sp,x,y){const t=T(x,y);if(!t.u||t.b)return false;if(sp==='owl')return holesAt(t)>0; // owls live in a tree hole, even one out in a beaver pond
+  return sp==='salmon'?t.gd==='water':sp==='beaver'||HOME_GD.has(t.gd)||(sp==='woodpecker'&&holesAt(t)>0)}
+// one pair to a hole: is there a hole free at (x,y)?
+const holeFree=(sp,x,y)=>sp!=='owl'||2*holesAt(T(x,y))>holeUsers(x,y);
 // the nearest tile within 4 where its home can go, for a home that ended up somewhere it can't be
 function nearHome(a){const F=FAUNA[a.sp];
   for(let r=1;r<=4;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
-    const x=a.hx+dx,y=a.hy+dy;if(inb(x,y)&&homeOk(a.sp,x,y)&&canStand(F.mv,T(x,y)))return [x,y]}
+    const x=a.hx+dx,y=a.hy+dy;if(inb(x,y)&&homeOk(a.sp,x,y)&&holeFree(a.sp,x,y)&&canStand(F.mv,T(x,y)))return [x,y]}
   return null}
 function pickHome(a,F,r){
   const sp=a.sp;
   for(let k=0;k<20;k++){const x=Math.round(a.x)+((Math.random()*(2*r+1))|0)-r,y=Math.round(a.y)+((Math.random()*(2*r+1))|0)-r;
-    if(!inb(x,y)||!canStand(F.mv,T(x,y))||!homeOk(sp,x,y)||!habOk(sp,x,y))continue;
+    if(!inb(x,y)||!canStand(F.mv,T(x,y))||!homeOk(sp,x,y)||!habOk(sp,x,y)||!holeFree(sp,x,y))continue;
     if(F.mv==='land'&&TCOMP[y*N+x]!==TCOMP[ri(a)])continue; // walkers stay inside their patch
     if(FEAR_OF[sp]&&FEAR_OF[sp]()[y*N+x]&&Math.random()<.85)continue; // prey keep clear of predators
     return [x,y]}
@@ -2558,7 +2613,7 @@ const homeTaken=(a,x,y,r)=>S.an.some(b=>b!==a&&b.sp===a.sp&&!b.bad&&Math.max(Mat
 // before giving up, look for free habitat anywhere it can get to: flyers within flight reach, the rest along their corridor
 // (with a goal, it just plans the route there; roaming, it also wants enough food there for one more)
 function relocate(a,F,goal,roam){
-  const ox=Math.round(a.x),oy=Math.round(a.y),r=F.range,ok=goal?(x,y)=>x===goal[0]&&y===goal[1]:(x,y)=>canStand(F.mv,T(x,y))&&homeOk(a.sp,x,y)&&habOk(a.sp,x,y)&&!homeTaken(a,x,y,r)&&!(roam&&crowded(a,x,y));
+  const ox=Math.round(a.x),oy=Math.round(a.y),r=F.range,ok=goal?(x,y)=>x===goal[0]&&y===goal[1]:(x,y)=>canStand(F.mv,T(x,y))&&homeOk(a.sp,x,y)&&habOk(a.sp,x,y)&&holeFree(a.sp,x,y)&&!homeTaken(a,x,y,r)&&!(roam&&crowded(a,x,y));
   if(goal&&ox===goal[0]&&oy===goal[1])return{h:goal,path:[]};
   if(F.mv==='fly'){if(goal)return{h:goal,path:[]};let best=null,bd=1e9;const R=F.reach;
     for(let y=Math.max(0,oy-R);y<=Math.min(N-1,oy+R);y++)for(let x=Math.max(0,ox-R);x<=Math.min(N-1,ox+R);x++){
@@ -2593,7 +2648,7 @@ function habitatCheck(){
   for(const a of S.an){const F=FAUNA[a.sp];if(a.st==='hib'||a.sp==='bee'&&SEA.p<1&&earlyNectar(a.hx,a.hy))continue; // a queen founding her nest lives on early nectar
     // a rabbit with a fox den close by, or deer and boar with a wolf pack, move their home out of its reach
     const fear=FEAR_OF[a.sp];if(fear&&fear()[a.hy*N+a.hx]&&Math.random()<.2){const h=pickHome(a,F,F.range+2);if(h&&!fear()[h[1]*N+h[0]]){a.hx=h[0];a.hy=h[1];a.bad=0;fled.push(a);continue}}
-    if(habOk(a.sp,a.hx,a.hy)&&canStand(F.mv,T(a.hx,a.hy))){a.bad=0;a.rel=0;
+    if(habOk(a.sp,a.hx,a.hy)&&canStand(F.mv,T(a.hx,a.hy))&&(a.sp!=='owl'||holeUsers(a.hx,a.hy)<=2*holesAt(T(a.hx,a.hy)))){a.bad=0;a.rel=0;
       // food pressure: when there are more of its kind around than the food can carry, the odd one roams off to free habitat
       if(Math.random()<.1&&crowded(a,a.hx,a.hy)){const mv=relocate(a,F,null,true);if(mv){a.hx=mv.h[0];a.hy=mv.h[1];a.path=mv.path;a.lodge=0;roamed.push(a)}}
       continue}
@@ -2621,7 +2676,7 @@ function populations(){
   const season=SEA.idx<=1;
   for(const sp in FAUNA){if(sp==='bee')continue;const F=FAUNA[sp],list=S.an.filter(a=>a.sp===sp),cap=Math.max(F.keystone?1:0,capOf(sp));
     if(list.length>cap&&list.length){if(cap>0&&Math.random()<.03*TICK_K){const a=list[(Math.random()*list.length)|0];if(PREY[sp])seeFx('starve:'+sp,a.hx,a.hy);removeAnimal(a)}continue}
-    if(season&&list.length>=(F.cls==='insect'?1:2)&&list.length<cap&&Math.random()<Math.min(.9,(F.cls==='insect'?.02:.008)*TICK_K)){
+    if(season&&list.length>=(F.cls==='insect'?1:2)&&list.length<cap&&Math.random()<Math.min(.9,(F.cls==='insect'?.02:F.fast?.04:.008)*TICK_K)){
       const p=list[(Math.random()*list.length)|0],h=pickHome(p,F,F.range+1);
       if(h){S.an.push({id:S.nid++,sp,x:h[0],y:h[1],hx:h[0],hy:h[1],tx:h[0],ty:h[1],w:1,f:1,bad:0,m:0});
         const[sx,sy]=isoG(h[0],h[1]);burst(sx,sy-6,'ring',1);
@@ -2933,6 +2988,10 @@ function comingSoon(){
       keep({key:'fall',x,y,cause:'light',title:'An old tree',dt:Math.max(0,life-t.p.age)+1/.0006,pri:1,
         text:seen?`This ${f.name.toLowerCase()} is near the end of its life. When it falls, light will reach the ground beneath it.`:`This ${f.name.toLowerCase()} is very old.`})}}
     if((FLAM[k]||0)>=.7&&g>=.4)fuel.push(i)}
+  // a standing dead tree about to come down, with whoever lives in its holes
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.sn||t.sn>.25||!t.u)continue;const x=i%N,y=(i/N)|0,h=holesAt(t),o=holeUsers(x,y);
+    keep({key:o?'snag:owl':'snag',x,y,cause:'home',title:o?'An owl’s home is coming down':'A dead tree is about to fall',dt:t.sn/SNAG_RATE,pri:o?3:1,
+      text:o?'The dead tree this owl nests in will soon fall. It will need another free hole nearby.':h?`This dead tree will soon fall, and its ${h>1?`${h} holes go`:'hole goes'} with it.`:'This dead tree will soon fall and lie rotting.'})}
   // fire weather: a drought summer ahead, with dry heather, broom or pine to burn
   if(fuel.length>=6){const thisYear=WX.type==='drought'&&SEA.p<2.6,nextYear=yearType(Math.floor(WX.n/4)+1)==='drought';
     if(thisYear||nextYear){const i=fuel[(fuel.length/2)|0];out.push({key:'fire',x:i%N,y:(i/N)|0,cause:'fire',title:'Fire weather ahead',pri:3,
@@ -4015,6 +4074,17 @@ function drawDeadwood(t,x,y){
   if(d<.7)for(let k=0;k<4;k++){const p=P(-len+k*len*.5,4.5);ell(p[0],p[1],2.4,1.2,'rgba(110,150,70,.85)')}
   if(d>.6){const s0=iso(x-.18,y-.2,z),top=8+10*d;isoBox(x-.18,y-.2,.07,.07,z,top,'#8a7458','#5a4836','#463828')}
 }
+// a dead tree still standing: bare grey wood, bark peeling off, and fewer branches the longer it has stood
+function drawSnag(t,x,y){const[sx,sy]=isoG(x,y),h=SNAG_H,lean=(hash(x,y,64)-.5)*3,c='#8d8474',d='#6e6658',top=sx+lean;
+  ell(sx,sy+.5,4.5,1.6,'rgba(30,24,16,.25)');
+  X.beginPath();X.moveTo(sx-3,sy);X.lineTo(top-1.4,sy-h);X.lineTo(top+1.4,sy-h-1.5);X.lineTo(sx+3,sy);X.closePath();X.fillStyle=tc(c);X.fill();
+  seg(sx+1.4,sy-1,top+.6,sy-h,d,.9);
+  if(t.sn>.35)seg(top-.4,sy-h*.75,top+5,sy-h*.75-5,c,1.3);
+  if(t.sn>.6)seg(top-.2,sy-h*.55,top-6,sy-h*.55-4,c,1.2);
+  for(let k=0;k<3;k++)ell(sx+(hash(x,k,y)-.5)*3,sy-3-k*4.5,.8,1.4,k%2?'#a89c86':'#6a5c48')}
+// tree holes: a dark oval each, down the trunk from where it meets the crown
+function drawHoles(t,x,y){const n=Math.min(3,holesAt(t));if(!n)return;const[sx,sy]=isoG(x,y),h=holeH(t),dx=isSnag(t)&&t.gd==='water'?-1:isSnag(t)?(hash(x,y,64)-.5)*2:0;
+  for(let k=0;k<n;k++){const px=sx+dx+[0,-.8,.9][k],py=sy-h+[0,4.5,-3.8][k];ell(px,py+.4,1.6,2,'#4a3e30');ell(px,py,1.15,1.55,'#100b07')}}
 function drawAsh(t,x,y){
   const z=hAt(x,y),a=Math.min(1,t.ash*1.4);X.globalAlpha=.75*a;
   for(let k=0;k<6;k++){const u=hash(x,y,70+k)-.5,v=hash(y,x,80+k)-.5,[px,py]=iso(x+u*.8,y+v*.8,z);ell(px,py,5+4*hash(x,k,90),2.4+2*hash(k,y,91),k%2?'#2c2622':'#3d342c')}
@@ -4023,6 +4093,7 @@ function drawAsh(t,x,y){
 function drawGroundExtras(t,x,y){
   if(t.ash&&!t.b&&t.gd==='soil')drawAsh(t,x,y);
   if(t.dw&&!t.b&&t.gd==='soil')drawDeadwood(t,x,y);
+  if(t.sn&&!t.b&&t.gd!=='water')drawSnag(t,x,y);
   // a tree drowned by a beaver pond stands on as a bare grey snag
   if(t.gd==='water'&&t.snag){const[sx,sy]=isoG(x,y);seg(sx-1,sy,sx-1,sy-18,'#8f8778',2.2);seg(sx-1,sy-11,sx+5,sy-16,'#8f8778',1.2);seg(sx-1,sy-14,sx-6,sy-19,'#8f8778',1)}
   if(t.gd==='water'&&(t.dam||t.lodge)){const[sx,sy]=isoG(x,y);
@@ -4281,11 +4352,14 @@ const markDirty=()=>{if(IN_TICK)softDirty=true;else worldDirty=true};
    where they live. Like plants and animals, homes draw from sheets in sprites/homes/ when there is one:
    a row for each season, a column for each look (the heron's nest in a tree or in the reeds). */
 // when each species rests: 'day' for the night and dusk animals, 'night' for the day animals
-const SLEEP={earthworm:'day',bee:'night',rabbit:'day',thrush:'night',jay:'night',fox:'day',heron:'night',deer:'day',beaver:'day',boar:'day',wolf:'day'};
+const SLEEP={earthworm:'day',bee:'night',rabbit:'day',thrush:'night',jay:'night',fox:'day',heron:'night',deer:'day',beaver:'day',boar:'day',wolf:'day',owl:'day',woodpecker:'night'};
 const sleepy=a=>{const k=SLEEP[a.sp];if(!k)return false;const p=((S.clock||0)/DAY+hash(a.id,3,9)*.05)%1;return k==='day'?p>.3&&p<.7:p>.86||p<.16};
 // how high a nest sits: where the trunk meets the crown, or on top of the crown for the herons
 const TREE_H={birch:[10,24],willow:[6,13],oak:[6,12],pine:[10,26],beech:[8,12]};
-const nestH=(t,top)=>{if(!t.p)return 0;const f=FLORA[t.p.id],g=t.p.g;
+const SNAG_H=24;
+// tree holes sit down the trunk, below where it meets the crown
+const holeH=t=>isSnag(t)&&!holeTree(t)?nestH(t,false):nestH(t,false)*.72;
+const nestH=(t,top)=>{if(isSnag(t)&&!holeTree(t))return t.gd==='water'?11:SNAG_H*.7;if(!t.p)return 0;const f=FLORA[t.p.id],g=t.p.g;
   if(f.kind==='tree'){const[a,b]=TREE_H[bid(t.p.id)]||[8,14],h=a+b*g;return (f.scale||1)*(top?h+3+8*g:h+1)}
   return f.kind==='shrub'?(4+10*g)*.75:f.kind==='herb'?3:0};
 const nestTwigs=(sx,sy,rx,ry,n,c,sd)=>{X.strokeStyle=tc(c);X.lineWidth=.8;X.beginPath();
@@ -4319,6 +4393,10 @@ const HOME_ART={
     if(v){X.strokeStyle=tc('#c8b070');X.lineWidth=.9;X.beginPath();for(let j=-5;j<=5;j++){X.moveTo(sx+j*1.6,sy+1);X.lineTo(sx+j*1.9,sy-8+Math.abs(j)*.5)}X.stroke()}
     ell(sx,sy+1.6,10,3.6,'#4e3c28');nestTwigs(sx,sy,10,3.2,18,'#6e5638',x*3+y);ell(sx,sy,8,2.8,'#5e4a32');ell(sx,sy-.3,5.6,1.8,'#3e3022');
     if(!v)for(let k=0;k<5;k++)ell(sx+(hash(x,y,k+60)-.5)*14,sy+4+hash(y,x,k+60)*8,1,.6,'rgba(245,245,238,.85)')}},
+  woodpecker:{name:'Woodpecker hole',nest:1,hole:1,draw(sx,sy,x,y,v){if(!holesAt(T(x,y)))return; // a fresh hole, pale chips of wood still clinging below it
+    ell(sx+.5,sy+.5,2,2.4,'#e8d2a4');ell(sx+.5,sy,1.4,1.7,'#140e08');circ(sx-.6,sy+3.2,.5,'#e8d2a4');circ(sx+1.4,sy+4,.45,'#d8bf8c')}},
+  owl:{name:'Owl hole',nest:1,hole:1,draw(sx,sy,x,y,v){ // a wide, dark hollow with a grey rim worn smooth
+    ell(sx,sy+.3,3.4,3.8,'#5d554a');ell(sx,sy,2.4,2.9,'#0e0a06')}},
   salmon:{name:'Salmon redds',season:()=>SEA.idx>=2,draw(sx,sy,x,y,v){ // gravel nests cut in the stream bed, from autumn until the fry hatch
     for(const[dx,dy]of[[-5,-1],[5,1.6]]){ell(sx+dx,sy+dy,6,2.4,'rgba(214,196,150,.7)');for(let k=0;k<6;k++)circ(sx+dx+(hash(x,k,dx)-.5)*9,sy+dy+(hash(k,y,dx)-.5)*3,.6,'rgba(150,132,100,.8)')}}},
 };
@@ -4340,7 +4418,7 @@ const HOME_OFF=[[.18,.18],[.24,-.2],[-.2,.24]];
 // where a home sits on screen: ground homes toward the front of the tile, nests up in the plant
 function homeSpot(sp,x,y){x=Math.round(x);y=Math.round(y);const l=HOMEART.get(y*N+x),k=l?l.indexOf(sp):-1;if(k<0)return null;
   const h=HOME_ART[sp],t=T(x,y),[ox,oy]=h.nest?[0,0]:vecB(...HOME_OFF[k%3]),[sx,sy]=isoG(x+ox,y+oy);
-  return {x:sx,y:sy,h:h.nest?nestH(t,h.nest===2):0,nest:!!h.nest,out:!!(h.nest||h.out)}}
+  return {x:sx,y:sy,h:h.hole?holeH(t):h.nest?nestH(t,h.nest===2):0,nest:!!h.nest,out:!!(h.nest||h.out)}}
 function drawHomes(t,x,y){const l=HOMEART.get(y*N+x);if(!l)return;
   for(const sp of l){const s=homeSpot(sp,x,y),h=HOME_ART[sp];homeArt(sp,s.x,s.y-s.h,x,y,h.variant?h.variant(t):0)}}
 function homeArt(sp,sx,sy,x,y,v){
@@ -4359,7 +4437,8 @@ function drawTileObjects(x,y,part=0){
   const t=T(x,y);if(part!==2)drawGroundExtras(t,x,y);
   if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{if(!buildingSprite(t,x,y))drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
   else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);PART=part;if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);PART=0;SLX=SLY=0}
-  if(!t.b&&part!==1)drawHomes(t,x,y); // nests go over a live plant, so they are drawn with it
+  if(!t.b&&part!==1&&(t.ho||hollowOf(t)))drawHoles(t,x,y); // holes and nests go over a live plant, so they are drawn with it
+  if(!t.b&&part!==1)drawHomes(t,x,y);
 }
 // inside a forest a tile holds a close stand of trees over ferns and leaf litter, mixing in the species next door
 const FOREST_SUB=[[-.26,-.26],[.26,-.18],[-.18,.26],[.04,.02],[.27,.27]];
@@ -4704,6 +4783,8 @@ const RES={
   // birds
   thrush:{g:'animal',req:['hawthorn'],cost:450,bio:80},
   jay:{g:'animal',req:['birch'],cost:700,bio:130},
+  woodpecker:{g:'animal',req:['birch'],cost:900,bio:150},
+  owl:{g:'animal',req:['woodpecker'],cost:1400,bio:200},
   heron:{g:'animal',req:['salmon'],cost:1000,bio:200},
   // mammals
   rabbit:{g:'animal',req:['meadow'],cost:200,bio:40},
@@ -4833,6 +4914,10 @@ function animalMechanics(sp){const F=FAUNA[sp],out=[];
     out.push(fxLine('queens:bee','<b>New queens.</b> In late summer a colony raises 1 to 3 new queens, which fly off up to 6 tiles and sleep through the winter. In autumn the workers and the old queen die.'));
     out.push(fxLine('wake:bee','<b>Early nectar.</b> In spring a sleeping queen only founds a nest with willow catkins or dandelions within 3 tiles; catkins give a fast start.'))}
   if(GEN_POLL.includes(sp))out.push(fxLine('poll',`<b>Pollinator.</b> Flowers within 4 tiles of its home can set seed, so meadow, heather, hedges and broom there mature to their flowering levels. Flowers its workers reach grow 30% faster, and grassland there spreads 50% faster. Every one in the city also makes all wild plants spread 5% faster (up to double).`));
+  if(sp==='woodpecker')out.push(fxLine('hole:woodpecker','<b>Home maker.</b> Each spring it carves a nest hole into a standing dead tree, a birch, a willow or an old tree within 2 tiles, and nests in it. Holes stay after it moves on (2 to a living tree, 3 to a dead one) until the tree comes down.'));
+  if(sp==='owl'){out.push(fxLine('home:owl','<b>Needs a hole.</b> It can only live in a free tree hole: an old woodpecker hole, or the hollow of an old oak or beech. One pair to each hole.'));
+    out.push(fxLine('hunt:owl','<b>Vole hunter.</b> Hunts the voles within 3 tiles of its hole at night.'))}
+  if(sp==='vole')out.push(fxLine('gnaw:vole','<b>Bark gnawer.</b> In winter it gnaws young trees and scrub within 1 tile of its runs.'));
   if(sp==='earthworm')out.push(fxLine('mix:earthworm','<b>Soil mixer.</b> On its tile and the 8 around it, toxicity falls twice as fast and soil richness evens out between neighbours.'));
   if(sp==='salmon')out.push(fxLine('feed:salmon','<b>Carries the sea inland.</b> Each autumn the spawned-out fish feed the banks: soil richness rises on land within 2 tiles of its home.'));
   if(sp==='boar')out.push(fxLine('root:boar','<b>Rooting.</b> Turns turf into bare, disturbed earth around its home, where pioneers and acorns sprout faster and beech seedlings struggle.'));
@@ -5398,6 +5483,9 @@ const CASCADES=[
   {id:'c_grazedback',name:'Grazed Back to Flowers',sp:['meadow','rabbit','deer'],steps:['rank','unrank'],r:700,bio:12,
     hint:'Too much richness ruins a meadow. What takes it away?',
     about:'Rich soil turned the meadow rank with nettles and coarse grass. Grazers cropped it and carried the nutrients away, until the soil was poor enough for the flowers to return.'},
+  {id:'c_holes',name:'Holes in the Wood',sp:['woodpecker','owl','vole'],steps:['hole:woodpecker','home:owl','hunt:owl'],r:1500,bio:20,
+    hint:'A bird that carves, a bird that cannot, and what it hunts in the long grass.',
+    about:'A woodpecker carved nest holes in dead and soft wood. An owl moved into one, and at night it hunted the voles that gnaw young trees in the long grass. Dead and old trees are homes: a tidy wood has no owls.'},
   {id:'c_thorns',name:'Thorns Shelter Oaks',sp:['hawthorn','deer','oak'],steps:['browse','thorn'],r:900,bio:14,
     hint:'Where grazers eat every sapling, something sharp keeps a few alive.',
     about:'Browsers ate the saplings back in the open, but inside the thorny scrub young trees grew up safe. This is how wood pasture renews itself.'},
@@ -5811,6 +5899,9 @@ function updateInfo(){
   }
   if(t.fire)notes+=`<p class="note" style="color:#f0a060"><b style="font-weight:600">On fire.</b> It will spread to dry fuel next door; water, roads and wet ground stop it.</p>`;
   else if(t.ash)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89a8a;font-weight:600">Burnt ground.</b> The ash makes the soil richer, and the bare ground is open to fireweed and birch.</p>`;
+  if(t.sn)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89c86;font-weight:600">Standing dead tree.</b> It died where it stood and will come down in time (${Math.round(t.sn*100)}% left), then lie rotting here.</p>`;
+  {const h=holesAt(t);if(h){const o=holeUsers(x,y),w=S.an.filter(a=>a.sp==='woodpecker'&&a.hx===x&&a.hy===y).length,used=Math.min(h,Math.ceil(o/2)+w);
+    notes+=`<p class="note" style="color:var(--ink)"><b style="color:#c9a77a;font-weight:600">${h>1?`${h} tree holes`:'A tree hole'}.</b> ${hollowOf(t)?'This old tree is hollow. ':''}${[o?(o>1?'a pair of owls':'an owl'):'',w?'a woodpecker':''].filter(Boolean).join(' and ').replace(/^./,c=>'Home to '+c)}${used?'. ':''}${h>used?(used?`${h-used} empty.`:h>1?'All empty.':'Empty.'):''}</p>`}}
   if(t.dw)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#c9a77a;font-weight:600">Dead wood.</b> A fallen trunk is rotting here (${Math.round(t.dw*100)}% left). Beetles and fungi are turning it back into rich soil while flowers and young growth fill the gap.</p>`;
   if(t.p&&!t.b&&DISP[t.p.id]){const up=upgradeNote(t,x,y,i);if(up)notes+=`<p class="note">${up}</p>`}
   for(const s of SOON)if(s.x===x&&s.y===y)notes+=`<p class="note" style="color:var(--ink)"><b style="color:var(--lichen);font-weight:600">Coming soon${s.dt!=null?`, ${soonWhen(s.dt)}`:''}.</b> ${s.text}</p>`;
