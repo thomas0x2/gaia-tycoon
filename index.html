@@ -2854,6 +2854,9 @@ function updateAnimals(dt){
         opts.push([x,y,far?dh:0])}
       if(Math.random()<.35&&!(zz&&cd))opts.push([cx,cy,far?99:0]);
       if(zz&&!cd){a.tx=a.hx;a.ty=a.hy;continue}
+      // cut off from home (water or a wall in the way): find the way round along the corridor, or a new home on this side
+      if(cd>F.range&&!opts.some(o=>o[2]<cd)){const mv=relocate(a,F,[a.hx,a.hy])||relocate(a,F);
+        if(mv&&mv.path.length){a.hx=mv.h[0];a.hy=mv.h[1];a.path=mv.path;a.w=.1;continue}}
       if(opts.length){opts.sort((p,q)=>p[2]-q[2]);const pool=far?opts.filter(o=>o[2]===opts[0][2]):opts,o=pool[(Math.random()*pool.length)|0];
         a.tx=o[0]+(Math.random()-.5)*.4;a.ty=o[1]+(Math.random()-.5)*.4}
       continue}

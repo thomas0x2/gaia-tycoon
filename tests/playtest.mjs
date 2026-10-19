@@ -96,7 +96,8 @@ const BOT = `(()=>{
     for(const sp in cnt){const cap=capOf(sp);row.cap[sp]=cap;let n=cnt[sp];
       if(sp==='bee'){const nests=S.an.filter(a=>a.sp==='bee'&&a.st==='nest').length,hib=cnt.bee-nests;row.bee={nests,hib,cap};
         // a colony is a nest; queens asleep for the winter replace this year's nests
-        n=typeof beeColonies==='function'?beeColonies().n:Math.max(nests,hib)}
+        // sleeping queens may outnumber the winter's flowers: only nests have to fit
+        n=nests}
       B.maxCount[sp]=Math.max(B.maxCount[sp]||0,n);
       const o=B.ov=B.ov||{};
       if(n>cap&&n>1){o[sp]=o[sp]||{since:S.clock,max:0};o[sp].max=Math.max(o[sp].max,n/Math.max(cap,1));
@@ -154,12 +155,13 @@ for (let d = 0; d < YEARS * DAYS; d++) {
   lastLine = line;
 }
 
-const rep = await page.evaluate(() => window.__G('({flags:Object.values(__B.flag),max:__B.maxCount,log:__B.log,hist:__B.hist,locked:Object.keys(RES).filter(k=>RES[k].max?lvl(k)<RES[k].max:!has(k)).map(k=>({k,cost:resCost(k),lvl:lvl(k),why:resOpen(k)?"":webWhy(k)}))})'));
+const rep = await page.evaluate(() => window.__G('({flags:Object.values(__B.flag),max:__B.maxCount,log:__B.log,hist:__B.hist,blocks:S.blocks?S.blocks.map((B,b)=>B.u?null:{name:B.name,type:B.t,...blockStatus(b)}).filter(x=>x&&(x.ok||!/neighbouring/.test(x.msg))):[],locked:Object.keys(RES).filter(k=>RES[k].max?lvl(k)<RES[k].max:!has(k)).map(k=>({k,cost:resCost(k),lvl:lvl(k),why:resOpen(k)?"":webWhy(k)}))})'));
 const errN = new Map(); for (const e of errors) errN.set(e, (errN.get(e) || 0) + 1);
 for (const [e, n] of errN) rep.flags.push({ kind: 'error', key: e.slice(0, 80), msg: e, n });
 await browser.close(); server.close();
 
 if (POOR) { console.log('\nWhat the bot bought:'); for (const l of rep.log) console.log('  ' + l.join('  '));
+  console.log('\nBlocks next in line:'); for (const b of rep.blocks) console.log(`  ${b.name} (${b.type})  ${b.ok ? b.cost + ' seeds' : b.msg}`);
   console.log('\nStill locked at the end:'); for (const l of rep.locked) console.log(`  ${l.k}${l.lvl ? ' ' + (l.lvl + 1) : ''}  ${l.cost} seeds  ${l.why}`) }
 console.log(`\nMost of each species at once: ${Object.entries(rep.max).map(([k, v]) => k + ' ' + v).join(', ')}`);
 if (!rep.flags.length) console.log('\nNo glitches found.');
