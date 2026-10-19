@@ -84,7 +84,6 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 /* rarity */
 .rtag{display:inline-block;vertical-align:1px;margin-left:4px;padding:0 6px;border:1px solid var(--rc);border-radius:999px;color:var(--rc);font:600 9.5px/15px var(--mono);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
 .gtags .rtag{margin-left:0;font-size:10.5px;line-height:20px;padding:0 9px}
-.wnode[style*="--rc"]{box-shadow:inset 3px 0 0 var(--rc)}
 /* the reveal */
 #reveal{position:fixed;inset:0;z-index:90;display:grid;place-items:center;pointer-events:none;overflow:hidden}
 #reveal[hidden]{display:none}
@@ -350,12 +349,23 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .websub{margin:0;color:var(--ink-dim);max-width:70ch;font-size:13px;line-height:1.5}
 .webseeds{display:flex;gap:14px;align-items:center;font-family:var(--mono);color:var(--lichen)}
 .webseeds .bio{color:#9fd3c0}
-.webscroll{position:relative;overflow:auto;min-height:0;flex:1 1 auto;border-radius:12px;border:1px solid var(--line);cursor:grab;overscroll-behavior:contain;
-  background:radial-gradient(1200px 600px at 20% 0%,rgba(120,150,90,.10),transparent 60%),radial-gradient(900px 700px at 90% 100%,rgba(90,120,140,.10),transparent 60%),#121a17}
-.webscroll.drag{cursor:grabbing}
-.webbody{flex:1 1 auto;min-height:0;display:flex;gap:12px}
+.webscroll{position:relative;overflow-x:hidden;overflow-y:auto;min-height:0;flex:1 1 auto;border-radius:12px;border:1px solid var(--line);overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
+  background:radial-gradient(900px 500px at 50% 0%,rgba(120,150,90,.10),transparent 60%),radial-gradient(700px 600px at 50% 100%,rgba(90,120,140,.10),transparent 60%),#121a17}
+.webbody{position:relative;flex:1 1 auto;min-height:0;display:flex;gap:12px}
 .webbody .webscroll{flex:1 1 auto}
-#webSide{flex:0 0 330px;display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);scrollbar-width:thin}
+#webSide{flex:0 0 340px;display:flex;flex-direction:column;gap:8px;min-height:0;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+#webInfo{flex:1 1 auto;min-height:0;overflow-y:auto;scrollbar-width:thin}
+#webAct{flex:0 0 auto;display:flex}#webAct:empty{display:none}
+#webAct .btn{flex:1 1 auto;min-height:46px;font-size:14px}
+.wgrab{display:none}
+.wi-links{display:flex;gap:16px;align-items:center;margin:0 0 6px}.wi-more{display:none}
+/* tabs: one tree at a time, a badge counts what you can grow now */
+.wtabs{display:flex;gap:4px;padding:3px;border-radius:12px;background:rgba(255,255,255,.05);flex:0 0 auto}
+.wtabs button{flex:1 1 0;min-height:44px;border-radius:9px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:600;font-size:13.5px;color:var(--ink-dim);position:relative;transition:background .15s,color .15s}
+.wtabs button.on{background:rgba(207,220,132,.16);color:var(--ink)}
+.wtabs small{font-family:var(--mono);font-size:10.5px;font-weight:400;color:var(--ink-dim)}
+.wtabs i{font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--lichen);color:#1d2614;font:700 11px/18px var(--mono);text-align:center}
+.wtabs i:empty{display:none}
 #webInfo{font-size:13px;line-height:1.5;color:var(--ink-dim)}
 #webInfo p{margin:0 0 8px}
 .wi-empty{color:var(--ink-dim)}
@@ -368,46 +378,53 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 #webInfo b.ok{color:var(--lichen)}#webInfo b.no{color:var(--bad)}
 .wi-act{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px}
 .btn:disabled{opacity:.5}
-.wnode .wb{position:absolute;top:-8px;right:8px;font-style:normal;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:#2b3a33;color:var(--ink-dim);border:1px solid rgba(255,255,255,.1)}
-.wnode .wb:empty{display:none}
 .wb{font-style:normal;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:5px;background:#2b3a33;color:var(--ink-dim)}
-.wb.k-stage,.wnode.k-stage .wb{background:#2f4a22;color:#cfe89a;border-color:rgba(207,232,154,.35)}
-.wb.k-upgrade,.wnode.k-upgrade .wb{background:#4a3a1c;color:#f0c870;border-color:rgba(240,200,112,.35)}
-.wb.k-animal,.wnode.k-animal .wb{background:#1f3a44;color:#9fd3e0;border-color:rgba(159,211,224,.3)}
-.wb.k-force,.wnode.k-force .wb{background:#3a2a44;color:#d8b0f0;border-color:rgba(216,176,240,.3)}
+.wb.k-stage{background:#2f4a22;color:#cfe89a}
+.wb.k-upgrade{background:#4a3a1c;color:#f0c870}
+.wb.k-animal{background:#1f3a44;color:#9fd3e0}
+.wb.k-force{background:#3a2a44;color:#d8b0f0}
 .wb.k-secret{background:#4a3a1c;color:#e2b86c}
-.wnode.k-upgrade{width:172px;border-style:dashed}
-.wnode.sel{outline:2px solid var(--lichen);outline-offset:2px}
-#webLines path.track{stroke:rgba(240,200,112,.28);stroke-width:3;stroke-dasharray:1 7;stroke-linecap:round}
-#webLines path.track.half{stroke:rgba(240,200,112,.55)}
-#webLines path.track.on{stroke:rgba(240,200,112,.85);filter:none}
-.webscroll{touch-action:none}
-#webGrid{position:relative}
+/* a tree: round nodes, read top to bottom; threads light up as you grow along them */
+#webGrid{position:relative;margin:0 auto;max-width:560px}
 #webLines{position:absolute;left:0;top:0;pointer-events:none;z-index:0}
-#webLines path{fill:none;stroke:rgba(214,200,160,.13);stroke-width:1.3}
-#webLines path.half{stroke:rgba(226,210,160,.42);stroke-width:1.4;stroke-dasharray:2 4}
-#webLines path.on{stroke:rgba(207,220,132,.7);stroke-width:2;filter:drop-shadow(0 0 3px rgba(207,220,132,.45))}
-.wlane{position:absolute;left:0;right:0;border-top:1px solid rgba(255,255,255,.05)}
-.wlane:nth-child(even){background:rgba(255,255,255,.018)}
-.wlane span{position:sticky;left:0;display:inline-block;margin-top:10px;padding:4px 10px 4px 14px;font-size:10.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);background:linear-gradient(90deg,#121a17 70%,transparent);z-index:2}
-.wnode{position:absolute;z-index:1;display:flex;align-items:center;gap:8px;padding:5px 10px 5px 5px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(28,38,34,.96);text-align:left;width:172px;height:60px;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:transform .12s ease,border-color .12s ease}
-.wnode:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.22)}
-.wnode img{width:58px;height:47px;border-radius:9px;background:rgba(255,255,255,.04);flex:0 0 auto}
-.wnode .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
-.wnode b{font-size:12px;font-weight:600;line-height:1.18;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.wnode span{font-family:var(--mono);font-size:10.5px;color:var(--lichen);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wnode.owned{background:linear-gradient(135deg,rgba(207,220,132,.2),rgba(28,38,34,.96) 70%);border-color:rgba(207,220,132,.55)}
-.wnode.owned span{color:var(--ink-dim)}
-.wnode.avail{border-color:rgba(207,220,132,.5);box-shadow:0 0 0 1px rgba(207,220,132,.15),0 0 16px rgba(207,220,132,.12)}
-.wnode.locked{opacity:.72}
-.wnode.locked img{filter:grayscale(.55) brightness(.85)}
-.wnode.locked span{color:var(--ink-dim)}
-.wnode.biolock span{color:#9fd3c0}
-.wnode.poor span{color:var(--bad)}
-.wnode.secret{border-style:dashed;border-color:rgba(226,184,108,.45);background:rgba(40,34,24,.9)}
-.wnode.secret b{color:#e2b86c}
-.wnode.secret span{color:rgba(226,184,108,.75)}
-.wnode.revealed::after{content:'✦';position:absolute;top:3px;right:6px;font-size:10px;color:#e2b86c}
+#webLines path{fill:none;stroke:rgba(214,200,160,.16);stroke-width:2;stroke-linecap:round}
+#webLines path.half{stroke:rgba(207,220,132,.45);stroke-dasharray:3 5}
+#webLines path.on{stroke:rgba(207,220,132,.75);stroke-width:2.5;filter:drop-shadow(0 0 3px rgba(207,220,132,.45))}
+.wn{position:absolute;z-index:1;width:86px;margin-left:-43px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0;text-align:center}
+.wn-ic{position:relative;width:66px;height:66px;border-radius:50%;background:#1f2a25;border:2px solid rgba(255,255,255,.14);display:grid;place-items:center;transition:transform .12s ease}
+.wn:active .wn-ic{transform:scale(.94)}
+.wn-ic>img:first-child{width:62px;height:50px}
+.wn b{font-size:11.5px;font-weight:600;line-height:1.15;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wn-sub{margin-top:-2px;font-family:var(--mono);font-size:10.5px;color:var(--ink-dim);white-space:nowrap;max-width:86px;overflow:hidden;text-overflow:ellipsis}
+.wn-st{position:absolute;right:-4px;bottom:-2px;width:22px;height:22px;border-radius:50%;display:none;place-items:center;font-style:normal;font:700 12px/1 var(--body);border:2px solid #121a17}
+.wn.owned .wn-ic{border-color:var(--rc,var(--lichen));background:radial-gradient(circle at 50% 35%,rgba(207,220,132,.2),#1f2a25 70%)}
+.wn.owned .wn-st{display:grid;background:var(--lichen);color:#1d2614}.wn.owned .wn-st::before{content:'✓'}
+.wn.ready .wn-ic{border-color:var(--lichen);animation:wpulse 1.8s ease-in-out infinite}
+.wn.ready .wn-sub{color:var(--lichen)}
+.wn.open .wn-sub{color:var(--bad)}
+.wn.locked .wn-ic{border-style:dashed}.wn.locked .wn-ic>img:first-child{opacity:.5;filter:grayscale(.75)}
+.wn.locked b{color:var(--ink-dim)}
+.wn.locked .wn-st{display:grid;background:#38423d}
+.wn.locked .wn-st::before{content:'';width:11px;height:11px;background:var(--ink-dim);-webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%2211%22%20width%3D%2214%22%20height%3D%2210%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M8%2011V8a4%204%200%200%201%208%200v3%22/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%3E%3Crect%20x%3D%225%22%20y%3D%2211%22%20width%3D%2214%22%20height%3D%2210%22%20rx%3D%222%22/%3E%3Cpath%20d%3D%22M8%2011V8a4%204%200%200%201%208%200v3%22/%3E%3C/svg%3E") center/contain no-repeat}
+.wn.biolock .wn-sub{color:#9fd3c0}
+.wn.secret .wn-ic{border-color:rgba(226,184,108,.5)}.wn.secret b,.wn.secret .wn-sub{color:#e2b86c}
+.wn.sel .wn-ic{box-shadow:0 0 0 3px #121a17,0 0 0 5px #f4f1e4}
+.wn.just .wn-ic{animation:wpop .6s ease-out}
+.wn-ext{position:absolute;left:-8px;top:-6px;width:32px;height:26px;border-radius:13px;background:#2b3a33;border:2px solid #121a17}
+@keyframes wpulse{0%,100%{box-shadow:0 0 0 3px rgba(207,220,132,.12),0 0 12px rgba(207,220,132,.25)}50%{box-shadow:0 0 0 6px rgba(207,220,132,.06),0 0 22px rgba(207,220,132,.5)}}
+@keyframes wpop{0%{transform:scale(1)}35%{transform:scale(1.18)}100%{transform:scale(1)}}
+/* forces of nature: levelled again and again, so a list with the price on the button */
+#webGrid.wlist{display:flex;flex-direction:column;gap:8px;padding:10px}
+.wf{display:flex;align-items:center;gap:10px;padding:8px 8px 8px 8px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);cursor:pointer}
+.wf img{width:52px;height:42px;border-radius:9px;background:rgba(255,255,255,.04);flex:0 0 auto}
+.wf-tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px}
+.wf-tx b{font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wf-sub{font-size:11.5px;line-height:1.3;color:var(--ink-dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wf-pips{display:flex;gap:3px;margin-top:3px}.wf-pips i{width:12px;height:4px;border-radius:2px;background:rgba(255,255,255,.13)}.wf-pips i.on{background:var(--lichen)}
+.wf-buy{flex:0 0 auto;min-width:76px;min-height:44px;padding:6px 10px;font-family:var(--mono);font-size:12.5px;font-weight:500}
+.wf.locked img{filter:grayscale(.7);opacity:.6}.wf.locked b{color:var(--ink-dim)}
+.wf.owned{border-color:rgba(207,220,132,.35)}
+.wf.sel{border-color:var(--lichen);background:rgba(207,220,132,.07)}
 #webMsg{margin:0;min-height:0;flex:0 0 auto;font-size:12.5px;line-height:1.45;color:var(--ink-dim)}
 #webMsg.bad{color:var(--bad)}
 #webMsg.good{color:var(--lichen)}
@@ -431,7 +448,6 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .gbig{width:180px;height:146px}#gSearch{min-width:0;flex:1}.dialog.gpanel{padding:14px 12px}
   #jList li{flex-direction:column}
   .websub{display:none}
-  .webbody{flex-direction:column}#webSide{flex:0 0 auto;max-height:42%}
   .dialog.webpanel{padding:14px 12px}
   .tabs #dockHide{margin-left:auto}
   .card{flex-basis:80px}
@@ -547,7 +563,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   #info:not(.open) #msg{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #info:not(.open) #msg:empty{display:none}
   #info .tool-head>div{min-width:0}
-  /* Wood Wide Web: a full-screen sheet with a slim header, and the Grow button right under the name */
+  /* Wood Wide Web: full screen with a slim header */
   #web.veil{padding:0;background:var(--ground)}
   .dialog.webpanel{max-width:none;border:0;border-radius:0;gap:8px;background:var(--ground);box-shadow:none;
     padding:max(10px, env(safe-area-inset-top, 0px)) max(10px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px))}
@@ -559,12 +575,23 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .webpanel .webhead .eyebrow{display:none}
   .webpanel .webhead h2{font-size:20px;margin:0;white-space:nowrap}
   .webbody{gap:8px}
-  #webSide{flex:0 0 auto;max-height:46%;padding:10px 12px}
-  #webInfo{display:flex;flex-direction:column}
-  .wi-empty{margin:0!important;font-size:12.5px}
-  .wi-head{order:0;margin-bottom:6px}.wi-head img{width:52px;height:42px}.wi-head h3{font-size:17px}
-  .wi-act{order:1;margin:0 0 8px}.wi-act .btn{min-height:44px}
-  .wi-what{order:2}#webInfo .kv{order:3}
+  /* the tree fills the screen; tapping a node slides up a sheet with the Grow button in thumb reach */
+  .dialog.webpanel{padding-bottom:0}
+  .webbody{display:block}
+  .webscroll{position:absolute;inset:0;border-radius:12px 12px 0 0;border-bottom:0;scroll-padding-bottom:16px}
+  #webGrid.wtree{margin-bottom:max(16px, env(safe-area-inset-bottom, 0px))}
+  #webGrid.wlist{padding-bottom:max(16px, env(safe-area-inset-bottom, 0px))}
+  #webSide{position:absolute;left:-10px;right:-10px;bottom:0;z-index:5;max-height:min(72%, 560px);gap:6px;
+    padding:0 16px max(12px, env(safe-area-inset-bottom, 0px));border-radius:18px 18px 0 0;border:1px solid var(--line);border-bottom:0;
+    background:#1f2925;box-shadow:0 -12px 32px rgba(0,0,0,.45);transform:translateY(105%);transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s .24s;visibility:hidden}
+  #webSide.open{transform:none;visibility:visible;transition-delay:0s}
+  .wgrab{display:block;align-self:stretch;height:22px;flex:0 0 auto;position:relative}
+  .wgrab::before{content:'';position:absolute;left:50%;width:40px;margin-left:-20px;top:8px;height:5px;border-radius:3px;background:rgba(255,255,255,.25)}
+  .wi-head{margin-bottom:6px}.wi-head img{width:56px;height:46px}.wi-head h3{font-size:18px}
+  #webSide:not(.more) .wi-what{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  #webSide:not(.more) #webInfo .kv{display:none}
+  .wi-more{display:inline}.wi-more::after{content:' ▾'}#webSide.more .wi-more::after{content:' ▴'}
+  #webAct .btn{min-height:50px;font-size:15px;border-radius:12px}
 }
 @media (prefers-reduced-motion: reduce){
   .toast{animation:none}
@@ -684,10 +711,12 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   <div id="web" class="veil" hidden>
     <div class="dialog panel webpanel" role="dialog" aria-labelledby="webTitle">
       <header class="webhead"><div><div class="eyebrow">Research</div><h2 id="webTitle">Wood Wide Web</h2>
-        <p class="websub">Under every wood runs a web of fungal threads linking the roots. Grow it with seeds. New plants and animals also need the city to be alive enough to hold them: each asks for a level of biodiversity (BIO). Only what adds something new to the game is here: each stage of succession, each animal and each force of nature. Richer plants need no research: grown tiles level up on their own. Each plant or animal you grow makes the rest 12% dearer, and species that need a richer city cost far more. Golden nodes are secrets. Drag to explore; click a node to see what it adds.</p></div>
+        <p class="websub">Under every wood runs a web of fungal threads linking the roots. Grow it with seeds. New plants and animals also need the city to be alive enough to hold them: each asks for a level of biodiversity (BIO). Only what adds something new to the game is here: each stage of succession, each animal and each force of nature. Richer plants need no research: grown tiles level up on their own. Each plant or animal you grow makes the rest 12% dearer, and species that need a richer city cost far more. Golden nodes are secrets. Read each tree from the top down; click a node to see what it adds.</p></div>
         <div class="webseeds"><span id="webSeeds"></span><span class="bio" id="webBio"></span><button class="btn" id="webClose">Close</button></div></header>
+      <nav class="wtabs" id="webTabs" role="tablist">
+        <button data-tab="plant" role="tab">Plants<small></small><i></i></button><button data-tab="animal" role="tab">Animals<small></small><i></i></button><button data-tab="force" role="tab">Forces<small></small><i></i></button></nav>
       <div class="webbody"><div class="webscroll" id="webScroll"><div id="webGrid"><svg id="webLines"></svg></div></div>
-        <aside id="webSide"><div id="webInfo"></div><p id="webMsg" class="msg"></p></aside></div>
+        <aside id="webSide"><button class="wgrab" id="webGrab" aria-label="Close details"></button><div id="webInfo"></div><p id="webMsg" class="msg"></p><div id="webAct"></div></aside></div>
     </div>
   </div>
   <div id="menu" class="veil" hidden>
@@ -3935,25 +3964,31 @@ function sowRule(id,x,y){
 
 /* ---------- the Wood Wide Web panel ---------- */
 function webSay(m,k){const el=$('webMsg');el.textContent=m;el.className='msg '+(k||'');if(k==='bad')sfx('bad')}
-// the web is laid out in lanes (plants, insects, birds, mammals, water life, forces), each node one column right of what it needs
-const LANES=[['plant','Plants'],['insect','Small life'],['bird','Birds'],['mammal','Mammals'],['water','Water life'],['force','Forces of nature']];
-const laneOf=k=>RES[k].g==='animal'?FAUNA[k].cls:RES[k].g;
-const NW=172,NH=60,CG=46,RG=12,LX=130,LT=34;
-let WEBL=null;
+// the web is split into three tabs, each read top to bottom like a family tree: what you grow first sits on top,
+// and every row needs something from a row above it. Forces of nature are levelled again and again, so they are a list.
+const WTABS=[['plant','Plants'],['animal','Animals'],['force','Forces']];
+const tabOf=k=>RES[k].g;
+const WCLS=['insect','bird','mammal','water'];
+const NODE_W=86,ROW_H=132,ROW_MAX=4,NODE_B=116; // NODE_B: how far below its top a node's label ends
+let webTab='plant',WEBL=null;
 const variantOf=k=>{for(const b in VARIANTS)if(VARIANTS[b].some(v=>v.id===k))return b;return null};
 const variantInfo=k=>{const b=variantOf(k);return b&&VARIANTS[b].find(v=>v.id===k)};
-function webLayout(){
-  if(WEBL)return WEBL;const dep={};const d=k=>dep[k]??(dep[k]=(RES[k].req||[]).reduce((m,r)=>Math.max(m,d(r)+1),0));
-  const pos={},tracks=[];let y=0,maxc=0;const lanes=[];
-  for(const[ln,label]of LANES){const ks=Object.keys(RES).filter(k=>laneOf(k)===ln);if(!ks.length)continue;
-    let rows;
-    {const cols={};for(const k of ks){const c=d(k);(cols[c]||(cols[c]=[])).push(k);maxc=Math.max(maxc,c)}
-      rows=Math.max(...Object.values(cols).map(a=>a.length));
-      for(const c in cols)cols[c].forEach((k,r)=>{pos[k]=[LX+c*(NW+CG),y+LT+r*(NH+RG)]})}
-    const h=LT+rows*(NH+RG)+14;lanes.push([label,y,h]);y+=h}
-  return WEBL={pos,lanes,tracks,w:LX+(maxc+1)*(NW+CG)+40,h:y};
+const webDepth=k=>{const dep=webDepth.m||(webDepth.m={});return dep[k]??(dep[k]=(RES[k].req||[]).reduce((m,r)=>Math.max(m,webDepth(r)+1),0))};
+// the row inside a tab: one below its deepest parent in the same tab, or as deep as it sits in the whole web if it has none here
+const webRow=k=>{const m=webRow.m||(webRow.m={});if(m[k]!=null)return m[k];const ps=(RES[k].req||[]).filter(r=>tabOf(r)===tabOf(k));
+  return m[k]=ps.length?Math.max(...ps.map(webRow))+1:webDepth(k)};
+const webKeys=tab=>Object.keys(RES).filter(k=>tabOf(k)===tab).sort((a,b)=>webRow(a)-webRow(b));
+function webLayout(tab,w){
+  if(WEBL&&WEBL.tab===tab&&WEBL.w===w)return WEBL;
+  const byD={},pos={},cols=Math.max(2,Math.min(ROW_MAX,Math.floor((w-12)/NODE_W)));let y=16;
+  for(const k of webKeys(tab))(byD[webRow(k)]||(byD[webRow(k)]=[])).push(k);
+  for(const d of Object.keys(byD).map(Number).sort((a,b)=>a-b)){
+    // each node sits under what it needs so the threads run mostly straight down; animals without a parent here keep to their kind
+    const want=k=>{const ps=(RES[k].req||[]).filter(r=>pos[r]);return ps.length?ps.reduce((s,r)=>s+pos[r][0],0)/ps.length:FAUNA[k]?(WCLS.indexOf(FAUNA[k].cls)+.5)/WCLS.length*w:w/2};
+    const row=byD[d].map((k,i)=>[k,want(k),i]).sort((a,b)=>a[1]-b[1]||a[2]-b[2]).map(a=>a[0]);
+    for(let i=0;i<row.length;i+=cols){const part=row.slice(i,i+cols);part.forEach((k,j)=>{pos[k]=[Math.round(w*(j+.5)/part.length),y]});y+=ROW_H}}
+  return WEBL={tab,w,pos,h:y};
 }
-// what kind of unlock a node is
 function webKind(k){const R0=RES[k];
   if(R0.g==='force')return {cls:'force',tag:'Force'};
   if(R0.g==='animal')return {cls:'animal',tag:'New animal'};
@@ -3999,44 +4034,93 @@ function webState(k){const R0=RES[k],l=lvl(k),maxed=R0.max?l>=R0.max:l>0,hidden=
 function webWhy(k){const R0=RES[k],st=webState(k),miss=(R0.req||[]).filter(r=>!has(r));
   if(st.hidden)return 'A secret. Discover the right hidden ecosystem to reveal it. The Ecosystems journal has hints.';
   const out=[];if(miss.length)out.push(`Needs ${miss.map(resName).join(' and ')} first.`);if(!st.bio)out.push(`Needs ${bioNeed(k)} BIO (highest so far ${S.peak||0}).`);return out.join(' ')}
+const webPhone=()=>matchMedia('(max-width: 760px)').matches;
+// ready: you can grow it right now
+const webReady=k=>{const s=webState(k);return s.open&&!s.maxed&&S.seeds>=s.c};
+// the short line under a node: its price, or the one thing still in the way
+function webSub(k,st){const R0=RES[k];
+  if(st.hidden)return '???';
+  if(st.maxed)return R0.g==='force'?'max level':R0.g==='plant'?'growing':'can arrive';
+  if(!st.reqOk){const m=(R0.req||[]).find(r=>!has(r));return 'needs '+resName(m).split(' ').pop().toLowerCase()}
+  if(!st.bio)return `${bioNeed(k)} BIO`;
+  if(!st.open)return 'secret';
+  return `${fmt(st.c)} seeds`}
 function renderWeb(){
   if($('web').hidden)return;
-  const grid=$('webGrid'),L=webLayout();
-  if(!grid.dataset.built){grid.dataset.built=1;grid.style.width=L.w+'px';grid.style.height=L.h+'px';
-    for(const[label,y,h]of L.lanes){const d=document.createElement('div');d.className='wlane';d.style.top=y+'px';d.style.height=h+'px';d.innerHTML=`<span>${label}</span>`;grid.insertBefore(d,grid.firstChild)}
-    for(const k in RES){const b=document.createElement('button');b.className='wnode';b.dataset.k=k;const[x,y]=L.pos[k];b.style.left=x+'px';b.style.top=y+'px';
-      b.innerHTML='<img alt=""><div class="tx"><b></b><span></span></div><i class="wb"></i>';
-      b.addEventListener('click',()=>{if(!webDragged){webSel=k;webDetail(k);renderWeb()}});
-      b.addEventListener('dblclick',()=>buyRes(k));
-      b.addEventListener('mouseenter',()=>{webHov=k;webDetail(k)});
-      b.addEventListener('mouseleave',()=>{webHov=null;webDetail(webSel)});
-      grid.appendChild(b)}
-    const svg=$('webLines');svg.setAttribute('width',L.w);svg.setAttribute('height',L.h)}
+  const sc=$('webScroll'),tab=webTab;
+  for(const b of $('webTabs').children){const t=b.dataset.tab,ks=webKeys(t),n=ks.filter(webReady).length;
+    b.classList.toggle('on',t===tab);b.setAttribute('aria-selected',t===tab);
+    b.querySelector('i').textContent=n||'';b.querySelector('small').textContent=`${ks.filter(k=>lvl(k)>0).length}/${ks.length}`}
   $('webSeeds').textContent=`${fmt(S.seeds)} seeds`;$('webBio').textContent=`${D.bio} BIO · best ${S.peak||0}`;
-  for(const b of grid.querySelectorAll('.wnode')){const k=b.dataset.k,R0=RES[k],st=webState(k);
-    const cls='wnode '+(st.hidden?'secret locked':st.maxed?'owned':st.open?'avail':'locked')+(!st.hidden&&!st.maxed&&st.reqOk&&!st.bio?' biolock':'')+(st.open&&!st.maxed&&S.seeds<st.c?' poor':'')+(R0.secret&&!st.hidden?' revealed':'');
-    const K=webKind(k),cls2=cls+' k-'+K.cls+(webSel===k?' sel':'');if(b.className!==cls2)b.className=cls2;if(R0.g!=='force'&&!st.hidden)b.style.setProperty('--rc',RARITY[rarityOf(k)].c);else b.style.removeProperty('--rc');
-    const wb=b.querySelector('.wb');wb.textContent=st.hidden?'':K.tag;
-    const name=st.hidden?'Secret':resName(k),sub=st.hidden?'hidden ecosystem':R0.g==='force'?(R0.max?`Lv ${st.l}/${R0.max}${st.maxed?'':' · '+fmt(st.c)}`:''):st.maxed?(R0.g==='plant'?'growing':'can arrive'):!st.bio&&st.reqOk?`needs ${bioNeed(k)} BIO`:bioNeed(k)?`${fmt(st.c)} · ${bioNeed(k)} BIO`:`${fmt(st.c)} seeds`;
-    const img=b.querySelector('img'),src=iconURL(st.hidden?'?':k);if(img.getAttribute('src')!==src)img.src=src;
-    b.querySelector('b').textContent=name;b.querySelector('span').textContent=sub}
-  // fungal threads between the nodes
-  let paths='';
-  for(const tr of L.tracks){const[ax,ay]=L.pos[tr[0]],[fx,fy]=L.pos[tr[1]],[bx]=L.pos[tr[tr.length-1]],y1=ay+NH/2,y2=fy+NH/2,mx=(ax+NW+fx)/2;
-    paths+=`<path d="M${ax+NW} ${y1} C${mx} ${y1},${mx} ${y2},${fx} ${y2} L${bx} ${y2}" class="track${tr.slice(1).some(has)?' on':has(tr[0])?' half':''}"/>`}
-  for(const k in RES)for(const r of RES[k].req||[]){if(variantOf(k)===r)continue;const[ax,ay]=L.pos[r],[bx,by]=L.pos[k];if(webState(k).hidden&&!has(r))continue;
-    const x1=ax+NW,y1=ay+NH/2,x2=bx,y2=by+NH/2,mx=(x1+x2)/2,j=(hash(x1,y2,1)-.5)*18;
-    paths+=`<path d="M${x1} ${y1} C${mx+j} ${y1},${mx-j} ${y2},${x2} ${y2}" class="${has(r)&&has(k)?'on':has(r)?'half':''}"/>`}
-  $('webLines').innerHTML=paths;
-  if(renderWeb.t===S.t)webDetail(webHov||webSel);
+  if(tab==='force')renderForces();else renderTree(tab,Math.min(sc.clientWidth,560));
+  if(renderWeb.t===S.t)webDetail(webSel);
 }
-// the detail panel: what an unlock is, what it does, what it needs and what it leads to
-let webSel=null,webHov=null;
+function renderTree(tab,w){
+  const grid=$('webGrid'),svg=$('webLines'),L=webLayout(tab,w);
+  if(grid.dataset.built!==tab+w){grid.dataset.built=tab+w;grid.className='wtree';grid.style.height=L.h+'px';
+    grid.querySelectorAll('[data-k]').forEach(e=>e.remove());svg.setAttribute('width',w);svg.setAttribute('height',L.h);svg.style.display='';
+    for(const k in L.pos){const b=document.createElement('button');b.className='wn';b.dataset.k=k;const[x,y]=L.pos[k];b.style.left=x+'px';b.style.top=y+'px';
+      b.innerHTML='<span class="wn-ic"><img alt=""><i class="wn-st"></i><img class="wn-ext" alt="" hidden></span><b></b><span class="wn-sub"></span>';
+      grid.appendChild(b)}}
+  for(const b of grid.querySelectorAll('.wn')){const k=b.dataset.k,R0=RES[k],st=webState(k);
+    const state=st.hidden?'secret locked':st.maxed?'owned':webReady(k)?'ready':st.open?'open':'locked';
+    const cls='wn '+state+(!st.hidden&&!st.maxed&&st.reqOk&&!st.bio?' biolock':'')+(webSel===k?' sel':'')+(b.dataset.st&&b.dataset.st!=='owned'&&state==='owned'?' just':b.classList.contains('just')?' just':'');
+    b.dataset.st=state;if(b.className!==cls)b.className=cls;
+    if(!st.hidden)b.style.setProperty('--rc',RARITY[rarityOf(k)].c);else b.style.removeProperty('--rc');
+    const img=b.querySelector('img'),src=iconURL(st.hidden?'?':k);if(img.getAttribute('src')!==src)img.src=src;
+    // a need from another tab shows as a little badge, so the tree never has to draw a thread off-screen
+    const ext=st.hidden?null:(R0.req||[]).find(r=>tabOf(r)!==tabOf(k)&&!has(r)),xi=b.querySelector('.wn-ext');
+    xi.hidden=!ext;if(ext&&xi.dataset.k!==ext){xi.dataset.k=ext;xi.src=iconURL(guideHidden(ext)?'?':ext);xi.title=`Needs ${resName(ext)}`}
+    b.querySelector('b').textContent=st.hidden?'Secret':resName(k);b.querySelector('.wn-sub').textContent=webSub(k,st);
+    b.setAttribute('aria-label',`${st.hidden?'Secret':resName(k)}, ${webSub(k,st)}`)}
+  // fungal threads from each node down to what it opens up
+  // a thread that skips a row slips through the gap between that row's nodes instead of running over one
+  const rows={};for(const k in L.pos)(rows[L.pos[k][1]]||(rows[L.pos[k][1]]=[])).push(L.pos[k][0]);
+  const gapAt=(y,x)=>{const xs=rows[y].slice().sort((a,b)=>a-b),h=NODE_W/2,g=[(xs[0]-h)/2,(xs[xs.length-1]+h+w)/2];
+    for(let i=1;i<xs.length;i++)g.push((xs[i-1]+xs[i])/2);return g.reduce((a,b)=>Math.abs(b-x)<Math.abs(a-x)?b:a)};
+  let paths='';
+  for(const k in L.pos)for(const r of RES[k].req||[]){if(!L.pos[r]||variantOf(k)===r)continue;if(webState(k).hidden&&!has(r))continue;
+    const[x1,y1]=L.pos[r],[x2,y2]=L.pos[k],pts=[[x1,y1+NODE_B]];
+    for(let y=y1+ROW_H;y<y2;y+=ROW_H){const gx=gapAt(y,x1+(x2-x1)*(y-y1)/(y2-y1));pts.push([gx,y-6],[gx,y+NODE_B])}
+    pts.push([x2,y2-2]);
+    let d=`M${pts[0][0]} ${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++){const[a,b]=pts[i-1],[c,e]=pts[i];if(i%2===0)d+=` L${c} ${e}`;else{const m=(e-b)/2;d+=` C${a} ${b+m},${c} ${e-m},${c} ${e}`}}
+    paths+=`<path d="${d}" class="${has(r)&&has(k)?'on':has(r)?'half':''}"/>`}
+  if(svg._p!==paths)svg.innerHTML=svg._p=paths;
+}
+function renderForces(){
+  const grid=$('webGrid');
+  if(grid.dataset.built!=='force'){grid.dataset.built='force';grid.className='wlist';grid.style.height='';
+    grid.querySelectorAll('[data-k]').forEach(e=>e.remove());$('webLines').style.display='none';
+    for(const k of webKeys('force')){const d=document.createElement('div');d.className='wf';d.dataset.k=k;
+      d.innerHTML='<img alt=""><div class="wf-tx"><b></b><span class="wf-sub"></span><span class="wf-pips"></span></div><button class="btn wf-buy"></button>';
+      d.querySelector('img').src=iconURL(k);grid.appendChild(d)}}
+  for(const d of grid.querySelectorAll('.wf')){const k=d.dataset.k,R0=RES[k],st=webState(k),rd=webReady(k);
+    const cls='wf '+(st.maxed?'owned':rd?'ready':st.open?'open':'locked')+(webSel===k?' sel':'');if(d.className!==cls)d.className=cls;
+    d.querySelector('b').textContent=resName(k);
+    d.querySelector('.wf-sub').textContent=st.open||st.maxed?R0.sub:webWhy(k).replace(/ first\.$/,'.');
+    const pips=Array.from({length:R0.max},(_,i)=>`<i${i<st.l?' class="on"':''}></i>`).join('');const pe=d.querySelector('.wf-pips');if(pe._p!==pips)pe.innerHTML=pe._p=pips;
+    const btn=d.querySelector('.wf-buy'),t=st.maxed?'Max':!st.open?'Locked':`${fmt(st.c)}`;if(btn.textContent!==t)btn.textContent=t;
+    btn.disabled=st.maxed||!rd;btn.classList.toggle('primary',rd);btn.setAttribute('aria-label',st.maxed?`${resName(k)} is at max level`:`${st.l?'Upgrade':'Grow'} ${resName(k)} for ${fmt(st.c)} seeds`)}
+}
+// pick a node: the sheet slides up with what it does and a big Grow button in reach of the thumb
+function webPick(k,scroll){
+  if(webSel!==k)webSay('');webSel=k;renderWeb();webDetail(k);
+  const sd=$('webSide');sd.classList.toggle('open',!!k);if(!k)sd.classList.remove('more');
+  const sc=$('webScroll');sc.style.paddingBottom=k&&webPhone()?sd.offsetHeight+'px':'';
+  const el=k&&$('webGrid').querySelector(`[data-k="${k}"]`);if(!el||!scroll&&!webPhone())return;
+  const r=el.getBoundingClientRect(),s=sc.getBoundingClientRect(),bottom=s.bottom-(webPhone()?sd.offsetHeight:0);
+  if(r.top<s.top+8||r.bottom>bottom-8)sc.scrollTo({top:sc.scrollTop+r.top-s.top-Math.max(8,(bottom-s.top-r.height)/2),behavior:'smooth'})}
+function webTabTo(t){if(t===webTab)return;webTab=t;WEBL=null;$('webScroll').scrollTop=0;webPick(null);webFocus(true)}
+// the detail sheet: what an unlock is, what it does, what it needs and what it leads to
+let webSel=null;
 const webChips=ks=>ks.length?`<span class="mchips">${ks.map(k=>{const h=guideHidden(k);return `<button class="mchip" ${RES[k]?'data-web':'data-enc'}="${k}" title="${h?'Secret':resName(k)}"><img src="${iconURL(h?'?':k)}" alt=""></button>`}).join('')}</span>`:'';
+function webSet(el,html){if(el._html===html)return false;el._html=html;el.innerHTML=html;return true}
 function webDetail(k){
-  const el=$('webInfo');if(!k){el.dataset.k='';el._html='';el.innerHTML='<p class="wi-empty"><span class="hint">Point at a node to see what it unlocks. Click to select it, then grow it here (or double-click the node).</span><span class="hint touch">Tap a node to see what it unlocks and grow it.</span></p>';return}
+  const el=$('webInfo'),act=$('webAct');
+  if(!k){el.dataset.k='';webSet(el,'<p class="wi-empty">Tap a node to see what it unlocks and grow it.</p>');webSet(act,'');return}
   const R0=RES[k],st=webState(k),K=webKind(k);
-  if(st.hidden){el.innerHTML=`<div class="wi-head"><img src="${iconURL('?')}" alt=""><div><span class="wb k-secret">Secret</span><h3>Not yet revealed</h3></div></div><p>${webWhy(k)}</p>`;return}
+  if(st.hidden){el.dataset.k=k;webSet(el,`<div class="wi-head"><img src="${iconURL('?')}" alt=""><div><span class="wb k-secret">Secret</span><h3>Not yet revealed</h3></div></div><p class="wi-what">${webWhy(k)}</p>`);webSet(act,'');return}
   const name=resName(k),isF=!!FLORA[k],isA=!!FAUNA[k];
   const req=(R0.req||[]),next=Object.keys(RES).filter(a=>(RES[a].req||[]).includes(k)),ok=t=>t?'<b class="ok">✓</b>':'<b class="no">✗</b>';
   let what='',rows=[];
@@ -4053,26 +4137,38 @@ function webDetail(k){
   if(isF&&PARTNER[k])rows.push(['Partner',`${FAUNA[PARTNER[k][0]].name}: ${PARTNER[k][1]}`]);
   rows.push(['Requires',`${req.map(r=>`${ok(has(r))} ${resName(r)}`).join(' · ')||'nothing'}${bioNeed(k)?` · ${ok(bioOk(k))} ${bioNeed(k)} BIO (best so far ${S.peak||0})`:''}${R0.secret?` · ${ok(secretOk(k))} a discovered ecosystem`:''}`]);
   if(next.length)rows.push(['Leads to',webChips(next)]);
-  const btn=st.maxed?`<button class="btn" disabled>${R0.g==='force'?'Fully grown':isF?'Growing in your city':'Can arrive in your city'}</button>`
-    :`<button class="btn primary" id="webGrow" ${!st.open||S.seeds<st.c?'disabled':''}>${R0.g==='force'&&st.l?'Upgrade':'Grow'} for ${fmt(st.c)} seeds</button>`;
-  const html=`<div class="wi-head"><img src="${iconURL(k)}" alt=""><div><span class="wb k-${K.cls}">${K.tag}</span><h3>${name}</h3>${isF||isA?`<em>${(FLORA[k]||FAUNA[k]).latin}</em>`:''}</div></div>
-    <p class="wi-what">${what}</p>${kv(rows)}<div class="wi-act">${btn}${isF||isA?`<button class="glink" data-enc="${k}">Field guide ›</button>`:''}</div>`;
-  // the web re-renders every tick; only touch the panel when it changed, or a tap can land on a button that was just replaced
-  if(el.dataset.k===k&&el._html===html)return;el.dataset.k=k;el._html=html;el.innerHTML=html;
-  const g=$('webGrow');if(g)g.addEventListener('click',()=>buyRes(k));
+  // the button says what it costs, or exactly what is still missing
+  const miss=req.find(r=>!has(r)),label=st.maxed?(R0.g==='force'?'Fully grown':isF?'Growing in your city':'Can arrive in your city')
+    :miss?`Needs ${resName(miss)}`:!st.bio?`Needs ${bioNeed(k)} BIO`:!st.open?'Needs a discovered ecosystem'
+    :S.seeds<st.c?`${fmt(st.c)} seeds · ${fmt(st.c-S.seeds)} to go`:`${R0.g==='force'&&st.l?'Upgrade':'Grow'} for ${fmt(st.c)} seeds`;
+  const head=`<div class="wi-head"><img src="${iconURL(k)}" alt=""><div><span class="wb k-${K.cls}">${K.tag}${R0.max?` · Lv ${st.l}/${R0.max}`:''}</span><h3>${name}</h3>${isF||isA?`<em>${(FLORA[k]||FAUNA[k]).latin}</em>`:''}</div></div>`;
+  const html=`${head}<p class="wi-what">${what}</p><div class="wi-links"><button class="glink wi-more" data-more>Details</button>${isF||isA?`<button class="glink" data-enc="${k}">Field guide ›</button>`:''}</div>${kv(rows)}`;
+  // the web re-renders every tick; only touch the sheet when it changed, or a tap can land on a button that was just replaced
+  el.dataset.k=k;webSet(el,html);
+  webSet(act,`<button class="btn${st.maxed?'':' primary'}" id="webGrow" ${st.maxed||!st.open||S.seeds<st.c?'disabled':''}>${label}</button>`);
 }
-$('webInfo').addEventListener('click',e=>{const b=e.target.closest('[data-web]');if(!b)return;webSel=b.dataset.web;webDetail(webSel);renderWeb();
-  const L=webLayout(),sc=$('webScroll'),[x,y]=L.pos[webSel];sc.scrollTo({left:Math.max(0,x-sc.clientWidth*.4),top:Math.max(0,y-sc.clientHeight*.4),behavior:'smooth'})});
-// drag the web around like a map
-let webDragged=false;
-{const sc=$('webScroll');let st=null;
-  sc.addEventListener('pointerdown',e=>{if(e.button!==0)return;st={x:e.clientX,y:e.clientY,l:sc.scrollLeft,t:sc.scrollTop,id:e.pointerId};webDragged=false});
-  sc.addEventListener('pointermove',e=>{if(!st)return;const dx=e.clientX-st.x,dy=e.clientY-st.y;if(!webDragged&&Math.hypot(dx,dy)>5){webDragged=true;sc.classList.add('drag');sc.setPointerCapture(st.id)}if(webDragged){sc.scrollLeft=st.l-dx;sc.scrollTop=st.t-dy}});
-  const end=()=>{st=null;sc.classList.remove('drag');setTimeout(()=>{webDragged=false},0)};
-  sc.addEventListener('pointerup',end);sc.addEventListener('pointercancel',end);}
-// open the web where the action is: the first node you can grow
-function webFocus(){const L=webLayout(),sc=$('webScroll');const k=Object.keys(RES).find(k=>{const s=webState(k);return s.open&&!s.maxed&&RES[k].g!=='force'});
-  if(k){const[x,y]=L.pos[k];sc.scrollLeft=Math.max(0,x-sc.clientWidth*.35);sc.scrollTop=Math.max(0,y-sc.clientHeight*.35)}}
+$('webAct').addEventListener('click',e=>{if(e.target.closest('#webGrow')&&webSel)buyRes(webSel)});
+$('webInfo').addEventListener('click',e=>{
+  if(e.target.closest('[data-more]')){$('webSide').classList.toggle('more');webPick(webSel);return}
+  const b=e.target.closest('[data-web]');if(!b)return;const k=b.dataset.web;
+  if(tabOf(k)!==webTab){webTab=tabOf(k);WEBL=null}webPick(k,true)});
+$('webGrab').addEventListener('click',()=>{const sd=$('webSide');if(sd.classList.contains('more'))sd.classList.remove('more');else webPick(null)});
+$('webTabs').addEventListener('click',e=>{const b=e.target.closest('[data-tab]');if(b)webTabTo(b.dataset.tab)});
+$('webGrid').addEventListener('click',e=>{
+  const buy=e.target.closest('.wf-buy'),n=e.target.closest('[data-k]');
+  if(buy&&n){webSel=n.dataset.k;buyRes(n.dataset.k);return}
+  webPick(n?(n.dataset.k===webSel&&webPhone()?null:n.dataset.k):null)});
+// swipe sideways to change tab, as in most mobile games
+{const sc=$('webScroll');let t0=null;
+  sc.addEventListener('touchstart',e=>{const t=e.touches[0];t0=e.touches.length===1?{x:t.clientX,y:t.clientY,at:Date.now()}:null},{passive:true});
+  sc.addEventListener('touchend',e=>{if(!t0)return;const t=e.changedTouches[0],dx=t.clientX-t0.x,dy=t.clientY-t0.y;
+    if(Math.abs(dx)>70&&Math.abs(dy)<Math.abs(dx)*.5&&Date.now()-t0.at<600){const i=WTABS.findIndex(w=>w[0]===webTab)+(dx<0?1:-1);if(WTABS[i])webTabTo(WTABS[i][0])}t0=null},{passive:true});}
+addEventListener('resize',()=>{if(!$('web').hidden){WEBL=null;renderWeb()}});
+// open the web where the action is: the tab with something to grow, scrolled to it
+function webFocus(stay){
+  if(!stay){const t=WTABS.map(w=>w[0]).find(t=>webKeys(t).some(webReady));if(t&&t!==webTab){webTab=t;WEBL=null}}
+  renderWeb();const sc=$('webScroll'),k=webKeys(webTab).find(webReady)||webKeys(webTab).find(k=>webState(k).open&&!webState(k).maxed);
+  const el=k&&$('webGrid').querySelector(`[data-k="${k}"]`);if(el)sc.scrollTop=Math.max(0,el.offsetTop-sc.clientHeight*.3)}
 
 /* ---------- nature keeps growing while the page is closed or in the background ---------- */
 let QUIET=false,offLog=null,catching=false;
@@ -4764,7 +4860,7 @@ $('rotR').addEventListener('click',()=>rotateView(1));
 $('goals').addEventListener('click',e=>{if(e.target.id==='goals')$('goals').hidden=true});
 $('goals').addEventListener('keydown',e=>{if(e.key==='Escape')$('goals').hidden=true});
 $('dnBtn').addEventListener('click',()=>{S.dayNight=S.dayNight===false;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));updateTime();markDirty();lastClockTxt='';save()});
-$('webBtn').addEventListener('click',()=>{$('web').hidden=false;webSay('');renderWeb();webFocus();webDetail(webSel)});
+$('webBtn').addEventListener('click',()=>{$('web').hidden=false;webSay('');webFocus();webPick(webPhone()?null:webSel)});
 $('webClose').addEventListener('click',()=>{$('web').hidden=true});
 $('web').addEventListener('keydown',e=>{if(e.key==='Escape')$('web').hidden=true});
 $('web').addEventListener('click',e=>{if(e.target.id==='web')$('web').hidden=true});
