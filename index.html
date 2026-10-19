@@ -3834,15 +3834,24 @@ function blit(sh,i,x,y){const[src,fx,fy]=frameSrc(sh,i),s=1/sh.scale;X.drawImage
 // a plant: the row for the time of year, the column for how grown it is and which of its looks this tile wears
 function plantSprite(id,sx,sy,g,sd){
   const sh=SHEETS.plant[id];if(!sh||(!TINT_ON&&!SPRITE_ICONS))return false;
-  const st=sh.stages||[1],vs=sh.variants>1&&sh.cols===st.length*sh.variants?sh.variants:1,ns=Math.floor(sh.cols/vs),G=ns===st.length?st:Array.from({length:ns},(_,i)=>(i+1)/ns);
-  let s=0;while(s<ns-1&&g>(G[s]+G[s+1])/2)s++;
+  const[s,vs]=sheetStage(sh,g);
   const i=(Math.floor(SEA.p/4*sh.rows)%sh.rows)*sh.cols+s*vs+(vs>1?Math.floor(hash(sd,0,61)*vs):0);
-  if(sh.shadow&&sh.shadow.length===sh.rows*sh.cols)for(const[cx,cy,rx,ry]of sh.shadow[i])shadowAt(sx+cx-rx*.45,sy+cy-1.5,rx,ry);
+  if(PART!==2&&sh.shadow&&sh.shadow.length===sh.rows*sh.cols)for(const[cx,cy,rx,ry]of sh.shadow[i])shadowAt(sx+cx-rx*.45,sy+cy-1.5,rx,ry);
+  if(PART===1)return true;
   const k=(SLY-SLX)/TW; // lean with the slope it stands on, as the code-drawn plants do
   if(k){X.save();X.transform(1,k,0,1,sx,sy);blit(sh,i,0,0);X.restore()}else blit(sh,i,sx,sy);
   return true;
 }
-function plantArt(id,sx,sy,g,sd,x,y){if(!plantSprite(id,sx,sy,g,sd))FDRAW[id](sx,sy,g,sd,0,x,y)}
+// which growth column of a sheet a plant this grown wears, and how many looks each stage has
+function sheetStage(sh,g){
+  const st=sh.stages||[1],vs=sh.variants>1&&sh.cols===st.length*sh.variants?sh.variants:1,ns=Math.floor(sh.cols/vs),G=ns===st.length?st:Array.from({length:ns},(_,i)=>(i+1)/ns);
+  let s=0;while(s<ns-1&&g>(G[s]+G[s+1])/2)s++;return[s,vs]}
+function plantArt(id,sx,sy,g,sd,x,y){
+  if(PART===1){plantSprite(id,sx,sy,g,sd);return} // a live plant leaves only its shadow on the still map (a code-drawn one, nothing)
+  const w=X===ctx&&LIVE_SET.has(y*N+x)?liveSway(id,sx,sd,y*N+x):null;
+  if(w){X.save();X.translate(sx,sy);X.transform(w[1],0,w[0],w[1],0,0);X.translate(-sx,-sy)}
+  if(!plantSprite(id,sx,sy,g,sd))FDRAW[id](sx,sy,g,sd,0,x,y);
+  if(w)X.restore()}
 // an animal at the origin, facing right: the frame for where it is in its stride, offset by its id so a herd is not in step
 function animalArt(k,a,tm){
   const sh=SHEETS.animal[k];if(!sh||(!TINT_ON&&!SPRITE_ICONS)){ADRAW[k](a,tm);return}
@@ -3899,10 +3908,11 @@ let cache=null,cctx=null,CW=0,CH=0,CS={x:0,y:0,z:1,lkey:'',w:0,h:0},worldDirty=t
 // changes from the simulation repaint at most every few frames' worth of drawing time; the player's own actions repaint at once
 let IN_TICK=false,softDirty=false,lastStatic=0,staticCost=0;
 const markDirty=()=>{if(IN_TICK)softDirty=true;else worldDirty=true};
-function drawTileObjects(x,y){
-  const t=T(x,y);drawGroundExtras(t,x,y);
+// part 1: everything but a live plant (it is drawn every frame), part 2: just that plant
+function drawTileObjects(x,y,part=0){
+  const t=T(x,y);if(part!==2)drawGroundExtras(t,x,y);
   if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
-  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);SLX=SLY=0}
+  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);PART=part;if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);PART=0;SLX=SLY=0}
 }
 // inside a forest a tile holds a close stand of trees over ferns and leaf litter, mixing in the species next door
 const FOREST_SUB=[[-.26,-.26],[.26,-.18],[-.18,.26],[.04,.02],[.27,.27]];
@@ -3910,7 +3920,7 @@ function drawForestTile(t,x,y,sx,sy){
   const sd=x*97+y*13,g=t.p.g,ids=[t.p.id,t.p.id];
   for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=T(nx,ny);if(n.p&&FS[ny*N+nx]&&FLORA[n.p.id].kind==='tree')ids.push(n.p.id)}
   const brown=SEA.aut>.5||SEA.snow>.3,fc=brown?['#8a6a3a','#a07a40']:['#3f6a2e','#55803a'];
-  if(SEA.snow<.6)for(let k=0;k<6;k++){const[ox,oy]=spot(sd,k+70,.9),fx=sx+ox,fy=sy+oy;
+  if(PART!==2&&SEA.snow<.6)for(let k=0;k<6;k++){const[ox,oy]=spot(sd,k+70,.9),fx=sx+ox,fy=sy+oy;
     for(let j=-2;j<=2;j++){X.beginPath();X.moveTo(fx,fy);X.quadraticCurveTo(fx+j*1.6,fy-4,fx+j*2.6,fy-3+Math.abs(j)*.6);X.strokeStyle=tc(fc[(j+k)&1]);X.lineWidth=1.1;X.stroke()}}
   for(let k=0;k<FOREST_SUB.length;k++){const[u,v]=FOREST_SUB[k];if(k===4&&hash(x,y,9)<.5)continue;
     const sp=ids[(hash(x,y,k+3)*ids.length)|0],gg=Math.max(.35,g*(.62+.22*hash(y,x,k))),ox=(u-v)*HW,oy=(u+v)*HH-(SLX*u+SLY*v);
@@ -3970,8 +3980,9 @@ function renderStatic(){
   const BK=[[[0,-1],[[-.5,-.5],[.5,-.5]]],[[-1,0],[[-.5,-.5],[-.5,.5]]]];
   const overCliff=(x,y)=>BK.some(([o,E])=>{const[ox,oy]=vecB(...o),nx=x+ox,ny=y+oy;if(!inb(nx,ny))return false;const n=T(nx,ny);if(!n.b&&!n.p)return false;
     return E.every(([u,v])=>{const[ex,ey]=vecB(u,v);return cornerH(x,y,ex,ey)-cornerH(nx,ny,ex-ox,ey-oy)>=2*HS-1})});
+  pickLive(visT,overCliff);
   for(let d=0;d<2*N-1;d++){
-    for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawTileObjects(x,y);FOG=0;HT=-1}}
+    for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawTileObjects(x,y,LIVE_SET.has(y*N+x)?1:0);FOG=0;HT=-1}}
     const e=d+1;for(let u=Math.max(0,e-N+1);u<=Math.min(N-1,e);u++){const[x,y]=toWorld(u,e-u);if(visT(x,y)&&overCliff(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawGround(T(x,y),x,y,0,wc);FOG=0;HT=-1}}
   }
   if(S.blocks)drawPlots();
@@ -4005,6 +4016,54 @@ const BIGM=new Set(['deer','wolf','fox','bison','heron','stork','boar','lynx','b
 function drawCar(o){const c=hx(o.c),ox=o.dy?(o.dy>0?-.2:.2):0,oy=o.dx?(o.dx>0?.2:-.2):0,cz=hAt(o.x,o.y);
   isoBox(o.x+ox,o.y+oy,o.dx?.17:.09,o.dy?.17:.09,cz,4,shade(c,1.05),shade(c,.8),shade(c,.65));
   if(NIGHT>.2){const[hx2,hy2]=iso(o.x+ox+o.dx*.18,o.y+oy+o.dy*.18,cz+2);circ(hx2,hy2,.9,'#fff4c8');glow(hx2,hy2,9,WARM,NIGHT*.7)}}
+// how tall and how wide (each side of the tile centre) what stands on a tile reaches on screen, or null if it lies flat
+function objBox(x,y){const t=T(x,y);
+  if(t.b)return[bTop(t.b)+Math.max(...corners(x,y))-hAt(x,y)+4,HW];
+  if(!t.p)return null;const k=FLORA[t.p.id].kind,g=t.p.g;
+  return k==='tree'?[16+42*g,6+12*g]:k==='shrub'?[4+10*g,4+8*g]:k==='herb'?[6+20*g,HW*.7]:k==='crop'&&t.p.id==='maize'?[16,HW]:null}
+/* living plants: trees, shrubs and tall herbs leave the cached map and are drawn every frame, so they can sway in the wind
+   and spring up when they are sown or grow into their next stage. Drawing only: none of this touches the simulation.
+   A plant stays still when zoomed far out, when a building or a cliff stands in front of it, or when it is further from the
+   middle of the screen than the nearest LIVE_MAX plant pictures (a forest tile counts 5). A still plant standing in front of
+   a moving one is drawn again over it, clipped to the moving plant, as drawMovers does for animals. */
+let LIVE=[],LIVE_SET=new Set(),PART=0;const LIVE_FADE=new Map(),LIVE_REP=new Map(),SEEN_STAGE=new Map(),POP=new Map(),LIVE_MAX=320;
+const SWAY_KIND={tree:[.065,1.1],shrub:[.08,1.6],herb:[.13,2.1],crop:[.1,1.9]}; // lean at full wind, sway speed (radians a second)
+function pickLive(visT,overCliff){
+  LIVE=[];LIVE_SET=new Set();LIVE_FADE.clear();LIVE_REP.clear();const on=TINT_ON&&!BAKE&&cam.z>=.75,still=new Set(),dist=(x,y)=>{const[sx,sy]=isoG(x,y);return Math.hypot(sx-cam.x,sy-cam.y)};
+  const sway=t=>on&&t.p&&!t.b&&SWAY_KIND[FLORA[t.p.id].kind];
+  // the reach that keeps the moving pictures within budget, nearest the middle first
+  const cand=[];for(let i=0;i<N*N;i++){const x=i%N,y=(i/N)|0,t=S.tiles[i];if(sway(t)&&visT(x,y))cand.push([dist(x,y),FS[i]&&FLORA[t.p.id].kind==='tree'?5:1])}
+  cand.sort((a,b)=>a[0]-b[0]);let R=Infinity,n=0;for(const[d,w]of cand)if((n+=w)>LIVE_MAX){R=d;break}
+  for(let d=2*N-2;d>=0;d--)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u),i=y*N+x;if(!visT(x,y))continue;
+    const t=T(x,y),sh=t.p&&SHEETS.plant[t.p.id],key=t.p?t.p.id+'|'+(sh?sheetStage(sh,t.p.g)[0]:Math.min(2,Math.floor(t.p.g*3))):'',was=SEEN_STAGE.get(i);
+    if(key&&was!=null&&was!==key)POP.set(i,time);SEEN_STAGE.set(i,key);
+    const bx=objBox(x,y);if(!bx)continue;
+    const r=sway(t)?dist(x,y):Infinity;if(r>=R){still.add(i);continue}
+    // whatever still stands in front of this plant and overlaps it: a building or cliff keeps it still, a plant is drawn again over it
+    const[h,w]=bx,[sx,sy]=isoG(x,y);let ok=true,rp=null;
+    for(let dv=-1;dv<=5&&ok;dv++)for(let du=-1;du<=5;du++){if(du+dv<=0)continue;const[ox,oy]=vecB(du,dv),nx=x+ox,ny=y+oy,j=ny*N+nx;if(!inb(nx,ny)||!visT(nx,ny))continue;
+      if(du+dv===1&&overCliff(nx,ny)){ok=false;break}
+      if(!still.has(j))continue;const[h2,w2]=objBox(nx,ny),[tx,ty]=isoG(nx,ny);
+      if(tx+w2>sx-w-3&&tx-w2<sx+w+3&&ty+HH>sy-h-3&&ty-h2<sy+HH){if(T(nx,ny).b){ok=false;break}(rp||(rp=[])).push(j)}}
+    if(ok){LIVE.push(i);LIVE_SET.add(i);if(R<Infinity)LIVE_FADE.set(i,clamp((R-r)/(R*.3),0,1));
+      if(rp)LIVE_REP.set(i,[sx-w-3,sy-h-3,2*w+6,h+HH+3,rp.sort((a,b)=>depth(a%N,(a/N)|0)-depth(b%N,(b/N)|0))])}else still.add(i)}
+  LIVE.reverse();
+}
+// a lean (horizontal shear about the plant's foot) and a size for a live plant this frame
+function liveSway(id,sx,sd,i){
+  const[a,f]=SWAY_KIND[FLORA[id].kind],gust=.7+.3*Math.sin(time*.21)*Math.sin(time*.37+1.3),wind=(drops.length?1.6:1)*gust;
+  const lean=a*wind*(LIVE_FADE.get(i)??1)*(.35+.65*Math.sin(time*f-sx*.014+hash(sd,3,17)*1.4));
+  let sc=1;const t0=POP.get(i);
+  if(t0!=null){const p=(time-t0)/.8;if(p>=1||p<0)POP.delete(i);else{const q=p-1;sc=.35+.65*(1+2.7*q*q*q+1.7*q*q)}}
+  return[lean,sc]}
+function drawLive(){
+  if(!LIVE.length)return;const z=cam.z;
+  for(const i of LIVE){const x=i%N,y=(i/N)|0,[mx,my]=isoG(x,y),px=(mx-cam.x)*z+W/2,py=(my-cam.y)*z+H/2;
+    if(px<-HW*z-20||px>W+HW*z+20||py<-20||py>H+70*z+20)continue;
+    FOG=FOGL[i];HT=i;drawTileObjects(x,y,2);FOG=0;HT=-1;
+    const rp=LIVE_REP.get(i);if(rp){X.save();X.beginPath();X.rect(rp[0],rp[1],rp[2],rp[3]);X.clip();OCC=true;
+      for(const j of rp[4]){FOG=FOGL[j];HT=j;drawTileObjects(j%N,(j/N)|0,2);FOG=0;HT=-1}OCC=false;X.restore()}}
+}
 // draw animals and cars, then repaint whatever stands in front of each one, clipped to its outline box
 function drawMovers(){
   const list=S.an.concat(cars.filter(c=>T(clamp(Math.round(c.x),0,N-1),clamp(Math.round(c.y),0,N-1)).u)).sort((p,q)=>depth(p.x,p.y)-depth(q.x,q.y));
@@ -4016,11 +4075,8 @@ function drawMovers(){
     const half=o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(o.sp?MOVER_H[o.sp]:9),bot=my+3;
     const tx=Math.round(o.x),ty=Math.round(o.y);let occ=null;
     for(let dv=-1;dv<=5;dv++)for(let du=-1;du<=5;du++){
-      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!REV[y*N+x])continue;const t=T(x,y);let h,w;
-      if(t.b){h=bTop(t.b)+Math.max(...corners(x,y))-hAt(x,y)+4;w=HW}
-      else if(t.p){const k=FLORA[t.p.id].kind,g=t.p.g;if(k==='tree'){h=16+42*g;w=6+12*g}else if(k==='shrub'){h=4+10*g;w=4+8*g}else if(k==='herb'){h=6+20*g;w=HW*.7}else if(k==='crop'&&t.p.id==='maize'){h=16;w=HW}else continue}
-      else continue;
-      const[sx,sy]=isoG(x,y);if(sx+w<l||sx-w>r||sy+HH<top||sy-h>bot)continue;
+      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!REV[y*N+x])continue;const bx=objBox(x,y);if(!bx)continue;
+      const[h,w]=bx,[sx,sy]=isoG(x,y);if(sx+w<l||sx-w>r||sy+HH<top||sy-h>bot)continue;
       (occ||(occ=[])).push([x,y]);
     }
     if(occ){occ.sort((a,b)=>depth(a[0],a[1])-depth(b[0],b[1]));X.save();X.beginPath();X.rect(l,top,r-l,bot-top);X.clip();OCC=true;
@@ -4099,7 +4155,7 @@ function render(){
   if(s===1){dx=Math.round(dx*DPR)/DPR;dy=Math.round(dy*DPR)/DPR}
   ctx.drawImage(cache,dx,dy,CW*s,CH*s);
   X=ctx;ctx.setTransform(DPR*z,0,0,DPR*z,DPR*(W/2-cam.x*z),DPR*(H/2-cam.y*z));
-  drawMovers();drawPods();drawHighlight();
+  drawLive();drawMovers();drawPods();drawHighlight();
   if(tool.type==='corridors'||tool.type==='guide'||tool.type==='lens')drawOverlay();
   const hm=hover||pinned;
   if(S.blocks&&hm&&!T(hm[0],hm[1]).u){const b=blockAt(hm[0],hm[1]);if(b>=0){const ok=blockStatus(b).ok;
@@ -5486,7 +5542,7 @@ function migrateRoster(){
   if(moved||refund)setTimeout(()=>toast('A wilder, leaner city',`Your city now grows the plants and animals of Central Europe. Old plant varieties became the levels of the plant that fills their place, and ${refund?`${fmt(refund)} seeds came back for the species that left`:'nothing was lost'}. Open the Lens to read the ground.`,'unlock'),1200);
 }
 function boot(state){
-  S=state;migrateRoster();worldDirty=true;ROT=S.rot||0;
+  S=state;migrateRoster();worldDirty=true;SEEN_STAGE.clear();ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
   RACT={};CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   // saves from before stepped terrain kept smooth corner heights: turn them into levels
