@@ -620,8 +620,8 @@ body.touring #dock{visibility:hidden}
   .card canvas{width:48px;height:39px}
   .card .nm{display:none}
   .card .cs{font-size:10.5px}
-  /* collapsed Survey: rows of four condition icons with a bar each, numbers one tap away */
-  #info:not(.open) #tileInfo .meters{grid-template-columns:repeat(5,1fr);gap:9px 10px}
+  /* collapsed Survey: a 3×3 grid of condition icons with a bar each, numbers one tap away */
+  #info:not(.open) #tileInfo .meters{grid-template-columns:repeat(3,1fr);gap:9px 22px}
   #info:not(.open) .meter label{font-size:0;justify-content:center}
   #info:not(.open) .meter label span{display:none}
   #info:not(.open) .meter label::before{content:'';width:15px;height:15px;background:currentColor;-webkit-mask:var(--mi) center/contain no-repeat;mask:var(--mi) center/contain no-repeat}
