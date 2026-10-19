@@ -38,7 +38,7 @@
 }
 *,*::before,*::after{box-sizing:border-box}
 [hidden]{display:none !important}
-html,body{height:100%}
+html,body{height:100%;margin:0}
 body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:14px;overflow:hidden;overscroll-behavior:none;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
 #app{position:relative;height:100%;overflow:hidden}
 #world{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
@@ -465,31 +465,39 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   #stats{flex:0 1 auto}.ctrl{flex:1 1 200px}
 }
 /* phones: keep the city in view. One-line title bar, the three key stats, icon toggles,
-   short toasts that a tap dismisses, and an info panel that shows the tile at a glance and opens for the rest */
+   short toasts that a tap dismisses, a toolbar of tall narrow buttons, and an info panel that shows
+   only the tool and tile at a glance and opens for the rest */
 @media (max-width: 760px){
   .brand{flex-wrap:nowrap;align-items:center;gap:10px;padding:6px 12px}
   .brand h1{display:none}
   .brand .clock{margin-left:0;flex:0 0 auto;font-size:11px;gap:6px}
   .brand .stage{flex:1 1 auto;min-width:0;font-size:11px;gap:6px}
   .brand .stage .bar{display:none}
+  #stageName{white-space:nowrap}
   #stageNext{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
   #stats{padding:2px}
   #stats .stat:not(.keep){display:none}
   #stats .stat.keep{flex:1 1 0;min-width:0;padding:3px 10px}
   .stat label{font-size:9px}
   .stat>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ctrl{padding:2px}
-  #dnBtn,#sndBtn{font-size:0;padding:6px 9px}
-  #dnBtn::before{content:'☀︎';font-size:14px}
-  #sndBtn::before{content:'♪';font-size:14px}
+  .ctrl{padding:3px;gap:3px;align-items:stretch}
+  .ctrl button{min-height:46px;max-width:72px;padding:4px 8px;white-space:normal;line-height:1.15;text-align:center;font-family:var(--body);font-size:11.5px;font-weight:500}
+  .ctrl .rotgrp{gap:3px}.ctrl .rotgrp button{padding:4px 10px;font-size:18px}
+  #dnBtn,#sndBtn{font-size:0;padding:4px 12px}
+  #dnBtn::before{content:'☀︎';font-size:17px}
+  #sndBtn::before{content:'♪';font-size:17px}
   .toast{padding:7px 12px;pointer-events:auto;cursor:pointer}
   .toast b{font-size:14px;margin-bottom:0}
   .toast p{font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
   #toasts .toast:nth-last-child(n+3){display:none}
-  #info:not(.open) .tool-head em{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #info:not(.open) #tileInfo .note{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-  #info:not(.open) #tileInfo .note:nth-of-type(n+3),#info:not(.open) #tileInfo .kv{display:none}
-  #info:not(.open) #msg{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  #info:not(.open){padding:6px 10px;gap:4px}
+  #info:not(.open) .tool-head{grid-template-columns:30px 1fr auto auto;gap:8px}
+  #info:not(.open) .tool-head canvas{width:30px;height:25px}
+  #info:not(.open) .tool-head h2{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #info:not(.open) .tool-head em,#info:not(.open) #tileInfo .note,#info:not(.open) #tileInfo .kv{display:none}
+  #info:not(.open) .cost{font-size:12px}
+  #info:not(.open) #tileInfo{padding-top:5px;gap:4px}
+  #info:not(.open) #msg{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #info:not(.open) #msg:empty{display:none}
   #info .tool-head>div{min-width:0}
 }
