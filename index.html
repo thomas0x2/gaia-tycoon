@@ -2475,26 +2475,31 @@ function progress(){
 /* ---------- moving things ---------- */
 function updateAnimals(dt){
   if(!dt)return;
-  for(const a of S.an){const F=FAUNA[a.sp];
-    if(a.w>0){a.w-=dt;a.m=0;continue}
+  for(const a of S.an){const F=FAUNA[a.sp],zz=sleepy(a)&&!(a.path&&a.path.length);
+    // resting at home: it stays put until its waking hour
+    if(zz&&Math.abs(a.x-a.hx)<.35&&Math.abs(a.y-a.hy)<.35&&(a.sl||Math.hypot(a.tx-a.x,a.ty-a.y)<.04)){a.sl=1;a.m=0;continue}
+    a.sl=0;
+    if(a.w>0&&!(zz&&a.w>.3)){a.w-=dt;a.m=0;continue}
     const dx=a.tx-a.x,dy=a.ty-a.y,d=Math.hypot(dx,dy);
     if(d<.04){a.m=0;
       // on its way to a new home: follow the route tile by tile, crossing gardens if it must
       if(a.path&&a.path.length){const j=a.path.shift();
         if(canCross(F.mv,S.tiles[j])){a.w=.1+Math.random()*.3;a.tx=j%N+(Math.random()-.5)*.3;a.ty=((j/N)|0)+(Math.random()-.5)*.3;continue}
         a.path=[]}
+      if(F.mv==='fly'&&zz){a.w=0;a.tx=a.hx;a.ty=a.hy;continue}
       if(F.mv==='fly'){a.w=1+Math.random()*4;
         for(let k=0;k<10;k++){const r=Math.min(3,F.range),x=a.hx+((Math.random()*(2*r+1))|0)-r,y=a.hy+((Math.random()*(2*r+1))|0)-r;
           if(inb(x,y)&&T(x,y).u&&!T(x,y).b){a.tx=x+(Math.random()-.5)*.6;a.ty=y+(Math.random()-.5)*.6;break}}
         continue}
       // one step to a neighbouring tile it can stand on, drifting back toward home when it strays
-      a.w=F.mv==='swim'?.5+Math.random()*2:1.5+Math.random()*(F.cls==='insect'?3:5);
-      const cx=Math.round(a.x),cy=Math.round(a.y),cd=Math.max(Math.abs(cx-a.hx),Math.abs(cy-a.hy)),far=cd>=Math.max(1,F.range-1),opts=[];
+      a.w=zz?.1:F.mv==='swim'?.5+Math.random()*2:1.5+Math.random()*(F.cls==='insect'?3:5);
+      const cx=Math.round(a.x),cy=Math.round(a.y),cd=Math.max(Math.abs(cx-a.hx),Math.abs(cy-a.hy)),far=zz||cd>=Math.max(1,F.range-1),opts=[];
       for(const[ox,oy]of N8){const x=cx+ox,y=cy+oy;if(!inb(x,y)||!canStand(F.mv,T(x,y)))continue;
         if(ox&&oy&&(!canStand(F.mv,T(cx+ox,cy))||!canStand(F.mv,T(cx,cy+oy))))continue;
         const dh=Math.max(Math.abs(x-a.hx),Math.abs(y-a.hy));if(dh>Math.max(F.range,cd))continue;
         opts.push([x,y,far?dh:0])}
-      if(Math.random()<.35)opts.push([cx,cy,far?99:0]);
+      if(Math.random()<.35&&!(zz&&cd))opts.push([cx,cy,far?99:0]);
+      if(zz&&!cd){a.tx=a.hx;a.ty=a.hy;continue}
       if(opts.length){opts.sort((p,q)=>p[2]-q[2]);const pool=far?opts.filter(o=>o[2]===opts[0][2]):opts,o=pool[(Math.random()*pool.length)|0];
         a.tx=o[0]+(Math.random()-.5)*.4;a.ty=o[1]+(Math.random()-.5)*.4}
       continue}
@@ -3803,14 +3808,14 @@ const SKY={st:hx('#7d6a56'),sb:hx('#c9a477'),dt:hx('#4f8fc0'),db:hx('#f0e2c4'),n
    sprites/README.md explains the layout. A species without a sheet, or whose sheet has not loaded, is drawn by its code.
    plant sheet: one row per part of the year, one column per growth stage and look (stage*variants+variant)
    animal sheet: row 0 moving, row 1 still, frames left to right through one cycle of its gait or wingbeat */
-const SHEETS={plant:{},animal:{}},TINTS=new Map();let TINT_LK='',SHREC=null,BAKE=false;
+const SHEETS={plant:{},animal:{},home:{}},TINTS=new Map();let TINT_LK='',SHREC=null,BAKE=false;
 const SPRITE_ICONS=location.protocol!=='file:'; // a sprite read from file:// would stop icon canvases from being saved
 // sprites have no light of their own: these animals keep hiding when their code would
 const ANIM_HIDE={butterfly:()=>NIGHT>.5||SEA.snow>.4,moth:()=>DAYL>.75,mayfly:()=>SEA.snow>.3,bat:()=>NIGHT<.15&&DAYL>.9};
 function loadSprites(){
   const M=window.SPRITE_SHEETS;if(!M||/[?&](nosprites|bake)\b/.test(location.search))return Promise.resolve();
   const jobs=[];
-  for(const kind of['plant','animal'])for(const[id,d]of Object.entries(M[kind+'s']||{}))jobs.push(new Promise(done=>{
+  for(const kind of['plant','animal','home'])for(const[id,d]of Object.entries(M[kind+'s']||{}))jobs.push(new Promise(done=>{
     const img=new Image();img.onerror=()=>done();
     img.onload=()=>{const cols=Math.floor(img.width/d.w),rows=Math.floor(img.height/d.h);if(cols&&rows){SHEETS[kind][id]={...d,id:kind+id,img,cols,rows};worldDirty=true}done()};
     img.src='sprites/'+d.file+(M.v?'?v='+M.v:'')}));
@@ -3869,7 +3874,7 @@ function bakeSprites(o={}){
     const c=document.createElement('canvas');c.width=fw*grid[0].length;c.height=fh*grid.length;const g=c.getContext('2d');
     grid.forEach((row,r)=>row.forEach((f,i)=>{if(!f.empty)g.drawImage(f.c,i*fw+f.x0-x0,r*fh+f.y0-y0)}));
     return{png:c.toDataURL('image/png'),meta:{w:fw,h:fh,ax:AX-x0,ay:AY-y0,scale:S,...meta}}};
-  const out={plants:{},animals:{}};
+  const out={plants:{},animals:{},homes:{}};
   try{
     const ROWS=12,STAGES=[.2,.55,1],VAR=2,SEEDS=[7,1234]; // a row for each day of the year (3 days a season)
     for(const id of Object.keys(FLORA)){if(!FDRAW[id]||(only&&!only.has(id)))continue;
@@ -3885,6 +3890,9 @@ function bakeSprites(o={}){
       const bake=()=>[1,0].map(m=>Array.from({length:n},(_,k)=>frame(()=>ADRAW[id]({id:0,m,f:1},om?k/n*Math.PI*2/om:0))));
       let grid=bake();if(grid.flat().every(f=>f.empty)){NIGHT=1;DAYL=0;grid=bake();NIGHT=0;DAYL=1}  // night animals
       const s=sheet(grid,{omega:om});if(s)out.animals[id]=s}
+    for(const id of Object.keys(HOME_ART)){if(only&&!only.has('home-'+id))continue; // a row for each season, a column for each look
+      const h=HOME_ART[id],grid=[0,1,2,3].map(r=>{Object.assign(SEA,seasonFields(r+.5));return Array.from({length:h.variants||1},(_,v)=>frame(()=>h.draw(0,0,-9,-9,v)))});
+      const s=sheet(grid,{});if(s)out.homes[id]=s}
   }finally{Object.assign(SEA,sv.SEA);({LV,LKEY,TINT_ON,FOG,NIGHT,DAYL,ROT,X}=sv);TC.clear();FC[1].clear();FC[2].clear();BAKE=false;SHREC=null}
   return out;
 }
@@ -3899,10 +3907,91 @@ let cache=null,cctx=null,CW=0,CH=0,CS={x:0,y:0,z:1,lkey:'',w:0,h:0},worldDirty=t
 // changes from the simulation repaint at most every few frames' worth of drawing time; the player's own actions repaint at once
 let IN_TICK=false,softDirty=false,lastStatic=0,staticCost=0;
 const markDirty=()=>{if(IN_TICK)softDirty=true;else worldDirty=true};
+/* ---------- homes ----------
+   Every animal has a home tile (a.hx, a.hy). Where the real animal builds something, it shows there:
+   a warren, an earth, a nest; deer and wild boar make no lasting den, and wolves dig one only for their pups.
+   Each species also goes home to rest at its natural time of day, so even the ones without a den show
+   where they live. Like plants and animals, homes draw from sheets in sprites/homes/ when there is one:
+   a row for each season, a column for each look (the heron's nest in a tree or in the reeds). */
+// when each species rests: 'day' for the night and dusk animals, 'night' for the day animals
+const SLEEP={earthworm:'day',bee:'night',rabbit:'day',thrush:'night',jay:'night',fox:'day',heron:'night',deer:'day',beaver:'day',boar:'day',wolf:'day'};
+const sleepy=a=>{const k=SLEEP[a.sp];if(!k)return false;const p=((S.clock||0)/DAY+hash(a.id,3,9)*.05)%1;return k==='day'?p>.3&&p<.7:p>.86||p<.16};
+// how high a nest sits: where the trunk meets the crown, or on top of the crown for the herons
+const TREE_H={birch:[10,24],willow:[6,13],oak:[6,12],pine:[10,26],beech:[8,12]};
+const nestH=(t,top)=>{if(!t.p)return 0;const f=FLORA[t.p.id],g=t.p.g;
+  if(f.kind==='tree'){const[a,b]=TREE_H[bid(t.p.id)]||[8,14],h=a+b*g;return (f.scale||1)*(top?h+3+8*g:h+1)}
+  return f.kind==='shrub'?(4+10*g)*.75:f.kind==='herb'?3:0};
+const nestTwigs=(sx,sy,rx,ry,n,c,sd)=>{X.strokeStyle=tc(c);X.lineWidth=.8;X.beginPath();
+  for(let k=0;k<n;k++){const an=hash(sd,k,5)*Math.PI*2,r=.6+.5*hash(k,sd,6),px=sx+Math.cos(an)*rx*r,py=sy+Math.sin(an)*ry*r;X.moveTo(px-2.4,py-.6+hash(sd,k,7));X.lineTo(px+2.4,py+.6-hash(k,sd,8))}X.stroke()};
+const HOME_ART={
+  earthworm:{name:'Worm casts',draw(sx,sy,x,y,v){
+    for(let k=0;k<5;k++){const px=sx+(hash(x,y,k+40)-.5)*20,py=sy+(hash(y,x,k+40)-.5)*8;ell(px,py,1.8,1,'#5e4632');ell(px,py-.7,1.3,.8,'#76593e');circ(px+.2,py-1.3,.6,'#8a6c4c')}}},
+  bee:{name:'Bumblebee nest',draw(sx,sy,x,y,v){ // an old mouse hole under a tussock, with room for the colony's wax cells
+    ell(sx,sy+1,7,2.6,'rgba(30,24,16,.3)');X.strokeStyle=tc('#6e8c40');X.lineWidth=.9;X.beginPath();
+    for(let j=-4;j<=4;j++){X.moveTo(sx+j*1.3,sy-1);X.quadraticCurveTo(sx+j*1.8,sy-6,sx+j*2.6,sy-5+Math.abs(j)*.6)}X.stroke();
+    ell(sx,sy,3,1.8,'#1a120c');circ(sx-1,sy-.2,.75,'#e0b040');circ(sx+.6,sy+.1,.75,'#d8a434');circ(sx,sy-.7,.6,'#ecc458');
+}},
+  rabbit:{name:'Rabbit warren',draw(sx,sy,x,y,v){
+    for(const[dx,dy]of[[-9,-1],[5,-3],[-1,4]]){const px=sx+dx,py=sy+dy;ell(px,py+1.4,6.4,2.6,'#ad8e60');ell(px,py+.2,4.6,2.2,'#c4a676');ell(px+.8,py-.6,2.5,1.6,'#1a120c')}
+    for(let k=0;k<6;k++)circ(sx+(hash(x,y,k+50)-.5)*18,sy+(hash(y,x,k+50)-.5)*7,.5,'#3a2a1a')}},
+  fox:{name:'Fox earth',draw(sx,sy,x,y,v){ // a dug bank with a fan of sandy spoil before the entrance
+    ell(sx+1,sy+3,12,4.4,'#c0965a');ell(sx+1,sy+2.4,8.4,3,'#d2aa6a');ell(sx-1,sy-2.6,8.6,5,'#6e5034');ell(sx-1.6,sy-4,6,3.4,'#7e5e3e');
+    ell(sx+.4,sy-1.2,3.8,2.6,'#120c08');seg(sx+6,sy+3,sx+9,sy+2.2,'#efe6d4',1.1);circ(sx+9.2,sy+2.1,.7,'#efe6d4')}},
+  wolf:{name:'Wolf den',season:()=>SEA.idx<=1,draw(sx,sy,x,y,v){ // dug under rocks and roots, used only while the pups are small
+    ell(sx+2,sy+3,11,3.6,'#8a7254');ell(sx,sy-3,11,6.4,'#6a665e');ell(sx-5,sy-5.6,6,4,'#837f76');ell(sx+5.6,sy-4.6,5.4,3.6,'#77736a');ell(sx-1,sy-8,4,2.4,'#918d84');
+    ell(sx+.6,sy-.8,4.6,3,'#100c0a');seg(sx-8,sy-6,sx-12,sy-10,'#4e3a26',1.2)}},
+  boar:{name:'Boar wallow',out:1,draw(sx,sy,x,y,v){ // a mud bath, and the trunk they rub clean afterwards
+    ell(sx,sy+1,12,4.8,'#4e3a28');ell(sx,sy+1,9,3.6,'#665038');ell(sx-2.4,sy+.4,4.4,1.3,'rgba(205,220,225,.4)');
+    for(let k=0;k<7;k++){const an=hash(x,k,y)*7,px=sx+Math.cos(an)*13,py=sy+1+Math.sin(an)*5.4;ell(px-.5,py,.6,.4,'#3a2a1c');ell(px+.5,py,.6,.4,'#3a2a1c')}}},
+  thrush:{name:'Song thrush nest',nest:1,draw(sx,sy,x,y,v){ // a cup smoothly lined with mud; sky-blue eggs in spring
+    ell(sx,sy+1,5.2,2.4,'#5e482e');nestTwigs(sx,sy,5,2,7,'#7a5e3e',x*7+y);ell(sx,sy,4,1.7,'#86683f');ell(sx,sy-.2,2.8,1.1,'#4a3826');
+    if(SEA.idx===0&&SEA.p>.15)for(const dx of[-1,.2,1.3]){circ(sx+dx,sy-.3,.75,'#7cc8dc');circ(sx+dx+.2,sy-.5,.18,'#1e1e1e')}}},
+  jay:{name:'Jay nest',nest:1,draw(sx,sy,x,y,v){
+    ell(sx,sy+1,6,2.6,'#4a3a28');nestTwigs(sx,sy,6.4,2.4,12,'#6a543a',x*5+y);ell(sx,sy,4.2,1.7,'#3a2c1e');ell(sx,sy-.2,3,1.1,'#2a2016')}},
+  heron:{name:'Heron nest',nest:2,variants:2,variant:t=>t.p&&FLORA[t.p.id].kind==='tree'?0:1,draw(sx,sy,x,y,v){ // a wide platform of sticks at the top of a waterside tree, or out in the reeds
+    if(v){X.strokeStyle=tc('#c8b070');X.lineWidth=.9;X.beginPath();for(let j=-5;j<=5;j++){X.moveTo(sx+j*1.6,sy+1);X.lineTo(sx+j*1.9,sy-8+Math.abs(j)*.5)}X.stroke()}
+    ell(sx,sy+1.6,10,3.6,'#4e3c28');nestTwigs(sx,sy,10,3.2,18,'#6e5638',x*3+y);ell(sx,sy,8,2.8,'#5e4a32');ell(sx,sy-.3,5.6,1.8,'#3e3022');
+    if(!v)for(let k=0;k<5;k++)ell(sx+(hash(x,y,k+60)-.5)*14,sy+4+hash(y,x,k+60)*8,1,.6,'rgba(245,245,238,.85)')}},
+  salmon:{name:'Salmon redds',season:()=>SEA.idx>=2,draw(sx,sy,x,y,v){ // gravel nests cut in the stream bed, from autumn until the fry hatch
+    for(const[dx,dy]of[[-5,-1],[5,1.6]]){ell(sx+dx,sy+dy,6,2.4,'rgba(214,196,150,.7)');for(let k=0;k<6;k++)circ(sx+dx+(hash(x,k,dx)-.5)*9,sy+dy+(hash(k,y,dx)-.5)*3,.6,'rgba(150,132,100,.8)')}}},
+};
+const HOME_NONE={deer:'Deer dig no den: they bed down in cover, in the bracken or a thicket, and move on.',
+  wolf:'Wolves dig a den only for their pups, in spring and summer.',salmon:'Salmon cut their redds in the gravel in autumn, then leave.',
+  beaver:'The family lives in the lodge of sticks and mud out in the water.'};
+let HOMEAT=new Map(),HOMEART=new Map(),homeKey='',homeAt=0;
+const homeShown=sp=>{const h=HOME_ART[sp];return !!h&&(!h.season||h.season())};
+// rebuilt when an animal moves home, is born or leaves, and when the season puts up or takes down a den
+function syncHomes(){
+  if(time-homeAt<.5)return;homeAt=time;
+  let k=SEA.idx+':';for(const a of S.an)k+=a.sp+(Math.round(a.hy)*N+Math.round(a.hx))+',';
+  if(k===homeKey)return;homeKey=k;HOMEAT=new Map();HOMEART=new Map();
+  for(const a of S.an){const i=Math.round(a.hy)*N+Math.round(a.hx);let m=HOMEAT.get(i);if(!m)HOMEAT.set(i,m={});m[a.sp]=(m[a.sp]||0)+1}
+  for(const[i,m]of HOMEAT){const l=Object.keys(m).filter(homeShown);if(l.length)HOMEART.set(i,l)}
+  markDirty();
+}
+const HOME_OFF=[[.18,.18],[.24,-.2],[-.2,.24]];
+// where a home sits on screen: ground homes toward the front of the tile, nests up in the plant
+function homeSpot(sp,x,y){x=Math.round(x);y=Math.round(y);const l=HOMEART.get(y*N+x),k=l?l.indexOf(sp):-1;if(k<0)return null;
+  const h=HOME_ART[sp],t=T(x,y),[ox,oy]=h.nest?[0,0]:vecB(...HOME_OFF[k%3]),[sx,sy]=isoG(x+ox,y+oy);
+  return {x:sx,y:sy,h:h.nest?nestH(t,h.nest===2):0,nest:!!h.nest,out:!!(h.nest||h.out)}}
+function drawHomes(t,x,y){const l=HOMEART.get(y*N+x);if(!l)return;
+  for(const sp of l){const s=homeSpot(sp,x,y),h=HOME_ART[sp];homeArt(sp,s.x,s.y-s.h,x,y,h.variant?h.variant(t):0)}}
+function homeArt(sp,sx,sy,x,y,v){
+  const sh=SHEETS.home[sp];if(!sh||(!TINT_ON&&!SPRITE_ICONS)){HOME_ART[sp].draw(sx,sy,x,y,v);return}
+  blit(sh,(Math.floor(SEA.p/4*sh.rows)%sh.rows)*sh.cols+Math.min(v,sh.cols-1),sx,sy)}
+// the homes on a tile, with the beaver lodge standing for the beavers living beside it
+function homesAt(x,y){const out=[],m=HOMEAT.get(y*N+x);if(m)for(const sp in m)out.push({sp,n:m[sp],x,y});
+  if(T(x,y).lodge&&!out.some(h=>h.sp==='beaver')){const b=S.an.filter(a=>a.sp==='beaver'&&Math.max(Math.abs(a.hx-x),Math.abs(a.hy-y))<=2);
+    if(b.length)out.push({sp:'beaver',n:b.length,x:b[0].hx,y:b[0].hy,lodge:1})}
+  return out}
+function homeNote(h){const F=FAUNA[h.sp],art=HOME_ART[h.sp],shown=h.lodge||homeShown(h.sp),who=h.n>1?`${h.n} ${F.pl}`:`a ${F.name.toLowerCase()}`;
+  const rest=SLEEP[h.sp]?` They rest here ${SLEEP[h.sp]==='day'?'by day':'at night'}.`:'';
+  return `<b style="color:var(--lichen);font-weight:600">${h.lodge?'Beaver lodge':shown?art.name:'Resting place'}.</b> Home of ${who}.${rest}${!shown&&HOME_NONE[h.sp]?' '+HOME_NONE[h.sp]:''}`}
 function drawTileObjects(x,y){
   const t=T(x,y);drawGroundExtras(t,x,y);
   if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
   else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);SLX=SLY=0}
+  if(!t.b)drawHomes(t,x,y);
 }
 // inside a forest a tile holds a close stand of trees over ferns and leaf litter, mixing in the species next door
 const FOREST_SUB=[[-.26,-.26],[.26,-.18],[-.18,.26],[.04,.02],[.27,.27]];
@@ -4009,14 +4098,17 @@ function drawCar(o){const c=hx(o.c),ox=o.dy?(o.dy>0?-.2:.2):0,oy=o.dx?(o.dx>0?.2
 function drawMovers(){
   const list=S.an.concat(cars.filter(c=>T(clamp(Math.round(c.x),0,N-1),clamp(Math.round(c.y),0,N-1)).u)).sort((p,q)=>depth(p.x,p.y)-depth(q.x,q.y));
   for(const o of list){
-    const[mx,my]=isoG(o.x,o.y);
+    let[mx,my]=isoG(o.x,o.y);
+    // asleep at home: out of sight in its burrow or den, sitting in its nest, or resting where it lives
+    if(o.sp&&o.sl){const hs=homeSpot(o.sp,o.hx,o.hy);if(hs&&!hs.out)continue;if(hs){mx=hs.x;my=hs.y-hs.h}}
     // animals off screen are skipped: their shaded sprites are the costliest thing drawn each frame
     if(o.sp){const z=cam.z,px=(mx-cam.x)*z+W/2,py=(my-cam.y)*z+H/2,m=18*z+8;if(px<-m||px>W+m||py<-6*z-8||py>H+42*z+8)continue}
     if(o.sp){X.save();X.translate(mx,my);X.scale(o.f,1);LO=cam.z<.75;animalArt(o.sp,o,time);LO=false;X.restore()}else drawCar(o);
-    const half=o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(o.sp?MOVER_H[o.sp]:9),bot=my+3;
+    // whatever stands in front of it is drawn again over it, inside the box its picture fills
+    const sh=o.sp&&SHEETS.animal[o.sp],half=sh?Math.max(sh.ax,sh.w-sh.ax)/sh.scale:o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(sh?sh.ay/sh.scale:o.sp?MOVER_H[o.sp]:9),bot=my+(sh?Math.max(3,(sh.h-sh.ay)/sh.scale):3);
     const tx=Math.round(o.x),ty=Math.round(o.y);let occ=null;
     for(let dv=-1;dv<=5;dv++)for(let du=-1;du<=5;du++){
-      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!REV[y*N+x])continue;const t=T(x,y);let h,w;
+      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!SEEN[y*N+x])continue;const t=T(x,y);let h,w;
       if(t.b){h=bTop(t.b)+Math.max(...corners(x,y))-hAt(x,y)+4;w=HW}
       else if(t.p){const k=FLORA[t.p.id].kind,g=t.p.g;if(k==='tree'){h=16+42*g;w=6+12*g}else if(k==='shrub'){h=4+10*g;w=4+8*g}else if(k==='herb'){h=6+20*g;w=HW*.7}else if(k==='crop'&&t.p.id==='maize'){h=16;w=HW}else continue}
       else continue;
@@ -4083,7 +4175,8 @@ const animalReach=sp=>sp==='fox'?3:sp==='wolf'?5:sp==='jay'?6:sp==='heron'?8:sp=
 function ringFor(m){if(!m||!T(m[0],m[1]).u)return null;let r=0;
   if(tool.type==='sow')r=fxRadius(tool.id);
   else if(tool.type==='reintro')r=animalReach(tool.id);
-  else if(tool.type==='inspect'&&pinned&&m===pinned){const t=T(m[0],m[1]),a=S.an.find(a=>Math.round(a.hx)===m[0]&&Math.round(a.hy)===m[1]);if(a)r=animalReach(a.sp);else if(t.p&&!FLORA[t.p.id].pre)r=fxRadius(t.p.id)}
+  else if(tool.type==='inspect'&&pinned&&m===pinned){const t=T(m[0],m[1]),h=homesAt(m[0],m[1])[0]; // a home, the beaver lodge included, rings its animals' reach
+    if(h)return [h.x,h.y,animalReach(h.sp)];else if(t.p&&!FLORA[t.p.id].pre)r=fxRadius(t.p.id)}
   return r?[m[0],m[1],r]:null}
 function drawRing(cx,cy,r){const z=cam.z,pts=[],e=r+.5;
   for(const[ax,ay,bx,by]of [[-e,-e,e,-e],[e,-e,e,e],[e,e,-e,e],[-e,e,-e,-e]])for(let s=0;s<1;s+=.125)pts.push(isoG(cx+ax+(bx-ax)*s,cy+ay+(by-ay)*s));
@@ -4099,6 +4192,7 @@ function render(){
   if(s===1){dx=Math.round(dx*DPR)/DPR;dy=Math.round(dy*DPR)/DPR}
   ctx.drawImage(cache,dx,dy,CW*s,CH*s);
   X=ctx;ctx.setTransform(DPR*z,0,0,DPR*z,DPR*(W/2-cam.x*z),DPR*(H/2-cam.y*z));
+  syncHomes();
   drawMovers();drawPods();drawHighlight();
   if(tool.type==='corridors'||tool.type==='guide'||tool.type==='lens')drawOverlay();
   const hm=hover||pinned;
@@ -5154,6 +5248,7 @@ function updateInfo(){
   let name=t.b?`${bName(t.b)}${['house','terrace','shop','tower','office','block'].includes(t.b.k)?` · ${t.b.h} floor${t.b.h>1?'s':''}`:''}`:t.gd==='soil'?'Bare soil':GNAME[t.gd].charAt(0).toUpperCase()+GNAME[t.gd].slice(1);
   if(t.p)name=`${FLORA[t.p.id].name} · ${t.p.id==='lawn'?'mown weekly':FLORA[t.p.id].crop||t.p.id==='pasture'?'farmed':t.p.g>=1?'mature':Math.round(t.p.g*100)+'% grown'}`;
   if(t.b&&!t.b.rp){const mx=BHP(t.b);name+=` · ${t.b.hp??mx}/${mx} hits left`}else if(t.hp!=null)name+=` · ${t.hp}/${GHP(t)} hits left`;
+  {const hs=homesAt(x,y);if(hs.length)name=`${hs.map(h=>h.lodge?'Beaver lodge':homeShown(h.sp)?HOME_ART[h.sp].name:`${FAUNA[h.sp].name} home`).join(', ')} · ${name}`}
   if(!t.b){if(t.rw)name='Runway';else if(t.hw)name='Motorway';else if(t.plane&&t.gd==='pave')name='Apron · parked airliner'}
   const here=S.an.filter(a=>Math.round(a.x)===x&&Math.round(a.y)===y).map(a=>FAUNA[a.sp].name);
   const el=Math.round(hAt(x,y)/3);
@@ -5179,6 +5274,7 @@ function updateInfo(){
   {const bb=S.blocks?blockOf(x,y):-1;if(bb>=0){const B=S.blocks[bb];notes+=`<p class="note" style="color:var(--lichen)">${B.name} · ${BT[B.t].name} · ${Math.round((B.pw||0)*100)}% wild${B.w?', rewilded':'; at 70% it counts as rewilded'}</p>`}}
   if(t.cul&&t.gd!=='water')notes+=`<p class="note">Drain grates. A buried stream runs beneath this tile.</p>`;
   if(here.length)notes+=`<p class="note" style="color:var(--lichen)">Here: ${[...new Set(here)].join(', ')}</p>`;
+  for(const h of homesAt(x,y))notes+=`<p class="note" style="color:var(--ink)">${homeNote(h)}</p>`;
   if(t.p&&POLLINATED.has(t.p.id)&&!pollinatedAt(t.p.id,i))notes+=`<p class="note" style="color:#e2b86c">No ${pollNames(t.p.id)} within 4 tiles: ${FLORA[t.p.id].name.toLowerCase()} can’t set seed and spread from here.</p>`;
   if(HERB[i]&&!t.b)notes+=`<p class="note" style="color:var(--bad)">Herbicide drifts here from the farmed fields: plants grow slowly and seedlings die.</p>`;
   if(INS[i])notes+=`<p class="note" style="color:var(--bad)">Insecticide drift: no insects can live here.</p>`;

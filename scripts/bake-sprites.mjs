@@ -1,8 +1,9 @@
-// Bakes the code-drawn plants and animals of index.html into PNG sprite sheets in sprites/,
+// Bakes the code-drawn plants, animals and animal homes of index.html into PNG sprite sheets in sprites/,
 // and writes sprites/sprites.js, the list the game loads them from.
 //
 //   npm run sprites                  bake every species that has no sheet yet
 //   npm run sprites -- oak fox       bake (or re-bake) just these, replacing their sheets
+//   npm run sprites -- home-fox      the same for an animal's home (the fox earth)
 //   npm run sprites -- --force       re-bake everything, replacing every sheet
 //   npm run sprites -- --scale=4     pixels per game unit (default 3)
 //
@@ -35,13 +36,13 @@ await page.waitForFunction(() => window.bakeSprites, null, { timeout: 30000 });
 const baked = await page.evaluate(o => window.bakeSprites(o), { scale, only: only.length ? only : null });
 await browser.close();
 
-const list = { v: old.v, plants: { ...old.plants }, animals: { ...old.animals } };
+const list = { v: old.v, plants: { ...old.plants }, animals: { ...old.animals }, homes: { ...old.homes } };
 const counts = { written: 0, kept: 0 };
-for (const kind of ['plants', 'animals']) {
+for (const kind of ['plants', 'animals', 'homes']) {
   mkdirSync(`${DIR}/${kind}`, { recursive: true });
   for (const [id, { png, meta }] of Object.entries(baked[kind])) {
     const file = `${kind}/${id}.png`;
-    if (existsSync(`${DIR}/${file}`) && !force && !only.includes(id) && list[kind][id]) { counts.kept++; continue }
+    if (existsSync(`${DIR}/${file}`) && !force && !only.includes(kind === 'homes' ? 'home-' + id : id) && list[kind][id]) { counts.kept++; continue }
     writeFileSync(`${DIR}/${file}`, Buffer.from(png.split(',')[1], 'base64'));
     list[kind][id] = { file, ...meta };
     counts.written++;
@@ -53,5 +54,5 @@ if (counts.written || !list.v) list.v = Date.now().toString(36); // a new versio
 // one line per sheet keeps diffs readable
 const body = kind => Object.entries(list[kind]).sort(([a], [b]) => a.localeCompare(b))
   .map(([id, m]) => `    ${JSON.stringify(id)}: ${JSON.stringify(m)}`).join(',\n');
-writeFileSync(LIST, `${HEAD}{\n  "v": ${JSON.stringify(list.v)},\n  "plants": {\n${body('plants')}\n  },\n  "animals": {\n${body('animals')}\n  }\n};\n`);
-console.log(`Wrote ${counts.written} sheets, kept ${counts.kept} existing ones. ${LIST} lists ${Object.keys(list.plants).length} plants and ${Object.keys(list.animals).length} animals.`);
+writeFileSync(LIST, `${HEAD}{\n  "v": ${JSON.stringify(list.v)},\n  "plants": {\n${body('plants')}\n  },\n  "animals": {\n${body('animals')}\n  },\n  "homes": {\n${body('homes')}\n  }\n};\n`);
+console.log(`Wrote ${counts.written} sheets, kept ${counts.kept} existing ones. ${LIST} lists ${Object.keys(list.plants).length} plants, ${Object.keys(list.animals).length} animals and ${Object.keys(list.homes).length} homes.`);
