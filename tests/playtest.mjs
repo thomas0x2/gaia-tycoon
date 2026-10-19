@@ -1,6 +1,6 @@
 // Headless playtest: a bot plays a city for several game years and flags glitches.
 //
-//   node tests/playtest.mjs [--years 4] [--seed 123] [--k 2] [--poor] [--out report.json]
+//   node tests/playtest.mjs [--years 4] [--seed 123] [--k 2] [--poor] [--no-tree-sowing] [--out report.json]
 //
 // The game runs in headless Chromium (Playwright). The bot gets plenty of seeds (unless --poor), grows every research node
 // it can, unlocks blocks, demolishes, sows and releases animals, while the simulation runs at TICK_K=--k (like catch-up).
@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const arg = (k, d) => { const i = process.argv.indexOf('--' + k); return i < 0 ? d : (process.argv[i + 1] && !process.argv[i + 1].startsWith('--') ? process.argv[i + 1] : true) };
-const IDLE = +arg('idle', 0), VISITS = +arg('visits', 2), YEARS = +arg('years', 4), SEED = +arg('seed', 12345), K = +arg('k', 2), POOR = !!arg('poor', false), OUT = arg('out', null);
+const IDLE = +arg('idle', 0), VISITS = +arg('visits', 2), YEARS = +arg('years', 4), SEED = +arg('seed', 12345), K = +arg('k', 2), POOR = !!arg('poor', false), NOTREES = !!arg('no-tree-sowing', false), OUT = arg('out', null);
 
 const TYPES = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.webmanifest': 'application/manifest+json', '.svg': 'image/svg+xml' };
 const server = http.createServer((req, res) => {
@@ -51,7 +51,8 @@ const setup = (seed, poor) => `(()=>{
   boot(newGame(${seed}));S.slot=0;S.speed=0;QUIET=true;
   for(const id of ['intro','menu'])if($(id))$(id).hidden=true;
   // keep the page's own frame loop from rendering or ticking: the bot drives the clock
-  window.__B={poor:${poor},flag:{},seen:{},ah:{},hist:[],log:[],t0:performance.now(),ticks:0,tickMs:0,maxCount:{}};
+  window.__B={poor:${poor},noTrees:${NOTREES},from:${!!process.env.FROM},flag:{},seen:{},ah:{},hist:[],log:[],t0:performance.now(),ticks:0,tickMs:0,maxCount:{}};
+
   return S.name})()`;
 
 const BOT = `(()=>{
@@ -78,7 +79,7 @@ const BOT = `(()=>{
       if(t.b&&!t.b.rp){hitBuilding(x,y,B.poor?power():99,'hand');hits++}
       else if(['road','pave','rubble','path','garden'].includes(t.gd)){hitGround(x,y,B.poor?power():99,'hand');hits++}}
     // sow: random open soil with a random plant that may go there
-    const sowable=Object.keys(FLORA).filter(k=>!VBASE[k]&&has(k)&&!FLORA[k].pre&&!FLORA[k].managed&&!FLORA[k].crop);
+    const sowable=Object.keys(FLORA).filter(k=>!VBASE[k]&&has(k)&&!FLORA[k].pre&&!FLORA[k].managed&&!FLORA[k].crop&&!(B.noTrees&&FLORA[k].kind==='tree'));
     let sown=0;for(let k=0;k<300&&sown<20&&sowable.length;k++){const i=U[B.rnd(U.length)],x=i%N,y=(i/N)|0,t=S.tiles[i];if(t.gd!=='soil'||t.p)continue;
       const id=sowable[B.rnd(sowable.length)];if(sowRule(id,x,y))continue;if(B.poor&&sowCost(id)>.01*S.seeds)continue; // nobody sows a tile for more than a sliver of their savings
       tool={type:'sow',id};if(apply(x,y,true))sown++}
@@ -176,9 +177,9 @@ let lastLine = '';
 for (let d = 0; d < (IDLE ? 0 : YEARS * DAYS); d++) {
   await page.evaluate(() => window.__G('__B.play()'));
   for (let h = 0; h < 24; h++) await page.evaluate(() => window.__G('(__B.hour(),__B.check())'));
-  const s = await page.evaluate(() => window.__G(`(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),an:r.an,bee:r.bee,bio:r.bio,flags:Object.keys(__B.flag).length,ms:__B.tickMs/Math.max(1,__B.ticks),land:(()=>{let g=0,sc=0,n=0;for(const t of S.tiles){if(!t.u||t.b||t.gd!=='soil')continue;n++;if(!t.p)continue;const b=bid(t.p.id);if(b==='meadow')g++;else if(b==='hawthorn'||b==='broom')sc++}return {g:Math.round(100*g/Math.max(1,n)),s:Math.round(100*sc/Math.max(1,n))}})()}})()`));
-  const line = `${s.when.padEnd(26)} bio ${String(s.bio).padStart(5)}  animals ${Object.values(s.an).reduce((a, b) => a + b, 0)}${s.bee ? `  bees ${s.bee.nests} nests/${s.bee.hib} queens of ${s.bee.cap}` : ''}  meadow ${s.land.g}% scrub ${s.land.s}%  rabbits ${s.an.rabbit || 0} ponies ${s.an.konik || 0}  flags ${s.flags}  ${s.ms.toFixed(1)} ms/tick`;
-  if (d % 3 === 0 || s.flags && line !== lastLine) console.log(line);
+  const s = await page.evaluate(() => window.__G(`(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),an:r.an,bee:r.bee,bio:r.bio,flags:Object.keys(__B.flag).length,ms:__B.tickMs/Math.max(1,__B.ticks),land:(()=>{let g=0,sc=0,tr=0,n=0;const tb={};for(const t of S.tiles){if(!t.u||t.b||t.gd!=='soil')continue;n++;if(!t.p)continue;const b=bid(t.p.id),f=FLORA[t.p.id];if(b==='meadow')g++;else if(b==='hawthorn'||b==='broom')sc++;else if(f.kind==='tree'&&!f.pre){tr++;tb[b]=(tb[b]||0)+1}}return {g:Math.round(100*g/Math.max(1,n)),s:Math.round(100*sc/Math.max(1,n)),tr:tr+(tr?' ('+Object.entries(tb).map(([k,v])=>k+' '+v).join(', ')+')':'')+(()=>{const pt=__B.pt,pu=__B.pu,nb={};const pid=__B.pid||[];__B.pid=[];__B.pt=new Uint8Array(N*N);__B.pu=new Uint8Array(N*N);for(let i=0;i<N*N;i++){const t=S.tiles[i],tr=t.p&&FLORA[t.p.id].kind==='tree'&&!FLORA[t.p.id].pre;__B.pid[i]=t.p?t.p.id:t.gd;__B.pt[i]=tr?1:0;__B.pu[i]=t.u?1:0;if(pt&&tr&&!pt[i]&&pu[i]){const b=(__B.from?pid[i]+'>':'')+bid(t.p.id);nb[b]=(nb[b]||0)+1}}return Object.keys(nb).length?' new '+Object.entries(nb).map(([k,v])=>k+' '+v).join(', '):''})()}})()}})()`));
+  const line = `${s.when.padEnd(26)} bio ${String(s.bio).padStart(5)}  animals ${Object.values(s.an).reduce((a, b) => a + b, 0)}${s.bee ? `  bees ${s.bee.nests} nests/${s.bee.hib} queens of ${s.bee.cap}` : ''}  meadow ${s.land.g}% scrub ${s.land.s}% trees ${s.land.tr}  rabbits ${s.an.rabbit || 0} ponies ${s.an.konik || 0}  flags ${s.flags}  ${s.ms.toFixed(1)} ms/tick`;
+  if (d % (process.env.EVERY ? +process.env.EVERY : 3) === 0 || s.flags && line !== lastLine) console.log(line);
   lastLine = line;
 }
 
