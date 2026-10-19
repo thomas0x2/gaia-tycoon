@@ -1458,11 +1458,12 @@ function tryUnlock(x,y){
   updateHUD();updateInfo();refreshCards();markDirty();save();return true;
 }
 // a block counts as rewilded once 70% of it is grassland or later, open water or reclaimed structures, with no other buildings left
+// a block counts as rewilded once 70% of it is wild: any wild plant (willowherb included), open water or a building given over to wildlife
 function checkWildBlocks(){
   if(!S.blocks)return;
   for(let b=0;b<NB*NB;b++){const B=S.blocks[b];if(!B.u)continue;
     const ts=blockTiles(b);let wild=0;
-    for(const[x,y]of ts){const t=T(x,y);if(t.b){if(t.b.rp)wild++;continue}if(t.gd==='water'||(t.p&&!FLORA[t.p.id].pre&&FLORA[t.p.id].stage>=2&&t.p.g>=.4))wild++}
+    for(const[x,y]of ts){const t=T(x,y);if(t.b){if(t.b.rp)wild++;continue}if(t.gd==='water'||(t.p&&!FLORA[t.p.id].pre&&t.p.g>=.4))wild++}
     B.pw=wild/ts.length;
     if(!B.w&&B.pw>=.7){B.w=true;const n=wildBlocks();
       const next=Object.keys(BT).filter(k=>BT[k].gate===n).map(k=>BT[k].name.toLowerCase());
@@ -3851,9 +3852,9 @@ const resName=k=>(RES[k]&&RES[k].name)||(FLORA[k]||FAUNA[k]).name;
 const lvl=k=>(S.res&&S.res[k])||0;
 // a level of a plant is known as soon as its stage is researched (secret levels also need their ecosystem)
 const has=k=>lvl(k)>0||(!!VBASE[k]&&lvl(VBASE[k])>0&&(!VSECRET[k]||!!(S.rec&&S.rec[VSECRET[k]])))||(!!ARRIVE[k]&&!!S.seen&&!!S.seen[k]);
-// every plant or animal already in the web makes the next one dearer (28% each): the web grows slower as it grows bigger, the idle grind
+// every plant or animal already in the web makes the next one dearer (30% each): the web grows slower as it grows bigger, the idle grind
 // later species also cost more the more life they need around them: (BIO/150)^2 on top
-const RES_INFL=1.28,RES_BASE=4,depthMult=k=>1+Math.pow(bioNeed(k)/150,2);
+const RES_INFL=1.3,RES_BASE=3,depthMult=k=>1+Math.pow(bioNeed(k)/150,2);
 const resDone=()=>{let n=0;for(const k in S.res||{})if(RES[k]&&RES[k].g!=='force'&&k!=='weeds'&&S.res[k])n++;return n};
 const resInfl=k=>Math.pow(RES_INFL,resDone());
 const resCost=k=>{const b=RES[k].grow?RES[k].cost*Math.pow(RES[k].grow,lvl(k)):RES[k].cost,c=b*RES_BASE*resInfl(k)*depthMult(k);return c<1000?Math.round(c/5)*5:Math.round(c/Math.pow(10,Math.floor(Math.log10(c))-2))*Math.pow(10,Math.floor(Math.log10(c))-2)};
@@ -4794,7 +4795,7 @@ function updateInfo(){
   if(FID[i]>=0){const f=D.forests[FID[i]];if(f)notes+=`<p class="note" style="color:var(--lichen)">${f.name} · ${f.size} trees, ${f.species} species. Forest bonus: +25% growth, +50% seeds.</p>`}
   if(t.fm&&t.p&&FLORA[t.p.id].crop)notes+=`<p class="note" style="color:var(--smog)">${FLORA[t.p.id].desc}</p>`;
   if(t.pk&&t.p&&FLORA[t.p.id].pre)notes+=`<p class="note">${FLORA[t.p.id].desc}</p>`;
-  {const bb=S.blocks?blockOf(x,y):-1;if(bb>=0){const B=S.blocks[bb];notes+=`<p class="note" style="color:var(--lichen)">${B.name} · ${BT[B.t].name} · ${Math.round((B.pw||0)*100)}% wild${B.w?', rewilded':''}</p>`}}
+  {const bb=S.blocks?blockOf(x,y):-1;if(bb>=0){const B=S.blocks[bb];notes+=`<p class="note" style="color:var(--lichen)">${B.name} · ${BT[B.t].name} · ${Math.round((B.pw||0)*100)}% wild${B.w?', rewilded':'; at 70% it counts as rewilded'}</p>`}}
   if(t.cul&&t.gd!=='water')notes+=`<p class="note">Drain grates. A buried stream runs beneath this tile.</p>`;
   {const ids=[...(t.p&&!FLORA[t.p.id].pre&&!FLORA[t.p.id].crop?[t.p.id]:[]),...new Set(S.an.filter(a=>Math.round(a.x)===x&&Math.round(a.y)===y).map(a=>a.sp))];
     if(ids.length)notes+=`<p class="note">${ids.map(k=>`<button class="glink" data-enc="${k}">${(FLORA[k]||FAUNA[k]).name} in the field guide ›</button>`).join(' ')}</p>`}
