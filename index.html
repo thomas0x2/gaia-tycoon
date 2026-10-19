@@ -1211,10 +1211,49 @@ const N8=[[-1,-1],[0,-1],[1,-1],[-1,0],[1,0],[-1,1],[0,1],[1,1]];
 const N4=[[0,-1],[-1,0],[1,0],[0,1]];
 
 /* ---------- terrain ---------- */
-function corners(x,y){const k=y*M+x,v=S.vh;return [v[k],v[k+1],v[k+M+1],v[k+M]]} // back, right, front, left
+// The ground comes in steps. Every tile has a level S.lv, counted in half steps of HS pixels. Where a neighbour
+// is half a step higher the tile slopes up to meet it; a full step or more is a cliff, or a waterfall where
+// water runs over it. Roads never climb a full step: they cut into the hill instead, so the road stays drivable.
+const HS=8,isRoadT=(x,y)=>isRoadLine(x)||isRoadLine(y);
+// S.vh holds four corner heights per tile (back, right, front, left, as corners() returns them); S.vh0 is the dry ground
+function buildTerrain(){
+  const lv=S.lv,vh=new Array(4*N*N),CO=[[0,0],[1,0],[1,1],[0,1]];
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const l=lv[y*N+x];
+    for(let c=0;c<4;c++){const vi=x+CO[c][0],vj=y+CO[c][1];let m=l;
+      for(const[tx,ty]of [[vi-1,vj-1],[vi,vj-1],[vi-1,vj],[vi,vj]])if(inb(tx,ty)&&lv[ty*N+tx]===l+1)m=l+1;
+      vh[(y*N+x)*4+c]=m*HS}}
+  S.vh0=vh;S.vh=vh.slice();
+  // open water lies flat, a little below the ground of its level, and the banks around it slope down to the
+  // water's edge instead of standing over it: every corner touching water comes down to just above it
+  const ws=new Float32Array(M*M).fill(Infinity);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(S.tiles[y*N+x].gd!=='water')continue;const w=lv[y*N+x]*HS-5;
+    for(let c=0;c<4;c++){const k=(y+CO[c][1])*M+x+CO[c][0];ws[k]=Math.min(ws[k],w);S.vh[(y*N+x)*4+c]=w}}
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(S.tiles[y*N+x].gd==='water')continue;
+    for(let c=0;c<4;c++){const w=ws[(y+CO[c][1])*M+x+CO[c][0]],k=(y*N+x)*4+c;if(w+1<S.vh[k])S.vh[k]=w+1}}
+}
+// roads climb at most half a step from one tile to the next (diagonals too, so junctions stay smooth),
+// and the streams in brooks only ever run downhill along their paths: both cut down into the ground until they fit.
+// With cliffAt (which neighbour pairs may break into a cliff), all other ground is eased into slopes too;
+// tiles in fixed keep their level
+function settleLevels(lv,brooks,cliffAt,fixed){
+  for(let changed=true;changed;){changed=false;
+    // elsewhere neighbours differ by at most half a step, so the ground slopes instead of breaking into cliffs
+    // (diagonals too, so the four tiles around any corner agree on its height and the ground has no seams)
+    if(cliffAt)for(let y=0;y<N;y++)for(let x=0;x<N;x++){const i=y*N+x;if(fixed&&fixed.has(i))continue;
+      for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny)||cliffAt(x,y,nx,ny))continue;const l=lv[ny*N+nx]+1;if(lv[i]>l){lv[i]=l;changed=true}}}
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(!isRoadT(x,y))continue;const i=y*N+x;
+      for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(inb(nx,ny)&&isRoadT(nx,ny)&&lv[i]>lv[ny*N+nx]+1){lv[i]=lv[ny*N+nx]+1;changed=true}}}
+    for(const path of brooks)for(let k=1;k<path.length;k++){const a=path[k-1],b=path[k],i=b[1]*N+b[0],l=lv[a[1]*N+a[0]];if(lv[i]>l&&!(fixed&&fixed.has(i))){lv[i]=l;changed=true}}
+  }
+}
+function corners(x,y){const k=(y*N+x)*4,v=S.vh;return [v[k],v[k+1],v[k+2],v[k+3]]} // back, right, front, left
+// HT is the tile being drawn: a point on its edge takes its height, not its neighbour's across a cliff
+let HT=-1;
 function hAt(fx,fy){
-  const u=fx+.5,v=fy+.5,i=clamp(Math.floor(u),0,N-1),j=clamp(Math.floor(v),0,N-1),tu=clamp(u-i,0,1),tv=clamp(v-j,0,1),k=j*M+i,h=S.vh;
-  return h[k]*(1-tu)*(1-tv)+h[k+1]*tu*(1-tv)+h[k+M+1]*tu*tv+h[k+M]*(1-tu)*tv;
+  let x=clamp(Math.round(fx),0,N-1),y=clamp(Math.round(fy),0,N-1);
+  if(HT>=0){const hx=HT%N,hy=(HT/N)|0;if(Math.abs(fx-hx)<=.5&&Math.abs(fy-hy)<=.5){x=hx;y=hy}}
+  const u=clamp(fx-x+.5,0,1),v=clamp(fy-y+.5,0,1),k=(y*N+x)*4,h=S.vh;
+  return h[k]*(1-u)*(1-v)+h[k+1]*u*(1-v)+h[k+2]*u*v+h[k+3]*(1-u)*v;
 }
 const isoG=(x,y,dz=0)=>iso(x,y,hAt(x,y)+dz);
 function quad(x,y,dz=0){const[a,b,c,d]=corners(x,y);return [iso(x-.5,y-.5,a+dz),iso(x+.5,y-.5,b+dz),iso(x+.5,y+.5,c+dz),iso(x-.5,y+.5,d+dz)]}
@@ -1222,17 +1261,9 @@ function slope(x,y){const[a,b,c,d]=corners(x,y),sx=((b+c)-(a+d))/2,sy=((c+d)-(a+
 // height of a tile corner given as an offset of ±.5 from its centre
 function cornerH(x,y,ox,oy){const c=corners(x,y);return ox<0?(oy<0?c[0]:c[3]):(oy<0?c[1]:c[2])}
 function makeWater(x,y){
-  const t=T(x,y);t.gd='water';t.p=t.p&&FLORA[t.p.id].place==='water'?t.p:null;
-  const vs=[[x,y],[x+1,y],[x+1,y+1],[x,y+1]];let m=Infinity;
-  for(const[i,j]of vs)m=Math.min(m,S.vh0[j*M+i]);m-=5;t.wl=m;
-  for(const[i,j]of vs){const k=j*M+i;S.vh[k]=Math.min(S.vh[k],m)}
+  const t=T(x,y);t.gd='water';t.p=t.p&&FLORA[t.p.id].place==='water'?t.p:null;buildTerrain();
 }
-function unWater(x,y){
-  T(x,y).gd='soil';delete T(x,y).wl;
-  for(const[i,j]of [[x,y],[x+1,y],[x+1,y+1],[x,y+1]]){let wet=false;
-    for(const[tx,ty]of [[i-1,j-1],[i,j-1],[i-1,j],[i,j]])if(inb(tx,ty)&&T(tx,ty).gd==='water')wet=true;
-    if(!wet)S.vh[j*M+i]=S.vh0[j*M+i]}
-}
+function unWater(x,y){T(x,y).gd='soil';buildTerrain()}
 
 /* ---------- city generation ---------- */
 /* ---------- city blocks ---------- */
@@ -1364,7 +1395,7 @@ function newGame(seed,carry){
   seed = seed ?? (Math.random()*1e9|0);
   const R=rng(seed),tiles=[];
   for(let i=0;i<N*N;i++)tiles.push({gd:'pave',b:null,p:null,tox:.4,fert:.1,cul:false,gr:0,pk:0});
-  S={v:4,seed,tiles,vh:[],vh0:[],seeds:150,an:[],unl:{},seen:{},rec:{},peak:0,t:0,demolished:0,dug:0,daylit:0,speed:1,done:{},nid:1,smog:1,E0:1,stage:0,flags:{},clock:DAY*.3,lastSeason:0,dayNight:true,eco:1,res:{weeds:1},myc:0,cities:0};
+  S={v:4,seed,tiles,lv:[],vh:[],vh0:[],seeds:150,an:[],unl:{},seen:{},rec:{},peak:0,t:0,demolished:0,dug:0,daylit:0,speed:1,done:{},nid:1,smog:1,E0:1,stage:0,flags:{},clock:DAY*.3,lastSeason:0,dayNight:true,eco:1,res:{weeds:1},myc:0,cities:0};
   if(carry){S.myc=carry.myc;S.cities=carry.cities;S.seen={...carry.seen};S.rec={...(carry.rec||{})};S.ach={...(carry.ach||{})};S.dayNight=carry.dayNight;S.seeds=150+40*S.myc;S.slot=carry.slot}
   S.name=CITY_NAMES[S.cities%CITY_NAMES.length];
   const LAYOUT=genLayout(R);
@@ -1375,18 +1406,39 @@ function newGame(seed,carry){
   while(x<N){cul.push([x,y]);T(x,y).cul=true;
     if(x>=sx0-10&&x<=sx1&&(y<sy0+1||y>sy1-1)){y+=y<ty?1:-1;continue}
     if(R()<.6)x++;else{const ny=clamp(y+(R()<.5?-1:1),Math.floor(N*.3),N-4);if(ny===y)x++;else y=ny}}
-  // relief: gentle rolling hills, a shallow valley along the brook,
-  // flatter ground under downtown, industry and the airport.
+  // in some cities a second buried stream comes in from the north or south edge and joins the brook in a fork
+  const onBrook=new Set(cul.map(([cx,cy])=>cy*N+cx)),trib=[];
+  if(R()<.6){const dir=R()<.5?1:-1;let tx=Math.floor(sx1+8+R()*(N-sx1-14)),ty=dir>0?0:N-1;
+    for(let k=0;k<2*N&&inb(tx,ty)&&!onBrook.has(ty*N+tx);k++){trib.push([tx,ty]);
+      if(R()<.65)ty+=dir;else tx=clamp(tx+(R()<.5?-1:1),sx1+7,N-2)}
+    if(inb(tx,ty)&&onBrook.has(ty*N+tx)){for(const[a,b]of trib)T(a,b).cul=true;trib.push([tx,ty])}else trib.length=0}
+  const creek=cul.concat(trib);
+  // relief: the streams have cut valleys, so the land rises the further it lies from them, and the whole city
+  // tilts gently down towards the east, the way the brook flows. A few low hills sit anywhere away from the water,
+  // flattened under downtown, industry and the airport. It is all rounded to half steps, so most of the city is
+  // flat ground with the odd sloping row between
   const FLAT={downtown:.35,industrial:.4,airport:.15,highway:.5,commercial:.6},hills=[];
-  for(let k=0;k<12;k++)hills.push([R()*N,R()*N,5+R()*8,5+R()*11]);
-  const vh=[];
-  for(let j=0;j<M;j++)for(let i=0;i<M;i++){const px=i-.5,py=j-.5;let h=0;
-    for(const[a,b,r,amp]of hills)h+=amp*Math.exp(-((px-a)**2+(py-b)**2)/(r*r));
-    let dm=99;for(const[cx,cy]of cul)dm=Math.min(dm,Math.hypot(px-cx,py-cy));
-    h-=7*Math.exp(-dm*dm/3.5);
-    h*=FLAT[LAYOUT[blkNear(Math.round(py))][blkNear(Math.round(px))]]??1;
-    vh.push(h+(R()-.5)*1.4)}
-  const mn=Math.min(...vh);S.vh=vh.map(h=>Math.round((h-mn)*2)/2);S.vh0=S.vh.slice();
+  for(let k=0;k<5;k++)hills.push([R()*N,R()*N,6+R()*7,3+R()*6]);
+  // Just east of the first block the brook falls a whole level, on a straight eastward run away from the roads
+  let fall=cul.findIndex(([cx,cy],k)=>k>1&&cul[k-1][0]===cx-1&&cul[k-1][1]===cy&&cul[k-2][0]===cx-2&&cul[k-2][1]===cy&&cx-1>=sx1+3&&cx<=sx1+6&&!isRoadT(cx,cy)&&!isRoadT(cx-1,cy));
+  if(fall<0)fall=Math.max(1,cul.findIndex(([cx,cy],k)=>k>0&&cul[k-1][0]===cx-1&&cx-1>sx1+1&&!isRoadT(cx,cy)&&!isRoadT(...cul[k-1])));
+  const hs=[];
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){let h=0;
+    for(const[a,b,r,amp]of hills)h+=amp*Math.exp(-((x-a)**2+(y-b)**2)/(r*r));
+    let dm=99;for(const[cx,cy]of creek)dm=Math.min(dm,Math.hypot(x-cx,y-cy));
+    // the flattening fades from one block's centre to the next, so it leaves no seams along the roads
+    const fu=clamp((x-3)/6,0,NB-1),fv=clamp((y-3)/6,0,NB-1),bu=Math.min(NB-2,Math.floor(fu)),bv=Math.min(NB-2,Math.floor(fv)),tu=fu-bu,tv=fv-bv,F=(i,j)=>FLAT[LAYOUT[j][i]]??1;
+    // a flat floor a few tiles either side of the water, then the valley sides rise gently and level off
+    const ss=t=>{t=clamp(t,0,1);return t*t*(3-2*t)};
+    h*=lerp(lerp(F(bu,bv),F(bu+1,bv),tu),lerp(F(bu,bv+1),F(bu+1,bv+1),tu),tv)*ss((dm-2)/6);
+    hs.push(h+26*ss((dm-3)/16)+(N-x)*.17)}
+  const mn=Math.min(...hs),lv=hs.map(h=>Math.round((h-mn)/6.5));
+  // the only cliff is the waterfall itself: the banks around it slope
+  const fw=cul[fall-1][1]*N+cul[fall-1][0],fe=cul[fall][1]*N+cul[fall][0],creeks=trib.length?[cul,trib]:[cul];
+  const cliffAt=(x,y,nx,ny)=>{const a=y*N+x,b=ny*N+nx;return a===fw&&b===fe||a===fe&&b===fw};
+  settleLevels(lv,creeks,cliffAt);
+  lv[fe]=Math.min(lv[fe],lv[fw]-2);settleLevels(lv,creeks,cliffAt,new Set([fw,fe]));
+  const lo=Math.min(...lv);S.lv=lv.map(l=>l-lo);buildTerrain();
   // the city, block by block
   const FARMS=[['pasture','maize'],['rapeseed','wheat'],['wheat','pasture'],['maize','rapeseed']];let farmN=0;
   const names=STREETS.slice();for(let i=names.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
@@ -1459,6 +1511,10 @@ function newGame(seed,carry){
   startGround();
   let tall=null;for(const t of S.tiles)if(t.b&&t.b.k==='tower'&&(!tall||t.b.h>tall.b.h))tall=t;
   if(tall){tall.b.h+=3;tall.b.spire=1;tall.b.v=0}
+  // a park pond lies level: sink it to the lowest of its tiles
+  const pondLv={};for(const[px,py]of pond){const b=blockOf(px,py);pondLv[b]=Math.min(pondLv[b]??99,S.lv[py*N+px])}
+  for(const[px,py]of pond)S.lv[py*N+px]=pondLv[blockOf(px,py)];
+  if(pond.length)buildTerrain();
   for(const[px,py]of pond)makeWater(px,py);
   refreshUnlock();computeMoist();computeDerived();
   S.E0=D.E;S.smog=1;computeDerived();
@@ -3118,6 +3174,35 @@ function groundRGB(t,x,y){
     default:return seasonGround((t.rw||t.hw?GC.road:GC[t.gd]).map(v=>v*(.95+hash(x,y,5)*.09)),'h');
   }
 }
+// where this tile's front edges stand above the tile in front, show the face between them: a waterfall where
+// water drops into water, a concrete retaining wall under paving, bare rock on a cliff, an earth bank on a small step
+const HARD=new Set(['pave','road','path','rubble']);
+function drawCliffs(t,x,y,wc){
+  for(const side of [0,1]){
+    const[ox,oy]=vecB(side,1-side),nx=x+ox,ny=y+oy;if(!inb(nx,ny)||!SEEN[ny*N+nx])continue;
+    const E=(side?[[.5,-.5],[.5,.5]]:[[-.5,.5],[.5,.5]]).map(([u,v])=>vecB(u,v));
+    const hi=E.map(([ex,ey])=>cornerH(x,y,ex,ey)),lo=E.map(([ex,ey],k)=>Math.min(hi[k],cornerH(nx,ny,ex-ox,ey-oy)));
+    const d=Math.max(hi[0]-lo[0],hi[1]-lo[1]);if(d<.5)continue;
+    const n=T(nx,ny),f=side?.8:1,P=E.map(([ex,ey],k)=>iso(x+ex,y+ey,hi[k])),Q=E.map(([ex,ey],k)=>iso(x+ex,y+ey,lo[k]));
+    const face=[P[0],P[1],Q[1],Q[0]],at=(k,v)=>[lerp(P[0][0],P[1][0],k),lerp(lerp(P[0][1],Q[0][1],v),lerp(P[1][1],Q[1][1],v),k)];
+    if(t.gd==='water'&&n.gd==='water'){
+      poly(face,shade(lerpc(wc.top,[226,240,246],.5),f));
+      for(let k=0;k<16;k++){const u=(k+.5+(hash(x,y,k)-.5)*.7)/16,v0=hash(y,x,k+40)*.3,a=at(u,v0),b=at(u,.95);seg(a[0],a[1],b[0],b[1],k%2?'rgba(250,253,254,.85)':'rgba(120,170,190,.35)',k%2?1.3:1)}
+      {const a=at(0,0),b=at(1,0);seg(a[0],a[1]+.5,b[0],b[1]+.5,'rgba(250,253,254,.9)',1.6)}
+      for(let k=0;k<7;k++){const a=at((k+.5)/7,1);ell(a[0],a[1]-.5,4+hash(y,x,k+20)*3,2.2,'rgba(250,253,254,.95)')}
+      continue}
+    const wall=HARD.has(t.gd)||t.b&&!t.p,rock=d>=HS*2-1;
+    poly(face,shade(hx(wall?'#9c988c':rock?'#857864':'#6e5539'),f));
+    if(wall){for(let v=.34;v<1;v+=.33){const a=at(0,v),b=at(1,v);seg(a[0],a[1],b[0],b[1],'rgba(0,0,0,.13)',.7)}
+      const a=at(0,0),b=at(1,0);seg(a[0],a[1]+.6,b[0],b[1]+.6,'rgba(255,255,255,.28)',1.2)}
+    else{
+      if(rock){for(let k=0;k<3;k++){const v=.3+k*.24+(hash(x,y,k+3)-.5)*.08,a=at(0,v),b=at(1,v+(hash(y,x,k)-.5)*.12);seg(a[0],a[1],b[0],b[1],'rgba(40,30,20,.22)',1)}
+        for(let k=0;k<2;k++){const u=.2+.6*hash(x,y,k+9),a=at(u,.1),b=at(u+.04,.6);seg(a[0],a[1],b[0],b[1],'rgba(40,30,20,.18)',.8)}}
+      // turf or paving hangs over the lip
+      const top=t.gd==='water'?wc.top:t.gd==='soil'||t.gd==='garden'?seasonGround(hx('#5e7a3a'),'g'):hx('#77786f');
+      poly([P[0],P[1],[P[1][0],P[1][1]+Math.min(3,d)],[P[0][0],P[0][1]+Math.min(3,d)]],shade(top,f))}
+  }
+}
 function drawGround(t,x,y,tm,wc){
   const q=quad(x,y),[dx,dy]=slope(x,y),f=1+(clamp(1+.035*dx+.012*dy,.68,1.3)-1)*(1-SEA.snow*.65);
   if(t.gd==='water'){
@@ -3330,8 +3415,16 @@ function renderStatic(){
   const visT=(x,y)=>{if(!SHOWN(y*N+x))return false;const[sx,sy]=iso(x,y,hAt(x,y));return sx>=vx0&&sx<=vx1&&sy>=vy0&&sy-200<=vy1};
   // all the ground first, then buildings and plants from back to front: ground rising in front of a
   // building on a slope must never slice into its walls
-  for(let d=0;d<2*N-1;d++)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];const t=T(x,y);if(edgeY(x,y))sideF(t,x,y,0);if(edgeX(x,y))sideF(t,x,y,1);drawGround(t,x,y,0,wc);FOG=0}}
-  for(let d=0;d<2*N-1;d++)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];drawTileObjects(x,y);FOG=0}}
+  for(let d=0;d<2*N-1;d++)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;const t=T(x,y);if(edgeY(x,y))sideF(t,x,y,0);if(edgeX(x,y))sideF(t,x,y,1);drawCliffs(t,x,y,wc);drawGround(t,x,y,0,wc);FOG=0;HT=-1}}
+  // ground standing a cliff above the tile behind it is drawn again over that tile's building or plants,
+  // so the foot of whatever stands below the cliff is hidden behind its rim
+  const BK=[[[0,-1],[[-.5,-.5],[.5,-.5]]],[[-1,0],[[-.5,-.5],[-.5,.5]]]];
+  const overCliff=(x,y)=>BK.some(([o,E])=>{const[ox,oy]=vecB(...o),nx=x+ox,ny=y+oy;if(!inb(nx,ny))return false;const n=T(nx,ny);if(!n.b&&!n.p)return false;
+    return E.every(([u,v])=>{const[ex,ey]=vecB(u,v);return cornerH(x,y,ex,ey)-cornerH(nx,ny,ex-ox,ey-oy)>=2*HS-1})});
+  for(let d=0;d<2*N-1;d++){
+    for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawTileObjects(x,y);FOG=0;HT=-1}}
+    const e=d+1;for(let u=Math.max(0,e-N+1);u<=Math.min(N-1,e);u++){const[x,y]=toWorld(u,e-u);if(visT(x,y)&&overCliff(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawGround(T(x,y),x,y,0,wc);FOG=0;HT=-1}}
+  }
   if(S.blocks)drawPlots();
   CS={x:cam.x,y:cam.y,z,lkey:LKEY,w:W,h:H};worldDirty=false;softDirty=false;X=ctx;
   const tn=performance.now();staticCost=staticCost*.6+(tn-t0)*.4;lastStatic=tn;
@@ -3382,7 +3475,7 @@ function drawMovers(){
       (occ||(occ=[])).push([x,y]);
     }
     if(occ){occ.sort((a,b)=>depth(a[0],a[1])-depth(b[0],b[1]));X.save();X.beginPath();X.rect(l,top,r-l,bot-top);X.clip();OCC=true;
-      for(const[x,y]of occ){FOG=FOGL[y*N+x];drawTileObjects(x,y);FOG=0}OCC=false;X.restore()}
+      for(const[x,y]of occ){FOG=FOGL[y*N+x];HT=y*N+x;drawTileObjects(x,y);FOG=0;HT=-1}OCC=false;X.restore()}
   }
 }
 function drawOverlay(){
@@ -4689,7 +4782,7 @@ const SLOTS_KEY='idle-nature-slots',SLOT_PRE='idle-nature-slot-',LAST_KEY='idle-
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v);return true}catch(e){return false}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 function slots(){try{const a=JSON.parse(ls.get(SLOTS_KEY)||'[]');return Array.isArray(a)?a:[]}catch(e){return []}}
 function slotMeta(){return {id:S.slot,name:S.name,cities:S.cities||0,myc:S.myc||0,owned:ownedBlocks(),wild:wildBlocks(),bio:D?D.bio:0,savedAt:S.savedAt,created:S.created||S.savedAt}}
-const round3=(k,v)=>typeof v==='number'&&!Number.isInteger(v)?Math.round(v*1000)/1000:v;
+const round3=(k,v)=>k==='vh'||k==='vh0'?undefined:typeof v==='number'&&!Number.isInteger(v)?Math.round(v*1000)/1000:v;
 function save(){
   if(catching||!S)return;S.savedAt=Date.now();
   if(!S.slot){const used=new Set(slots().map(m=>m.id));let id=1;while(used.has(id))id++;S.slot=id;S.created=S.savedAt}
@@ -4716,7 +4809,7 @@ function playSlot(id){
 function newCity(carry){if(S)save();boot(newGame(undefined,carry));S.slot=0;save();focusCity();closeMenu();$('intro').hidden=false}
 document.addEventListener('visibilitychange',()=>{if(document.hidden)save()});
 window.addEventListener('pagehide',save);
-function valid(s){return s&&s.v===4&&Array.isArray(s.tiles)&&s.tiles.length===N*N&&Array.isArray(s.vh)&&s.vh.length===M*M}
+function valid(s){return s&&s.v===4&&Array.isArray(s.tiles)&&s.tiles.length===N*N&&(Array.isArray(s.lv)&&s.lv.length===N*N||Array.isArray(s.vh)&&s.vh.length===M*M)}
 // saves from the old single-slot, 28×28 version cannot be loaded, but their mycelium and field guide carry over
 function legacyCarry(){let c=null;for(const k of [KEY,OLD_KEY,...slots().map(m=>SLOT_PRE+m.id)]){try{const s=JSON.parse(ls.get(k));if(s&&(s.myc||s.cities)){c={myc:s.myc||0,cities:s.cities||0,seen:s.seen||{},dayNight:s.dayNight!==false};break}}catch(e){}}return c}
 
@@ -4749,6 +4842,11 @@ function boot(state){
   S=state;migrateRoster();worldDirty=true;ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
   RACT={};for(const k in RMISS)delete RMISS[k];TGROW.fill(1);TBRW.fill(1);CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
+  // saves from before stepped terrain kept smooth corner heights: turn them into levels
+  if(!Array.isArray(S.lv)||S.lv.length!==N*N){const v=S.vh0||S.vh;S.lv=[];
+    for(let y=0;y<N;y++)for(let x=0;x<N;x++){const k=y*M+x;S.lv.push(Math.round((v[k]+v[k+1]+v[k+M]+v[k+M+1])/4/HS))}
+    settleLevels(S.lv,[],()=>false)}
+  buildTerrain();
   HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;updateTime();cars=[];parts=[];
   S.rec=S.rec||{};S.ach=S.ach||{};refreshUnlock();computeMoist();computeDerived();evalRecipes();computeDerived();setTimeout(()=>checkAch(true),0);
   S.speed=1;if(!S.res){S.res={weeds:1};for(const t of S.tiles)if(t.p&&RES[t.p.id])S.res[t.p.id]=1;for(const a of S.an)if(RES[a.sp])S.res[a.sp]=1}S.myc=S.myc||0;S.cities=S.cities||0;S.name=S.name||CITY_NAMES[S.cities%CITY_NAMES.length];$('cityName').textContent=S.name;
