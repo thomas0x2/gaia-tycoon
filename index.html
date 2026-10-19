@@ -1948,6 +1948,26 @@ function pickHome(a,F,r){
     return [x,y]}
   return null;
 }
+// tiles an animal can travel through on its way to a new home: its corridor, gardens included
+const canCross=(mv,t)=>mv==='swim'?isWater(t):mv==='amph'?passable(t)||isWater(t):passable(t);
+// is another of its kind already living around (x,y)?
+const homeTaken=(a,x,y,r)=>S.an.some(b=>b!==a&&b.sp===a.sp&&!b.bad&&Math.max(Math.abs(b.hx-x),Math.abs(b.hy-y))<=r);
+// before giving up, look for free habitat anywhere it can get to: flyers within flight reach, the rest along their corridor
+// (with a goal, it just plans the route there)
+function relocate(a,F,goal){
+  const ox=Math.round(a.x),oy=Math.round(a.y),r=F.range,ok=goal?(x,y)=>x===goal[0]&&y===goal[1]:(x,y)=>canStand(F.mv,T(x,y))&&habOk(a.sp,x,y)&&!homeTaken(a,x,y,r);
+  if(goal&&ox===goal[0]&&oy===goal[1])return{h:goal,path:[]};
+  if(F.mv==='fly'){if(goal)return{h:goal,path:[]};let best=null,bd=1e9;const R=F.reach;
+    for(let y=Math.max(0,oy-R);y<=Math.min(N-1,oy+R);y++)for(let x=Math.max(0,ox-R);x<=Math.min(N-1,ox+R);x++){
+      const d=Math.hypot(x-ox,y-oy);if(d<bd&&ok(x,y)){best=[x,y];bd=d}}
+    return best&&{h:best,path:[]}}
+  // breadth-first along the corridor, so the nearest free home wins and the route comes with it
+  const s=oy*N+ox,prev=new Int32Array(N*N).fill(-2);prev[s]=-1;const q=[s];
+  for(let h=0;h<q.length;h++){const k=q[h],x=k%N,y=(k/N)|0;
+    if(k!==s&&ok(x,y)){const path=[];for(let j=k;j!==s;j=prev[j])path.push(j);return{h:[x,y],path:path.reverse()}}
+    for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const j=ny*N+nx;if(prev[j]===-2&&canCross(F.mv,S.tiles[j])){prev[j]=k;q.push(j)}}}
+  return null;
+}
 // wild animals find their own way in
 // most species are released by hand; the wild arrivals find their own way in once their home is ready
 function colonise(){
@@ -1961,17 +1981,23 @@ function colonise(){
     }
   }
 }
-let leaveToastAt=-99;
+let leaveToastAt=-99,moveToastAt=-99;
 function habitatCheck(){
-  const gone=[];
+  const gone=[],moved=[];
   for(const a of S.an)if(a.sp==='beaver'&&!a.lodge){for(let r=0;r<=2&&!a.lodge;r++)for(let dy=-r;dy<=r&&!a.lodge;dy++)for(let dx=-r;dx<=r;dx++){const x=a.hx+dx,y=a.hy+dy;if(inb(x,y)&&T(x,y).gd==='water'){T(x,y).lodge=1;a.lodge=1;markDirty();break}}}
   for(const a of S.an){const F=FAUNA[a.sp];
     if(habOk(a.sp,a.hx,a.hy)&&canStand(F.mv,T(a.hx,a.hy))){a.bad=0;a.rel=0;continue}
     const h=pickHome(a,F,F.range);
     if(h){a.hx=h[0];a.hy=h[1];a.bad=0;continue}
+    // a group that loses its home together follows whoever found the new one
+    const lead=moved.find(m=>m.a.sp===a.sp&&Math.max(Math.abs(m.ox-a.hx),Math.abs(m.oy-a.hy))<=F.range);
+    const mv=(lead&&relocate(a,F,[lead.a.hx,lead.a.hy]))||relocate(a,F);
+    if(mv){moved.push({a,ox:a.hx,oy:a.hy});a.hx=mv.h[0];a.hy=mv.h[1];a.path=mv.path;a.bad=0;a.lodge=0;continue}
     if(++a.bad>=20)gone.push(a); // about a minute without what it needs, then it leaves or dies
   }
   for(const a of gone)removeAnimal(a);
+  if(moved.length&&S.t-moveToastAt>20){moveToastAt=S.t;const F=FAUNA[moved[0].a.sp];
+    toast(`The ${F.pl} are moving`,`Their old home stopped suiting them, so they set off to free habitat they can reach. Keep corridors open and animals can move instead of leaving.`)}
   if(gone.length&&S.t-leaveToastAt>20){leaveToastAt=S.t;const g=gone[0],F=FAUNA[g.sp];
     toast(g.rel?`The ${F.pl} could not survive here`:`${F.name} moved on`,`${g.rel?'The seeds spent releasing it were wasted. ':'Its habitat disappeared. '}${F.name} needs ${F.need.charAt(0).toLowerCase()+F.need.slice(1)}`,'warn')}
 }
@@ -2007,16 +2033,20 @@ function updateAnimals(dt){
     if(a.w>0){a.w-=dt;a.m=0;continue}
     const dx=a.tx-a.x,dy=a.ty-a.y,d=Math.hypot(dx,dy);
     if(d<.04){a.m=0;
+      // on its way to a new home: follow the route tile by tile, crossing gardens if it must
+      if(a.path&&a.path.length){const j=a.path.shift();
+        if(canCross(F.mv,S.tiles[j])){a.w=.1+Math.random()*.3;a.tx=j%N+(Math.random()-.5)*.3;a.ty=((j/N)|0)+(Math.random()-.5)*.3;continue}
+        a.path=[]}
       if(F.mv==='fly'){a.w=1+Math.random()*4;
         for(let k=0;k<10;k++){const r=Math.min(3,F.range),x=a.hx+((Math.random()*(2*r+1))|0)-r,y=a.hy+((Math.random()*(2*r+1))|0)-r;
           if(inb(x,y)&&T(x,y).u&&!T(x,y).b){a.tx=x+(Math.random()-.5)*.6;a.ty=y+(Math.random()-.5)*.6;break}}
         continue}
       // one step to a neighbouring tile it can stand on, drifting back toward home when it strays
       a.w=F.mv==='swim'?.5+Math.random()*2:1.5+Math.random()*(F.cls==='insect'?3:5);
-      const cx=Math.round(a.x),cy=Math.round(a.y),far=Math.max(Math.abs(cx-a.hx),Math.abs(cy-a.hy))>=Math.max(1,F.range-1),opts=[];
+      const cx=Math.round(a.x),cy=Math.round(a.y),cd=Math.max(Math.abs(cx-a.hx),Math.abs(cy-a.hy)),far=cd>=Math.max(1,F.range-1),opts=[];
       for(const[ox,oy]of N8){const x=cx+ox,y=cy+oy;if(!inb(x,y)||!canStand(F.mv,T(x,y)))continue;
         if(ox&&oy&&(!canStand(F.mv,T(cx+ox,cy))||!canStand(F.mv,T(cx,cy+oy))))continue;
-        const dh=Math.max(Math.abs(x-a.hx),Math.abs(y-a.hy));if(dh>F.range)continue;
+        const dh=Math.max(Math.abs(x-a.hx),Math.abs(y-a.hy));if(dh>Math.max(F.range,cd))continue;
         opts.push([x,y,far?dh:0])}
       if(Math.random()<.35)opts.push([cx,cy,far?99:0]);
       if(opts.length){opts.sort((p,q)=>p[2]-q[2]);const pool=far?opts.filter(o=>o[2]===opts[0][2]):opts,o=pool[(Math.random()*pool.length)|0];
