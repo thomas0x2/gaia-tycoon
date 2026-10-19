@@ -549,8 +549,8 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .card canvas{width:48px;height:39px}
   .card .nm{display:none}
   .card .cs{font-size:10.5px}
-  /* collapsed Survey: one row of condition icons with a bar each, numbers one tap away */
-  #info:not(.open) #tileInfo .meters{grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:5px}
+  /* collapsed Survey: rows of four condition icons with a bar each, numbers one tap away */
+  #info:not(.open) #tileInfo .meters{grid-template-columns:repeat(4,1fr);gap:9px 16px}
   #info:not(.open) .meter label{font-size:0;justify-content:center}
   #info:not(.open) .meter label span{display:none}
   #info:not(.open) .meter label::before{content:'';width:15px;height:15px;background:currentColor;-webkit-mask:var(--mi) center/contain no-repeat;mask:var(--mi) center/contain no-repeat}
