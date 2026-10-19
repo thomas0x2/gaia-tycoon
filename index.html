@@ -1286,15 +1286,14 @@ const N4=[[0,-1],[-1,0],[1,0],[0,1]];
 /* ---------- terrain ---------- */
 // The ground comes in steps. Every tile has a level S.lv, counted in half steps of HS pixels. Where a neighbour
 // is half a step higher the tile slopes up to meet it; a full step or more is a cliff, or a waterfall where
-// water runs over it. Road tiles only ramp towards other road tiles, and roads never climb a full step:
-// they cut into the hill instead, so a cliff beside a road is a retaining wall and the road itself stays drivable.
+// water runs over it. Roads never climb a full step: they cut into the hill instead, so the road stays drivable.
 const HS=8,isRoadT=(x,y)=>isRoadLine(x)||isRoadLine(y);
 // S.vh holds four corner heights per tile (back, right, front, left, as corners() returns them); S.vh0 is the dry ground
 function buildTerrain(){
   const lv=S.lv,vh=new Array(4*N*N),CO=[[0,0],[1,0],[1,1],[0,1]];
-  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const l=lv[y*N+x],rd=isRoadT(x,y);
+  for(let y=0;y<N;y++)for(let x=0;x<N;x++){const l=lv[y*N+x];
     for(let c=0;c<4;c++){const vi=x+CO[c][0],vj=y+CO[c][1];let m=l;
-      for(const[tx,ty]of [[vi-1,vj-1],[vi,vj-1],[vi-1,vj],[vi,vj]])if(inb(tx,ty)&&!(rd&&!isRoadT(tx,ty))&&lv[ty*N+tx]===l+1)m=l+1;
+      for(const[tx,ty]of [[vi-1,vj-1],[vi,vj-1],[vi-1,vj],[vi,vj]])if(inb(tx,ty)&&lv[ty*N+tx]===l+1)m=l+1;
       vh[(y*N+x)*4+c]=m*HS}}
   S.vh0=vh;S.vh=vh.slice();
   for(let i=0;i<N*N;i++)if(S.tiles[i].gd==='water')sinkWater(i%N,(i/N)|0);
@@ -1308,8 +1307,9 @@ function sinkWater(x,y){const k=(y*N+x)*4,w=S.lv[y*N+x]*HS-5;for(let c=0;c<4;c++
 function settleLevels(lv,brook,cliffAt,fixed){
   for(let changed=true;changed;){changed=false;
     // elsewhere neighbours differ by at most half a step, so the ground slopes instead of breaking into cliffs
+    // (diagonals too, so the four tiles around any corner agree on its height and the ground has no seams)
     if(cliffAt)for(let y=0;y<N;y++)for(let x=0;x<N;x++){const i=y*N+x;if(fixed&&fixed.has(i))continue;
-      for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(!inb(nx,ny)||cliffAt(x,y,nx,ny))continue;const l=lv[ny*N+nx]+1;if(lv[i]>l){lv[i]=l;changed=true}}}
+      for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny)||cliffAt(x,y,nx,ny))continue;const l=lv[ny*N+nx]+1;if(lv[i]>l){lv[i]=l;changed=true}}}
     for(let y=0;y<N;y++)for(let x=0;x<N;x++){if(!isRoadT(x,y))continue;const i=y*N+x;
       for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(inb(nx,ny)&&isRoadT(nx,ny)&&lv[i]>lv[ny*N+nx]+1){lv[i]=lv[ny*N+nx]+1;changed=true}}}
     for(let k=1;k<brook.length;k++){const a=brook[k-1],b=brook[k],i=b[1]*N+b[0],l=lv[a[1]*N+a[0]];if(lv[i]>l){lv[i]=l;changed=true}}
@@ -1494,8 +1494,10 @@ function newGame(seed,carry){
     for(const[a,b,r,amp]of hills)h+=amp*Math.exp(-((x-a)**2+(y-b)**2)/(r*r));
     let dm=99;for(const[cx,cy]of cul)dm=Math.min(dm,Math.hypot(x-cx,y-cy));
     h-=5*Math.exp(-dm*dm/8);
-    const bt=LAYOUT[blkNear(y)][blkNear(x)];h*=FLAT[bt]??1;
-    if(west(x,y)&&bt!=='airport')h+=13;
+    // the flattening fades from one block's centre to the next, so it leaves no seams along the roads
+    const fu=clamp((x-3)/6,0,NB-1),fv=clamp((y-3)/6,0,NB-1),bu=Math.min(NB-2,Math.floor(fu)),bv=Math.min(NB-2,Math.floor(fv)),tu=fu-bu,tv=fv-bv,F=(i,j)=>FLAT[LAYOUT[j][i]]??1;
+    h*=lerp(lerp(F(bu,bv),F(bu+1,bv),tu),lerp(F(bu,bv+1),F(bu+1,bv+1),tu),tv);
+    if(west(x,y)&&LAYOUT[blkNear(y)][blkNear(x)]!=='airport')h+=13;
     hs.push(h)}
   const mn=Math.min(...hs),lv=hs.map(h=>Math.round((h-mn)/6.5));
   // the only cliff: the scarp where it crosses the brook
