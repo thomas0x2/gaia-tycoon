@@ -513,7 +513,7 @@ body.touring #dock{visibility:hidden}
   #toolDesc,#toolNeed{display:none}
   #info.open #toolDesc,#info.open #toolNeed{display:block}
   #info .tool-head{cursor:pointer}
-  #info:not(.open) .tool-head::after{content:'▴';margin-left:6px;color:var(--ink-dim)}
+  #info #infoTog{display:flex}
   #info{padding:10px 12px;gap:6px}
   .meters{gap:6px}
   .tabs .hint{display:none}
@@ -545,9 +545,18 @@ body.touring #dock{visibility:hidden}
 }
 #info.mini>*:not(.tool-head){display:none}
 #info.mini .tool-head,#info.open .tool-head{cursor:pointer}
-#info.mini .tool-head::after{content:'▴';margin-left:6px;color:var(--ink-dim)}
 #info.open{position:relative;z-index:5}
-#info.open .tool-head::after{content:'▾';margin-left:6px;color:var(--ink-dim)}
+/* the Survey panel's open/close switch: a clear pill with a chevron, big enough for a thumb */
+#infoTog{display:none;align-items:center;gap:5px;min-height:36px;padding:0 12px 0 9px;border-radius:18px;border:1px solid rgba(207,220,132,.45);
+  background:rgba(207,220,132,.14);color:var(--lichen);font:600 12.5px var(--body);cursor:pointer;-webkit-tap-highlight-color:transparent}
+#infoTog::before{content:'';width:16px;height:16px;background:currentColor;transition:transform .2s;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%2015l6-6%206%206%22/%3E%3C/svg%3E") center/contain no-repeat;
+  mask:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%2015l6-6%206%206%22/%3E%3C/svg%3E") center/contain no-repeat}
+#infoTog::after{content:'More'}
+#info.open #infoTog::before{transform:rotate(180deg)}
+#info.open #infoTog::after{content:'Less'}
+#infoTog:active{background:rgba(207,220,132,.28)}
+#info.mini #infoTog,#info.open #infoTog{display:flex}
 @media (max-height: 520px){
   .brand{padding:6px 10px;gap:3px;min-width:0}.brand .stage{display:none}.brand h1{font-size:18px}
   #stats .stat:not(.keep){display:none}.stat{padding:3px 10px}.stat span{font-size:13px}
@@ -774,7 +783,7 @@ body.touring #dock{visibility:hidden}
   <nav id="dock">
     <button id="dockShow" class="panel dockbtn" hidden title="Show the toolbar">Tools ▴</button>
     <section id="info" class="panel" aria-live="polite">
-      <div class="tool-head"><canvas id="toolIcon" width="88" height="72"></canvas><div><h2 id="toolName">Survey</h2><em id="toolLatin"></em></div><span class="cost" id="toolCost"></span></div>
+      <div class="tool-head"><canvas id="toolIcon" width="88" height="72"></canvas><div><h2 id="toolName">Survey</h2><em id="toolLatin"></em></div><span class="cost" id="toolCost"></span><button id="infoTog" type="button" aria-expanded="false" aria-label="Show more of the survey"></button></div>
       <p id="toolDesc"></p>
       <p id="toolNeed"></p>
       <div id="tileInfo"></div>
@@ -2100,7 +2109,7 @@ function computeMoist(){
 
 function computeDerived(){
   computeNetworks();computeFields();
-  const forests=computeForests();
+  const forests=computeForests();computeThickets();
   const fl={},gw={},fa={},flB={},gwB={};for(const k in FLORA){fl[k]=0;gw[k]=0;flB[k]=0;gwB[k]=0}for(const k in FAUNA)fa[k]=0;
   let holes=0,trees=0,flowers=0,grazing=0,water=0,conc=0,factories=0,bldg=0,roads=0,grown=0,income=0,A=0,E=0,parkMeadow=0,crops=0,farmWild=0;
   const chim=[],flowerTiles=[],treeTiles=[],rp={batroost:0,nestmast:0,owlbarn:0,greenbridge:0};
@@ -4829,7 +4838,7 @@ function homeNote(h){const F=FAUNA[h.sp],art=HOME_ART[h.sp],shown=h.lodge||homeS
 function drawTileObjects(x,y,part=0){
   const t=T(x,y);if(part!==2)drawGroundExtras(t,x,y);
   if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{if(!buildingSprite(t,x,y))drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
-  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);PART=part;if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);PART=0;SLX=SLY=0}
+  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);PART=part;if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else if(TS[y*N+x]&&FLORA[t.p.id].kind==='shrub')drawThicketTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);PART=0;SLX=SLY=0}
   if(!t.b&&part!==1&&(t.ho||hollowOf(t)))drawHoles(t,x,y); // holes and nests go over a live plant, so they are drawn with it
   if(!t.b&&part!==1)drawHomes(t,x,y);
 }
@@ -4843,6 +4852,20 @@ function drawForestTile(t,x,y,sx,sy){
     for(let j=-2;j<=2;j++){X.beginPath();X.moveTo(fx,fy);X.quadraticCurveTo(fx+j*1.6,fy-4,fx+j*2.6,fy-3+Math.abs(j)*.6);X.strokeStyle=tc(fc[(j+k)&1]);X.lineWidth=1.1;X.stroke()}}
   for(let k=0;k<FOREST_SUB.length;k++){const[u,v]=FOREST_SUB[k];if(k===4&&hash(x,y,9)<.5)continue;
     const sp=ids[(hash(x,y,k+3)*ids.length)|0],gg=Math.max(.35,g*(.62+.22*hash(y,x,k))),ox=(u-v)*HW,oy=(u+v)*HH-(SLX*u+SLY*v);
+    plantArt(sp,sx+ox,sy+oy,gg,sd+k*31,x,y)}
+}
+// inside a thicket a tile holds a tangle of bushes, reaching out to the shrubs next door so the thicket reads as one mass
+const THICKET_SUB=[[-.2,-.22],[.22,-.16],[-.16,.22],[.2,.2],[.02,0]];
+function drawThicketTile(t,x,y,sx,sy){
+  const sd=x*97+y*13,g=t.p.g,ids=[t.p.id,t.p.id,t.p.id];
+  for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=T(nx,ny);if(n.p&&TS[ny*N+nx]&&FLORA[n.p.id].kind==='shrub')ids.push(n.p.id)}
+  // bramble runners over the ground between the bushes
+  if(PART!==2&&SEA.snow<.6){const bc=SEA.aut>.5?['#6a4a2a','#8a3a2a']:['#3a5a28','#4f6e30'];
+    for(let k=0;k<5;k++){const[ox,oy]=spot(sd,k+80,.95),bx=sx+ox,by=sy+oy,d=hash(sd,k,83)<.5?-1:1;
+      curve(bx,by,bx+d*3,by-4,bx+d*6,by-1,bc[k&1],1.1);
+      if(SEA.aut>.3&&hash(sd,k,84)<.6){circ(bx+d*4.5,by-2.2,.9,'#2a1a2e');circ(bx+d*5.4,by-1.6,.8,'#3a2238')}}}
+  for(let k=0;k<THICKET_SUB.length;k++){const[u,v]=THICKET_SUB[k];
+    const sp=ids[(hash(x,y,k+3)*ids.length)|0],gg=Math.max(.45,g*(.72+.2*hash(y,x,k))),ox=(u-v)*HW,oy=(u+v)*HH-(SLX*u+SLY*v);
     plantArt(sp,sx+ox,sy+oy,gg,sd+k*31,x,y)}
 }
 // ivy climbing the walls, and cracks from every hit
@@ -4943,7 +4966,7 @@ function objBox(x,y){const t=T(x,y);
 /* living plants: trees, shrubs and tall herbs leave the cached map and are drawn every frame, so they can sway in the wind
    and spring up when they are sown or grow into their next stage. Drawing only: none of this touches the simulation.
    A plant stays still when zoomed far out, when a building or a cliff stands in front of it, or when it is further from the
-   middle of the screen than the nearest LIVE_MAX plant pictures (a forest tile counts 5). A still plant standing in front of
+   middle of the screen than the nearest LIVE_MAX plant pictures (a forest or thicket tile counts 5). A still plant standing in front of
    a moving one is drawn again over it, clipped to the moving plant, as drawMovers does for animals. */
 let LIVE=[],LIVE_SET=new Set(),PART=0;const LIVE_FADE=new Map(),LIVE_REP=new Map(),SEEN_STAGE=new Map(),POP=new Map(),LIVE_MAX=320;
 const SWAY_KIND={tree:[.065,1.1],shrub:[.08,1.6],herb:[.13,2.1],crop:[.1,1.9]}; // lean at full wind, sway speed (radians a second)
@@ -4951,7 +4974,7 @@ function pickLive(visT,overCliff){
   LIVE=[];LIVE_SET=new Set();LIVE_FADE.clear();LIVE_REP.clear();const on=TINT_ON&&!BAKE&&cam.z>=.75,still=new Set(),dist=(x,y)=>{const[sx,sy]=isoG(x,y);return Math.hypot(sx-cam.x,sy-cam.y)};
   const sway=t=>on&&t.p&&!t.b&&SWAY_KIND[FLORA[t.p.id].kind];
   // the reach that keeps the moving pictures within budget, nearest the middle first
-  const cand=[];for(let i=0;i<N*N;i++){const x=i%N,y=(i/N)|0,t=S.tiles[i];if(sway(t)&&visT(x,y))cand.push([dist(x,y),FS[i]&&FLORA[t.p.id].kind==='tree'?5:1])}
+  const cand=[];for(let i=0;i<N*N;i++){const x=i%N,y=(i/N)|0,t=S.tiles[i];if(sway(t)&&visT(x,y))cand.push([dist(x,y),FS[i]&&FLORA[t.p.id].kind==='tree'?5:TS[i]&&FLORA[t.p.id].kind==='shrub'?5:1])}
   cand.sort((a,b)=>a[0]-b[0]);let R=Infinity,n=0;for(const[d,w]of cand)if((n+=w)>LIVE_MAX){R=d;break}
   for(let d=2*N-2;d>=0;d--)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u),i=y*N+x;if(!visT(x,y))continue;
     const t=T(x,y),sh=t.p&&SHEETS.plant[t.p.id],key=t.p?t.p.id+'|'+(sh?sheetStage(sh,t.p.g)[0]:Math.min(2,Math.floor(t.p.g*3))):'',was=SEEN_STAGE.get(i);
@@ -5138,6 +5161,19 @@ function computeForests(){
     for(const k of comp){FS[k]=comp.length;FID[k]=id}
   }
   return out;
+}
+// 5+ grown shrubs touching (including diagonals) close into one thicket, drawn as a dense tangle
+const THICKET_MIN=5,TS=new Int16Array(N*N);
+function computeThickets(){
+  TS.fill(0);const seen=new Uint8Array(N*N);
+  const ok=i=>{const t=S.tiles[i];return t.p&&!FLORA[t.p.id].pre&&FLORA[t.p.id].kind==='shrub'&&t.p.g>=.5};
+  for(let i=0;i<N*N;i++){
+    if(seen[i]||!ok(i))continue;
+    const comp=[i];seen[i]=1;
+    for(let h=0;h<comp.length;h++){const k=comp[h],x=k%N,y=(k/N)|0;
+      for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const j=ny*N+nx;if(!seen[j]&&ok(j)){seen[j]=1;comp.push(j)}}}
+    if(comp.length>=THICKET_MIN)for(const k of comp)TS[k]=comp.length;
+  }
 }
 
 /* ---------- loop ---------- */
@@ -6602,7 +6638,7 @@ function setMore(on){$('hud').classList.toggle('more',on);$('moreBtn').setAttrib
 $('moreBtn').addEventListener('click',()=>setMore(!$('hud').classList.contains('more')));
 document.querySelector('.ctrl').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!['moreBtn','dnBtn','sndBtn','rotL','rotR'].includes(b.id))setMore(false)});
 $('world').addEventListener('pointerdown',()=>setMore(false));
-$('info').querySelector('.tool-head').addEventListener('click',()=>{const i=$('info'),phone=matchMedia('(max-width: 760px)').matches;if(!phone&&!i.classList.contains('mini')&&!i.classList.contains('open'))return;i.classList.toggle('open');i.classList.toggle('mini',!i.classList.contains('open'));fitPanels()});
+$('info').querySelector('.tool-head').addEventListener('click',()=>{const i=$('info'),phone=matchMedia('(max-width: 760px)').matches;if(!phone&&!i.classList.contains('mini')&&!i.classList.contains('open'))return;i.classList.toggle('open');i.classList.toggle('mini',!i.classList.contains('open'));$('infoTog').setAttribute('aria-expanded',String(i.classList.contains('open')));fitPanels()});
 $('guideBtn').addEventListener('click',()=>openGuide());
 $('gClose').addEventListener('click',()=>{$('guide').hidden=true});
 $('guide').addEventListener('click',e=>{if(e.target.id==='guide')$('guide').hidden=true});
