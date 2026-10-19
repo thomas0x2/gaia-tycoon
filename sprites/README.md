@@ -38,6 +38,10 @@ You don't have to fill the whole grid. The game counts the rows and columns of w
 
 Keep each frame the size given in `sprites.js`, or change `w` and `h` there to match yours.
 
+Plants need no animation frames: the game sways trees, shrubs and tall herbs in the wind and makes them spring up when
+they are sown or grow into a new stage, by bending and scaling each frame about its anchor. Keep the foot of the plant
+on the anchor and it will bend from the ground.
+
 ## Animal sheets
 
 - **Row 1 is the animal moving** (walking, swimming, flying), **row 2 standing still.** A sheet with one row uses it for both.

@@ -853,7 +853,10 @@ body.touring #dock{visibility:hidden}
 'use strict';
 const NB = 8, N = NB*6+1, TW = 64, TH = 32, HW = TW / 2, HH = TH / 2, FL = 9, M = N + 1;
 const KEY = 'idle-nature-save-v1', OLD_KEY = 'gaia-tycoon-save-v2';
-const DAY = 100, SDAYS = 3, YEAR = DAY * SDAYS * 4; // game-seconds per day, days per season
+const DAY = 600, SDAYS = 3, YEAR = DAY * SDAYS * 4; // game-seconds per day, days per season: a 10-minute day, a 30-minute season, a 2-hour year
+// how much slower the calendar runs than it used to (a 20-minute year). Plants and animals keep their pace in real time;
+// what the weather does once a season or once a year (drought damage, fires) is spread over the longer season, so a year does as much as before
+const CAL = YEAR / 1200;
 const cv = document.getElementById('world');
 const ctx = cv.getContext('2d');
 let X = ctx; // current drawing context (swapped when drawing icons)
@@ -1444,7 +1447,7 @@ const LENS=[
   ['stony','Stony','Deep soil to bare stone. Broken roads and rubble leave crushed stone that drains dry and holds few nutrients; pioneer roots and frost wear it down. Grass and hawthorn cannot root above 35%, but heather, broom, pine and birch can.',i=>stonyOf(S.tiles[i]),null,[150,150,165]],
   ['ph','Acidity','Soil pH, from sour (orange, about 4) through neutral (pale, 6.5) to lime-rich (blue, 8). Old parkland on sand starts acid; concrete, mortar and rubble are full of lime, so broken ground and old building sites are lime-rich. Heather and broom need acid soil; orchid grassland and cowslips need lime or at least not acid; earthworms leave soil under pH 5.',i=>(phOf(S.tiles[i])-4)/5,[226,112,54],[70,120,220],[232,222,170]],
   ['graze','Grazing','How hard rabbits, deer and boar browse each tile. Light grazing keeps meadows open and poor; heavy grazing crops them bare and eats every seedling. Hawthorn thorns halve it next door; rabbits keep 3 tiles clear of foxes, deer and boar 5 tiles clear of wolves.',i=>grazeOf(i),null,[200,120,60]],
-  ['dist','Disturbance','Fresh bare earth from unbuilding, fallen trees, boar rooting and rabbit scrapes, healing over about a season. Pioneers and acorns sprout faster on it; beech seedlings struggle.',i=>S.tiles[i].ds||0,null,[170,110,60]],
+  ['dist','Disturbance','Fresh bare earth from unbuilding, fallen trees, boar rooting and rabbit scrapes, healing within about half a day. Pioneers and acorns sprout faster on it; beech seedlings struggle.',i=>S.tiles[i].ds||0,null,[170,110,60]],
   ['human','Human pressure','Standing buildings and busy roads, felt up to 2 tiles away. Deer and herons only settle under 60%, wolves under 40%. Bring buildings down and break up roads to quieten the land.',i=>HUM[i],null,[240,90,150]],
   ['tox','Toxicity','How poisoned the soil is, and where spray drifts from farmed fields. Plants die back on soil too toxic for them; herbicide kills seedlings; insecticide keeps every insect away.',i=>S.tiles[i].tox,null,[230,90,70]],
 ];
@@ -1714,7 +1717,7 @@ function newGame(seed,carry){
   seed = seed ?? (Math.random()*1e9|0);
   const R=rng(seed),tiles=[];
   for(let i=0;i<N*N;i++)tiles.push({gd:'pave',b:null,p:null,tox:.4,fert:.1,cul:false,gr:0,pk:0});
-  S={v:4,seed,tiles,lv:[],vh:[],vh0:[],seeds:150,an:[],unl:{},seen:{},rec:{},peak:0,t:0,demolished:0,dug:0,daylit:0,speed:1,done:{},nid:1,smog:1,E0:1,stage:0,flags:{},clock:DAY*.3,lastSeason:0,dayNight:true,eco:1,res:{weeds:1},myc:0,cities:0};
+  S={v:4,seed,tiles,lv:[],vh:[],vh0:[],seeds:150,an:[],unl:{},seen:{},rec:{},peak:0,t:0,demolished:0,dug:0,daylit:0,speed:1,done:{},nid:1,smog:1,E0:1,stage:0,flags:{},clock:DAY*.3,lastSeason:0,cal:CAL,dayNight:true,eco:1,res:{weeds:1},myc:0,cities:0};
   if(carry){S.myc=carry.myc;S.cities=carry.cities;S.seen={...carry.seen};S.rec={...(carry.rec||{})};S.fx={...(carry.fx||{})};S.ach={...(carry.ach||{})};S.dayNight=carry.dayNight;S.seeds=150+40*S.myc;S.slot=carry.slot}
   S.name=CITY_NAMES[S.cities%CITY_NAMES.length];
   const LAYOUT=genLayout(R);
@@ -2274,7 +2277,7 @@ function levelDown(t,x,y,k,to){
    In a drought summer a fire can break out in dry fuel (old heather, pine, broom, dry grassland) and run from tile to tile.
    Wet ground, water, roads and bare ground stop it. What burns leaves ash: richer soil, disturbed ground where fireweed and
    birch move in first; heather and broom sprout again from the seed in the ground; veteran oaks and old pines survive.
-   S.burning lists the tiles on fire, t.fire how much fuel each has left, t.ash the burnt ground fading over two seasons. */
+   S.burning lists the tiles on fire, t.fire how much fuel each has left, t.ash the burnt ground fading over about a season. */
 const FLAM={heath:.9,heath3:1,pine:.75,pine3:.8,broom:.8,meadowD:.7,meadowO:.6,meadowA:.65,weeds:.5,meadow:.5,meadow2:.45,meadow3:.4,meadow4:.4,meadowR:.35,
   birch:.45,hawthorn:.35,oak:.15,beech:.12,willow:.05,reed:.08,meadowW:.04,meadowF:0,reed3:0,willow2:0};
 const FIRE_CAP=45; // a fire burns at most this many tiles before it dies down
@@ -2284,21 +2287,22 @@ function ignite(i){const t=S.tiles[i];t.fire=1;S.burning.push(i);S.fireN=(S.fire
 function fireTick(){
   if(!S.burning)S.burning=[];const K=TICK_K;
   // a fire breaks out now and then in a drought summer
-  if(!S.burning.length&&WX.dry>.35&&SEA.p>.8&&SEA.p<2.6&&S.t-(S.fireAt||-1e9)>600&&Math.random()<.002*WX.dry*K)
+  if(!S.burning.length&&WX.dry>.35&&SEA.p>.8&&SEA.p<2.6&&S.clock-(S.fireAt||-1e9)>600*CAL&&Math.random()<.002*WX.dry*K/CAL)
     for(let k=0;k<30&&UT.length;k++){const i=UT[(Math.random()*UT.length)|0],t=S.tiles[i];if(flam(t,i)<.5)continue;
-      S.fireAt=S.t;S.fireN=0;ignite(i);const x=i%N,y=(i/N)|0;seeFx('fire:spread',x,y);
+      S.fireAt=S.clock;S.fireN=0;ignite(i);const x=i%N,y=(i/N)|0;seeFx('fire:spread',x,y);
       if(!S.flags.fire){S.flags.fire=1;toast('Wildfire!','A fire has broken out in the drought. It runs through dry heather, pine, broom and grassland, and stops at water, roads and wet ground. Burnt land comes back: watch what moves in.','warn')}
       break}
   if(!S.burning.length)return;
-  const still=[],spread=[];
+  // while catching up, a step stands for many seconds: burn in one-second steps so a fire spreads as it would have
+  for(let n=Math.ceil(K),s=0;s<n&&S.burning.length;s++){const k=K/n,still=[],spread=[];
   for(const i of S.burning){const t=S.tiles[i],x=i%N,y=(i/N)|0;
     // fire jumps to dry fuel next door, more easily the deeper the drought
     if(S.fireN<FIRE_CAP)for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const j=ny*N+nx,v=flam(S.tiles[j],j);
-      if(v&&Math.random()<Math.min(.9,v*(.25+WX.dry)*(dx&&dy?.03:.06)*K))spread.push(j)}
-    t.fire-=.04*K;if(t.fire>0)still.push(i);else burnOut(x,y)}
-  S.burning=still;for(const j of spread)if(!S.tiles[j].fire&&S.fireN<FIRE_CAP)ignite(j);
+      if(v&&Math.random()<Math.min(.9,v*(.25+WX.dry)*(dx&&dy?.03:.06)*k))spread.push(j)}
+    t.fire-=.04*k;if(t.fire>0)still.push(i);else burnOut(x,y)}
+  S.burning=still;for(const j of spread)if(!S.tiles[j].fire&&S.fireN<FIRE_CAP)ignite(j)}
   // it has burnt out against ground that would not burn
-  if(!S.burning.length){S.fireAt=S.t;if(S.fireLast)seeFx('fire:out',S.fireLast[0],S.fireLast[1])}
+  if(!S.burning.length){S.fireAt=S.clock;if(S.fireLast)seeFx('fire:out',S.fireLast[0],S.fireLast[1])}
 }
 function burnOut(x,y){
   const t=T(x,y),i=y*N+x;if(offLog)offLog.push({k:'burn',x,y});delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);t.ph=Math.min(8,phOf(t)+.3);
@@ -2322,8 +2326,8 @@ function tick0(){
     const t=S.tiles[i];if(!t.u)continue;
     // a fallen trunk rots away in about twenty-five minutes, feeding the soil
     if(t.dw){t.dw=Math.max(0,t.dw-.0007*TICK_K);if(t.fert<1)t.fert=Math.min(1,t.fert+.0006*TICK_K);if(t.dw<=0){delete t.dw;markDirty()}}
-    if(t.ash){t.ash-=.0015*TICK_K;if(t.ash<=0){delete t.ash;markDirty()}}
-    // disturbed ground heals over about a season
+    if(t.ash){t.ash-=.0015*TICK_K/(CAL/2);if(t.ash<=0){delete t.ash;markDirty()}}
+    // disturbed ground heals within about half a day
     if(t.ds){t.ds-=.003*TICK_K;if(t.ds<=0)delete t.ds}
     if(t.p){
       const f=FLORA[t.p.id],x=i%N,y=(i/N)|0;
@@ -2350,9 +2354,9 @@ function tick0(){
         // drought: thirsty plants dry out where the ground holds too little water. Lush meadow on poor soil turns to dry grassland
         const dm=WX.dry>.2?dryMin(t.p.id):0;
         if(dm&&WET[i]<dm){parched++;parchedAt=i+1;if(Math.random()<.004)mark(x,y,'water');
-          if(VBASE[t.p.id]){if(Math.random()<.0015*WX.dry*TICK_K)levelDown(t,x,y,t.p.id,bid(t.p.id)==='meadow'&&t.fert<.45&&has('meadowD')?'meadowD':PARENT[t.p.id])}
-          else if(f.kind==='tree'&&t.p.g>=1){if(Math.random()<.0004*WX.dry*TICK_K){fallTree(x,y,'drought');continue}}
-          else{t.p.g-=.001*WX.dry*TICK_K;if(t.p.g<=.05){t.p={id:'weeds',g:.2};continue}}}
+          if(VBASE[t.p.id]){if(Math.random()<.0015*WX.dry*TICK_K/CAL)levelDown(t,x,y,t.p.id,bid(t.p.id)==='meadow'&&t.fert<.45&&has('meadowD')?'meadowD':PARENT[t.p.id])}
+          else if(f.kind==='tree'&&t.p.g>=1){if(Math.random()<.0004*WX.dry*TICK_K/CAL){fallTree(x,y,'drought');continue}}
+          else{t.p.g-=.001*WX.dry*TICK_K/CAL;if(t.p.g<=.05){t.p={id:'weeds',g:.2};continue}}}
       }
       const g=t.p.g;
       // the work of each stage on the soil
@@ -4052,15 +4056,24 @@ function blit(sh,i,x,y,f){const[src,fx,fy]=frameSrc(sh,i,f),s=1/sh.scale;X.drawI
 // a plant: the row for the time of year, the column for how grown it is and which of its looks this tile wears
 function plantSprite(id,sx,sy,g,sd){
   const sh=SHEETS.plant[id];if(!sh||(!TINT_ON&&!SPRITE_ICONS))return false;
-  const st=sh.stages||[1],vs=sh.variants>1&&sh.cols===st.length*sh.variants?sh.variants:1,ns=Math.floor(sh.cols/vs),G=ns===st.length?st:Array.from({length:ns},(_,i)=>(i+1)/ns);
-  let s=0;while(s<ns-1&&g>(G[s]+G[s+1])/2)s++;
+  const[s,vs]=sheetStage(sh,g);
   const i=(Math.floor(SEA.p/4*sh.rows)%sh.rows)*sh.cols+s*vs+(vs>1?Math.floor(hash(sd,0,61)*vs):0);
-  if(sh.shadow&&sh.shadow.length===sh.rows*sh.cols)for(const[cx,cy,rx,ry]of sh.shadow[i])shadowAt(sx+cx-rx*.45,sy+cy-1.5,rx,ry);
+  if(PART!==2&&sh.shadow&&sh.shadow.length===sh.rows*sh.cols)for(const[cx,cy,rx,ry]of sh.shadow[i])shadowAt(sx+cx-rx*.45,sy+cy-1.5,rx,ry);
+  if(PART===1)return true;
   const k=(SLY-SLX)/TW; // lean with the slope it stands on, as the code-drawn plants do
   if(k){X.save();X.transform(1,k,0,1,sx,sy);blit(sh,i,0,0);X.restore()}else blit(sh,i,sx,sy);
   return true;
 }
-function plantArt(id,sx,sy,g,sd,x,y){if(!plantSprite(id,sx,sy,g,sd))FDRAW[id](sx,sy,g,sd,0,x,y)}
+// which growth column of a sheet a plant this grown wears, and how many looks each stage has
+function sheetStage(sh,g){
+  const st=sh.stages||[1],vs=sh.variants>1&&sh.cols===st.length*sh.variants?sh.variants:1,ns=Math.floor(sh.cols/vs),G=ns===st.length?st:Array.from({length:ns},(_,i)=>(i+1)/ns);
+  let s=0;while(s<ns-1&&g>(G[s]+G[s+1])/2)s++;return[s,vs]}
+function plantArt(id,sx,sy,g,sd,x,y){
+  if(PART===1){plantSprite(id,sx,sy,g,sd);return} // a live plant leaves only its shadow on the still map (a code-drawn one, nothing)
+  const w=X===ctx&&LIVE_SET.has(y*N+x)?liveSway(id,sx,sd,y*N+x):null;
+  if(w){X.save();X.translate(sx,sy);X.transform(w[1],0,w[0],w[1],0,0);X.translate(-sx,-sy)}
+  if(!plantSprite(id,sx,sy,g,sd))FDRAW[id](sx,sy,g,sd,0,x,y);
+  if(w)X.restore()}
 // an animal at the origin, facing right: the frame for where it is in its stride, offset by its id so a herd is not in step
 function animalArt(k,a,tm){
   const sh=SHEETS.animal[k];if(!sh||(!TINT_ON&&!SPRITE_ICONS)){ADRAW[k](a,tm);return}
@@ -4256,11 +4269,12 @@ function homesAt(x,y){const out=[],m=HOMEAT.get(y*N+x);if(m)for(const sp in m)ou
 function homeNote(h){const F=FAUNA[h.sp],art=HOME_ART[h.sp],shown=h.lodge||homeShown(h.sp),who=h.n>1?`${h.n} ${F.pl}`:`a ${F.name.toLowerCase()}`;
   const rest=SLEEP[h.sp]?` They rest here ${SLEEP[h.sp]==='day'?'by day':'at night'}.`:'';
   return `<b style="color:var(--lichen);font-weight:600">${h.lodge?'Beaver lodge':shown?art.name:'Resting place'}.</b> Home of ${who}.${rest}${!shown&&HOME_NONE[h.sp]?' '+HOME_NONE[h.sp]:''}`}
-function drawTileObjects(x,y){
-  const t=T(x,y);drawGroundExtras(t,x,y);
+// part 1: everything but a live plant (it is drawn every frame), part 2: just that plant
+function drawTileObjects(x,y,part=0){
+  const t=T(x,y);if(part!==2)drawGroundExtras(t,x,y);
   if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{if(!buildingSprite(t,x,y))drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
-  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);SLX=SLY=0}
-  if(!t.b)drawHomes(t,x,y);
+  else if(t.p){const[sx,sy]=isoG(x,y);[SLX,SLY]=slope(x,y);PART=part;if(FS[y*N+x]&&FLORA[t.p.id].kind==='tree')drawForestTile(t,x,y,sx,sy);else plantArt(t.p.id,sx,sy,t.p.g,x*97+y*13,x,y);PART=0;SLX=SLY=0}
+  if(!t.b&&part!==1)drawHomes(t,x,y); // nests go over a live plant, so they are drawn with it
 }
 // inside a forest a tile holds a close stand of trees over ferns and leaf litter, mixing in the species next door
 const FOREST_SUB=[[-.26,-.26],[.26,-.18],[-.18,.26],[.04,.02],[.27,.27]];
@@ -4268,7 +4282,7 @@ function drawForestTile(t,x,y,sx,sy){
   const sd=x*97+y*13,g=t.p.g,ids=[t.p.id,t.p.id];
   for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=T(nx,ny);if(n.p&&FS[ny*N+nx]&&FLORA[n.p.id].kind==='tree')ids.push(n.p.id)}
   const brown=SEA.aut>.5||SEA.snow>.3,fc=brown?['#8a6a3a','#a07a40']:['#3f6a2e','#55803a'];
-  if(SEA.snow<.6)for(let k=0;k<6;k++){const[ox,oy]=spot(sd,k+70,.9),fx=sx+ox,fy=sy+oy;
+  if(PART!==2&&SEA.snow<.6)for(let k=0;k<6;k++){const[ox,oy]=spot(sd,k+70,.9),fx=sx+ox,fy=sy+oy;
     for(let j=-2;j<=2;j++){X.beginPath();X.moveTo(fx,fy);X.quadraticCurveTo(fx+j*1.6,fy-4,fx+j*2.6,fy-3+Math.abs(j)*.6);X.strokeStyle=tc(fc[(j+k)&1]);X.lineWidth=1.1;X.stroke()}}
   for(let k=0;k<FOREST_SUB.length;k++){const[u,v]=FOREST_SUB[k];if(k===4&&hash(x,y,9)<.5)continue;
     const sp=ids[(hash(x,y,k+3)*ids.length)|0],gg=Math.max(.35,g*(.62+.22*hash(y,x,k))),ox=(u-v)*HW,oy=(u+v)*HH-(SLX*u+SLY*v);
@@ -4328,8 +4342,9 @@ function renderStatic(){
   const BK=[[[0,-1],[[-.5,-.5],[.5,-.5]]],[[-1,0],[[-.5,-.5],[-.5,.5]]]];
   const overCliff=(x,y)=>BK.some(([o,E])=>{const[ox,oy]=vecB(...o),nx=x+ox,ny=y+oy;if(!inb(nx,ny))return false;const n=T(nx,ny);if(!n.b&&!n.p)return false;
     return E.every(([u,v])=>{const[ex,ey]=vecB(u,v);return cornerH(x,y,ex,ey)-cornerH(nx,ny,ex-ox,ey-oy)>=2*HS-1})});
+  pickLive(visT,overCliff);
   for(let d=0;d<2*N-1;d++){
-    for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawTileObjects(x,y);FOG=0;HT=-1}}
+    for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u);if(visT(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawTileObjects(x,y,LIVE_SET.has(y*N+x)?1:0);FOG=0;HT=-1}}
     const e=d+1;for(let u=Math.max(0,e-N+1);u<=Math.min(N-1,e);u++){const[x,y]=toWorld(u,e-u);if(visT(x,y)&&overCliff(x,y)){FOG=FOGL[y*N+x];HT=y*N+x;drawGround(T(x,y),x,y,0,wc);FOG=0;HT=-1}}
   }
   if(S.blocks)drawPlots();
@@ -4363,6 +4378,54 @@ const BIGM=new Set(['deer','wolf','fox','bison','heron','stork','boar','lynx','b
 function drawCar(o){const c=hx(o.c),ox=o.dy?(o.dy>0?-.2:.2):0,oy=o.dx?(o.dx>0?.2:-.2):0,cz=hAt(o.x,o.y);
   isoBox(o.x+ox,o.y+oy,o.dx?.17:.09,o.dy?.17:.09,cz,4,shade(c,1.05),shade(c,.8),shade(c,.65));
   if(NIGHT>.2){const[hx2,hy2]=iso(o.x+ox+o.dx*.18,o.y+oy+o.dy*.18,cz+2);circ(hx2,hy2,.9,'#fff4c8');glow(hx2,hy2,9,WARM,NIGHT*.7)}}
+// how tall and how wide (each side of the tile centre) what stands on a tile reaches on screen, or null if it lies flat
+function objBox(x,y){const t=T(x,y);
+  if(t.b)return[bTop(t.b)+Math.max(...corners(x,y))-hAt(x,y)+4,HW];
+  if(!t.p)return null;const k=FLORA[t.p.id].kind,g=t.p.g;
+  return k==='tree'?[16+42*g,6+12*g]:k==='shrub'?[4+10*g,4+8*g]:k==='herb'?[6+20*g,HW*.7]:k==='crop'&&t.p.id==='maize'?[16,HW]:null}
+/* living plants: trees, shrubs and tall herbs leave the cached map and are drawn every frame, so they can sway in the wind
+   and spring up when they are sown or grow into their next stage. Drawing only: none of this touches the simulation.
+   A plant stays still when zoomed far out, when a building or a cliff stands in front of it, or when it is further from the
+   middle of the screen than the nearest LIVE_MAX plant pictures (a forest tile counts 5). A still plant standing in front of
+   a moving one is drawn again over it, clipped to the moving plant, as drawMovers does for animals. */
+let LIVE=[],LIVE_SET=new Set(),PART=0;const LIVE_FADE=new Map(),LIVE_REP=new Map(),SEEN_STAGE=new Map(),POP=new Map(),LIVE_MAX=320;
+const SWAY_KIND={tree:[.065,1.1],shrub:[.08,1.6],herb:[.13,2.1],crop:[.1,1.9]}; // lean at full wind, sway speed (radians a second)
+function pickLive(visT,overCliff){
+  LIVE=[];LIVE_SET=new Set();LIVE_FADE.clear();LIVE_REP.clear();const on=TINT_ON&&!BAKE&&cam.z>=.75,still=new Set(),dist=(x,y)=>{const[sx,sy]=isoG(x,y);return Math.hypot(sx-cam.x,sy-cam.y)};
+  const sway=t=>on&&t.p&&!t.b&&SWAY_KIND[FLORA[t.p.id].kind];
+  // the reach that keeps the moving pictures within budget, nearest the middle first
+  const cand=[];for(let i=0;i<N*N;i++){const x=i%N,y=(i/N)|0,t=S.tiles[i];if(sway(t)&&visT(x,y))cand.push([dist(x,y),FS[i]&&FLORA[t.p.id].kind==='tree'?5:1])}
+  cand.sort((a,b)=>a[0]-b[0]);let R=Infinity,n=0;for(const[d,w]of cand)if((n+=w)>LIVE_MAX){R=d;break}
+  for(let d=2*N-2;d>=0;d--)for(let u=Math.max(0,d-N+1);u<=Math.min(N-1,d);u++){const[x,y]=toWorld(u,d-u),i=y*N+x;if(!visT(x,y))continue;
+    const t=T(x,y),sh=t.p&&SHEETS.plant[t.p.id],key=t.p?t.p.id+'|'+(sh?sheetStage(sh,t.p.g)[0]:Math.min(2,Math.floor(t.p.g*3))):'',was=SEEN_STAGE.get(i);
+    if(key&&was!=null&&was!==key)POP.set(i,time);SEEN_STAGE.set(i,key);
+    const bx=objBox(x,y);if(!bx)continue;
+    const r=sway(t)?dist(x,y):Infinity;if(r>=R){still.add(i);continue}
+    // whatever still stands in front of this plant and overlaps it: a building or cliff keeps it still, a plant is drawn again over it
+    const[h,w]=bx,[sx,sy]=isoG(x,y);let ok=true,rp=null;
+    for(let dv=-1;dv<=5&&ok;dv++)for(let du=-1;du<=5;du++){if(du+dv<=0)continue;const[ox,oy]=vecB(du,dv),nx=x+ox,ny=y+oy,j=ny*N+nx;if(!inb(nx,ny)||!visT(nx,ny))continue;
+      if(du+dv===1&&overCliff(nx,ny)){ok=false;break}
+      if(!still.has(j))continue;const[h2,w2]=objBox(nx,ny),[tx,ty]=isoG(nx,ny);
+      if(tx+w2>sx-w-3&&tx-w2<sx+w+3&&ty+HH>sy-h-3&&ty-h2<sy+HH){if(T(nx,ny).b){ok=false;break}(rp||(rp=[])).push(j)}}
+    if(ok){LIVE.push(i);LIVE_SET.add(i);if(R<Infinity)LIVE_FADE.set(i,clamp((R-r)/(R*.3),0,1));
+      if(rp)LIVE_REP.set(i,[sx-w-3,sy-h-3,2*w+6,h+HH+3,rp.sort((a,b)=>depth(a%N,(a/N)|0)-depth(b%N,(b/N)|0))])}else still.add(i)}
+  LIVE.reverse();
+}
+// a lean (horizontal shear about the plant's foot) and a size for a live plant this frame
+function liveSway(id,sx,sd,i){
+  const[a,f]=SWAY_KIND[FLORA[id].kind],gust=.7+.3*Math.sin(time*.21)*Math.sin(time*.37+1.3),wind=(drops.length?1.6:1)*gust;
+  const lean=a*wind*(LIVE_FADE.get(i)??1)*(.35+.65*Math.sin(time*f-sx*.014+hash(sd,3,17)*1.4));
+  let sc=1;const t0=POP.get(i);
+  if(t0!=null){const p=(time-t0)/.8;if(p>=1||p<0)POP.delete(i);else{const q=p-1;sc=.35+.65*(1+2.7*q*q*q+1.7*q*q)}}
+  return[lean,sc]}
+function drawLive(){
+  if(!LIVE.length)return;const z=cam.z;
+  for(const i of LIVE){const x=i%N,y=(i/N)|0,[mx,my]=isoG(x,y),px=(mx-cam.x)*z+W/2,py=(my-cam.y)*z+H/2;
+    if(px<-HW*z-20||px>W+HW*z+20||py<-20||py>H+70*z+20)continue;
+    FOG=FOGL[i];HT=i;drawTileObjects(x,y,2);FOG=0;HT=-1;
+    const rp=LIVE_REP.get(i);if(rp){X.save();X.beginPath();X.rect(rp[0],rp[1],rp[2],rp[3]);X.clip();OCC=true;
+      for(const j of rp[4]){FOG=FOGL[j];HT=j;drawTileObjects(j%N,(j/N)|0,2);FOG=0;HT=-1}OCC=false;X.restore()}}
+}
 // draw animals and cars, then repaint whatever stands in front of each one, clipped to its outline box
 function drawMovers(){
   const list=S.an.filter(a=>a.st!=='hib').concat(WORKERS,cars.filter(c=>T(clamp(Math.round(c.x),0,N-1),clamp(Math.round(c.y),0,N-1)).u)).sort((p,q)=>depth(p.x,p.y)-depth(q.x,q.y));
@@ -4377,11 +4440,8 @@ function drawMovers(){
     const sh=o.sp&&SHEETS.animal[o.sp],half=sh?Math.max(sh.ax,sh.w-sh.ax)/sh.scale:o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(sh?sh.ay/sh.scale:o.sp?MOVER_H[o.sp]:9),bot=my+(sh?Math.max(3,(sh.h-sh.ay)/sh.scale):3);
     const tx=Math.round(o.x),ty=Math.round(o.y);let occ=null;
     for(let dv=-1;dv<=5;dv++)for(let du=-1;du<=5;du++){
-      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!SEEN[y*N+x])continue;const t=T(x,y);let h,w;
-      if(t.b){h=bTop(t.b)+Math.max(...corners(x,y))-hAt(x,y)+4;w=HW}
-      else if(t.p){const k=FLORA[t.p.id].kind,g=t.p.g;if(k==='tree'){h=16+42*g;w=6+12*g}else if(k==='shrub'){h=4+10*g;w=4+8*g}else if(k==='herb'){h=6+20*g;w=HW*.7}else if(k==='crop'&&t.p.id==='maize'){h=16;w=HW}else continue}
-      else continue;
-      const[sx,sy]=isoG(x,y);if(sx+w<l||sx-w>r||sy+HH<top||sy-h>bot)continue;
+      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!SEEN[y*N+x])continue;const bx=objBox(x,y);if(!bx)continue;
+      const[h,w]=bx,[sx,sy]=isoG(x,y);if(sx+w<l||sx-w>r||sy+HH<top||sy-h>bot)continue;
       (occ||(occ=[])).push([x,y]);
     }
     if(occ){occ.sort((a,b)=>depth(a[0],a[1])-depth(b[0],b[1]));X.save();X.beginPath();X.rect(l,top,r-l,bot-top);X.clip();OCC=true;
@@ -4463,7 +4523,7 @@ function render(){
   ctx.drawImage(cache,dx,dy,CW*s,CH*s);
   X=ctx;ctx.setTransform(DPR*z,0,0,DPR*z,DPR*(W/2-cam.x*z),DPR*(H/2-cam.y*z));
   syncHomes();
-  drawMovers();drawPods();drawHighlight();drawTour();
+  drawLive();drawMovers();drawPods();drawHighlight();drawTour();
   if(tool.type==='corridors'||tool.type==='guide'||tool.type==='lens')drawOverlay();
   const hm=hover||pinned;
   if(S.blocks&&hm&&!T(hm[0],hm[1]).u){const b=blockAt(hm[0],hm[1]);if(b>=0){const ok=blockStatus(b).ok;
@@ -5059,13 +5119,14 @@ function webFocus(stay){
 
 /* ---------- nature keeps growing while the page is closed or in the background ---------- */
 let QUIET=false,offLog=null,catching=false;
-const OFFLINE_SIM=8*3600,OFFLINE_MAX=24*3600;
+// nature grows in full for the first 12 hours away (six years of seasons), then seeds trickle in at a quarter of the rate up to two days
+const OFFLINE_SIM=12*3600,OFFLINE_MAX=48*3600,OFFLINE_STEPS=1200;
 function summary(){const fl={};for(const k of WILD_FLORA)fl[k]=D.fl[k]||0;return {seeds:S.seeds,fl,fell:S.natFell||0,cracked:S.natCracked||0,carried:S.carried||0,stage:S.stage}}
 function dur(s){s=Math.round(s);if(s<90)return `${s} seconds`;if(s<5400)return `${Math.round(s/60)} minutes`;return `${(s/3600).toFixed(1)} hours`}
 function catchUp(sec,show){
   if(catching||sec<2)return;catching=true;
   const simS=Math.floor(Math.min(sec,OFFLINE_SIM)),extra=Math.max(0,Math.min(sec,OFFLINE_MAX)-simS),before=summary();if(show){tourEnd();before.snap=awaySnap()}
-  const K=Math.max(1,Math.ceil(simS/1200)),simT=Math.ceil(simS/K);
+  const K=Math.max(1,Math.ceil(simS/OFFLINE_STEPS)),simT=Math.ceil(simS/K);
   QUIET=true;offLog=[];let done=0;
   if(show){$('away').hidden=false;$('awayBody').innerHTML='<p>Nature has been busy. Catching up…</p>';$('awayBar').style.width='0';$('awayEye').textContent=`You were away for ${dur(sec)}`;$('awayTitle').textContent='Catching up…';$('awayBar').parentNode.hidden=false;$('awayGo').hidden=true;$('awayTour').hidden=true}
   const step=()=>{
@@ -5163,7 +5224,7 @@ function showAway(a,b,extra){
   if(show.length)h+=`<ol class="aw-list">${show.map((e,i)=>`<li><button data-aw="${i}" style="--c:${e.c}">${awayPic(e)}<div><em>${e.tag}</em><b>${e.title}</b><p>${e.line}</p></div>${e.pts.length||e.an?'<span class="aw-go" aria-hidden="true">›</span>':''}</button></li>`).join('')}</ol>`;
   else h+=`<p class="dim">Nothing big changed. Plants grow slowly: give them a season or two.</p>`;
   if(rest>0)h+=`<p class="dim">…and ${plural(rest,'smaller change')} around the city.</p>`;
-  if(extra>60)h+=`<p class="dim">Nature grew for the first ${dur(OFFLINE_SIM)}. After that, seeds trickled in at a quarter of the rate, up to ${dur(OFFLINE_MAX)}.</p>`;
+  if(extra>60)h+=`<p class="dim">Nature grew for the first ${OFFLINE_SIM/3600} hours. After that, seeds trickled in at a quarter of the rate, up to ${OFFLINE_MAX/3600} hours.</p>`;
   $('awayBody').innerHTML=h;$('awayBar').parentNode.hidden=true;
   const go=ev.some(e=>e.pts.length||e.an);$('awayTour').hidden=!go;$('awayGo').hidden=false;$('awayGo').textContent=go?'Later':'Back to the city';(go?$('awayTour'):$('awayGo')).focus();
 }
@@ -5685,7 +5746,7 @@ function updateInfo(){
   if(!t.b&&HUM[i]>=.4)notes+=`<p class="note">Human pressure ${pct(HUM[i])} from the buildings and roads nearby: ${HUM[i]>=.6?'deer, herons and wolves':'wolves'} won’t settle here.</p>`;
   if(t.p&&WX.dry>.2&&dryMin(t.p.id)&&WET[i]<dryMin(t.p.id))notes+=`<p class="note" style="color:#e2b86c">Drought: the ground here holds ${pct(WET[i])} water and ${FLORA[t.p.id].name.toLowerCase()} needs ${pct(dryMin(t.p.id))}. It is drying out.</p>`;
   else if(WX.wet>.2&&!t.b&&t.gd!=='water'&&MO[i]>=.3)notes+=`<p class="note" style="color:#7fb0e6">Wet year: the water is high and floods the ground near its banks.</p>`;
-  if(!t.b&&(t.ds||0)>.1)notes+=`<p class="note">Freshly disturbed ground (${pct(t.ds)}): pioneers and acorns sprout faster here. It heals over a season.</p>`;
+  if(!t.b&&(t.ds||0)>.1)notes+=`<p class="note">Freshly disturbed ground (${pct(t.ds)}): pioneers and acorns sprout faster here. It heals within about half a day.</p>`;
   if(t.p&&FLORA[t.p.id].sps&&t.p.g>.05)notes+=kv([['Earns',`${(FLORA[t.p.id].sps*t.p.g*(FS[i]?1.5:1)).toFixed(3)} seeds/s now`],['Effects',fxText(t.p.id)||'none']]);
   if(t.b&&t.b.rp)notes+=`<p class="note" style="color:var(--lichen)">${REP[t.b.k].desc}</p>`;
   else if(t.b&&t.b.k==='flyover')notes+=`<p class="note">${has('reclaim')?`Nature will repurpose this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down${t.b.ivy?` (${Math.round(t.b.ivy*100)}% overgrown)`:''}. Demolishing it by hand still works.`:`Grow Reclamation in the Wood Wide Web and nature will turn this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down.`}</p>`;
@@ -5989,7 +6050,7 @@ function migrateRoster(){
   if(moved||refund)setTimeout(()=>toast('A wilder, leaner city',`Your city now grows the plants and animals of Central Europe. Old plant varieties became the levels of the plant that fills their place, and ${refund?`${fmt(refund)} seeds came back for the species that left`:'nothing was lost'}. Open the Lens to read the ground.`,'unlock'),1200);
 }
 function boot(state){
-  S=state;migrateRoster();if(S.tiles[0].ph==null)startPh(true);worldDirty=true;ROT=S.rot||0;
+  S=state;migrateRoster();if(S.tiles[0].ph==null)startPh(true);worldDirty=true;SEEN_STAGE.clear();ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
   RACT={};CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   // saves from before stepped terrain kept smooth corner heights: turn them into levels
@@ -6001,7 +6062,10 @@ function boot(state){
     for(let i=0;i<N*N&&S.fall[0]<0;i++){if(!st(i))continue;const x=i%N,y=(i/N)|0;
       for(const[dx,dy]of N4){const j=(y+dy)*N+x+dx;if(inb(x+dx,y+dy)&&st(j)&&S.lv[i]-S.lv[j]>=2){S.fall=[i,j];break}}}}
   levelWater();buildTerrain();
-  HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;updateTime();cars=[];parts=[];
+  HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;
+  // saves from before the slower calendar: keep the same day of the same year
+  if(S.cal!==CAL){S.clock*=CAL/(S.cal||1);S.cal=CAL}
+  updateTime();cars=[];parts=[];
   S.rec=S.rec||{};S.ach=S.ach||{};S.fx=S.fx||{};S.fxc=S.fxc||{};
   // effects announced by older versions count as seen
   for(const[f,k]of [['shaded','shade'],['drowned','drown'],['overgrazed','overgraze'],['browse','browse'],['glade','glade'],['heronreed','reed:heron'],['dam','dam:beaver'],['fled_rabbit','fear:fox'],['fled_deer','fear:wolf'],['fled_boar','fear:wolf'],['fall_age','fall:age'],['fall_storm','fall:storm'],['fall_beaver','fell:beaver'],['fall_drought','fall:drought'],['parched','parch']])if(S.flags&&S.flags[f])S.fx[k]=1;
