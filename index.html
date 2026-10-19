@@ -944,7 +944,7 @@ const upgradesOf=k=>KIDS[k]||[];
    (soil, water, light, grazing), once bees live within 4 tiles where a level needs pollinating and its partner animal
    lives in the city. Older patches next door speed it up. When the ground changes so a level no longer suits it,
    it slips back to the level it grew from, or switches branch: an overgrazed herb-rich meadow drops back, a meadow on over-rich soil turns rank. */
-const LV_RATE=.0003;
+const LV_RATE=.00015;
 const levelOk=(v,t,x,y,i)=>has(v.id)&&pollinatedAt(v.id,i)&&(!PARTNER[v.id]||GEN_POLL.includes(PARTNER[v.id][0])||D.fa[PARTNER[v.id][0]]>0)&&(!v.ok||v.ok(t,x,y,i));
 const linesFrom=k=>[KIDS[k]||[]];
 function nextLevel(t,x,y,i){for(const v of KIDS[t.p.id]||[])if(levelOk(v,t,x,y,i))return v;return null}
@@ -1570,7 +1570,7 @@ function refreshUnlock(){
 // every block touching one you own, diagonals included, is drawn as it stands
 function blockNear(b){const bx=b%NB,by=(b/NB)|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const nx=bx+dx,ny=by+dy;if((dx||dy)&&nx>=0&&ny>=0&&nx<NB&&ny<NB&&S.blocks[ny*NB+nx].u)return true}return false}
 function blockAdj(b){const bx=b%NB,by=(b/NB)|0;return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx,dy])=>{const nx=bx+dx,ny=by+dy;return nx>=0&&ny>=0&&nx<NB&&ny<NB&&S.blocks[ny*NB+nx].u})}
-function blockCost(b){return Math.round(3*BT[S.blocks[b].t].cost*Math.pow(1.3,ownedBlocks()-1))}
+function blockCost(b){return Math.round(4*BT[S.blocks[b].t].cost*Math.pow(1.4,ownedBlocks()-1))}
 function blockStatus(b){
   const B=S.blocks[b],T0=BT[B.t];
   if(B.u)return {owned:true};
@@ -1899,14 +1899,14 @@ const tilesOf=(...ids)=>Object.assign(()=>ids.reduce((n,k)=>n+(k==='water'?D.wat
 const animals=(...sps)=>Object.assign(()=>sps.reduce((n,k)=>n+(D.fa[k]||0),0),{sps});
 // the same food, counted on one tile: what tilesOf adds up across the whole map
 const isFood=(ids,t,i)=>ids.some(k=>{if(k==='water')return t.gd==='water'&&!!t.u;if(!t.p||t.p.g<.4)return false;const f=FLORA[t.p.id];
-  return k==='forest'?FS[i]>0:k==='flowers'?!!f.flower:k==='graze'?!!f.graze:k==='trees'?f.kind==='tree':t.p.id===k||f.base===k});
+  return k==='grown'?!f.pre:k==='forest'?FS[i]>0:k==='flowers'?!!f.flower:k==='graze'?!!f.graze:k==='trees'?f.kind==='tree':t.p.id===k||f.base===k});
 // too many of its kind for the food around (x,y)? Same rule as the map-wide cap, applied to the land it can roam (twice its range),
 // and a breeding pair always fits
 function crowded(a,x,y){
   const C=CAPS[a.sp];if(!Array.isArray(C))return false;
   const F=FAUNA[a.sp],r=2*F.range,[,fn,per]=C;let food=0;
   if(fn.sps)for(const k of fn.sps)food+=preyNear(k,x,y,r);
-  else for(let j=Math.max(0,y-r);j<=Math.min(N-1,y+r);j++)for(let i=Math.max(0,x-r);i<=Math.min(N-1,x+r);i++)if(isFood(fn.ids,T(i,j),j*N+i))food++;
+  else if(fn.ids)for(let j=Math.max(0,y-r);j<=Math.min(N-1,y+r);j++)for(let i=Math.max(0,x-r);i<=Math.min(N-1,x+r);i++)if(isFood(fn.ids,T(i,j),j*N+i))food++;
   let n=1;for(const b of S.an)if(b!==a&&b.sp===a.sp&&Math.max(Math.abs(b.hx-x),Math.abs(b.hy-y))<=r)n++;
   return n>Math.max(2,Math.floor(food/per));
 }
@@ -1914,7 +1914,7 @@ const CAPS={
   bee:['flowering tiles',tilesOf('flowers'),25],butterfly:['nettle tiles',tilesOf('nettle'),6],moth:['willowherb and foxglove tiles',tilesOf('weeds','foxglove'),12],
   beetle:['grassland and scrub tiles',tilesOf('meadow','hawthorn'),20],hoverfly:['flowering tiles',tilesOf('flowers'),20],mayfly:['water tiles',tilesOf('water'),15],
   dragonfly:['reed tiles',tilesOf('reed'),15],stagbeetle:['oak tiles',tilesOf('oak'),10],glowworm:['grassland tiles',tilesOf('meadow'),25],
-  earthworm:['grown plants',()=>D.grown,15],salmon:['water tiles',tilesOf('water'),12],
+  earthworm:['grown plants',Object.assign(()=>D.grown,{ids:['grown']}),15],salmon:['water tiles',tilesOf('water'),12],
   thrush:['scrub and tree tiles',tilesOf('hawthorn','trees'),30],skylark:['grassland, lawn and pasture tiles',tilesOf('graze'),40],swallow:['water tiles',tilesOf('water'),20],
   jay:['tree tiles',tilesOf('trees'),50],kingfisher:['brown trout',animals('trout'),4],heron:['water tiles',tilesOf('water'),30],
   woodpecker:['forest tiles',tilesOf('forest'),30],kestrel:['field voles',animals('vole'),4],owl:['forest tiles',tilesOf('forest'),40],
