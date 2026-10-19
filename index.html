@@ -1116,6 +1116,24 @@ const FX={
     text:'Wolves only live where 2 or more deer or boar live within 8 tiles. When their prey moves away, the pack dwindles.'},
   poll:{sp:['bee'],cause:'bloom',name:'Bees bring the flowers',hint:'Watch the meadows around its home through a summer.',
     text:'Flowers within 4 tiles of a bee colony set seed, so meadow, heather, hedges and broom there mature to their flowering levels.'},
+  'fire:spread':{sp:['heath','pine','broom','meadow'],cause:'fire',name:'Wildfire',hint:'Watch heather and pine in a drought summer.',
+    text:'In a drought summer a fire can break out in dry fuel and run through it: old heather and pine burn fiercest, broom and dry grassland next, broadleaf woods hardly at all.'},
+  'fire:out':{sp:['reed','willow','meadow'],cause:'water',name:'Wet ground stops the fire',hint:'Watch where a fire burns out.',
+    text:'A fire stops at water, roads, bare ground and anything wet: fen, reed beds, wet meadow and willow carr are natural firebreaks.'},
+  'renew:fire':{sp:['heath','broom'],cause:'fire',name:'Heather and broom spring back',hint:'Watch burnt heathland.',
+    text:'Fire clears old, woody heather and the seed in the ground sprouts in the ash: a burnt heath comes back young and in flower. Broom seed cracks open in the heat too.'},
+  fireweed:{sp:['weeds'],cause:'fire',name:'Fireweed',hint:'Watch burnt ground.',
+    text:'Rosebay willowherb is called fireweed: its fluffy seed is the first to colonise burnt ground, and the ash feeds it.'},
+  'ash:birch':{sp:['birch'],cause:'fire',name:'Birch takes the burnt ground',hint:'Watch burnt ground near birches.',
+    text:'Birch seed blows in from up to 6 tiles away and sprouts on the bare, ash-rich ground a fire leaves.'},
+  'bark:fire':{sp:['oak','pine'],cause:'fire',name:'Old trees stand the fire',hint:'Watch an old oak or pine in a fire.',
+    text:'Thick bark lets veteran oaks and old pines live through a fire that kills younger trees around them.'},
+  'colony:bee':{sp:['bee'],cause:'bloom',name:'A queen raises her colony',hint:'Watch a queen’s nest through the summer.',
+    text:'A queen founds a nest and raises workers all spring and summer, as many as the flowers within 3 tiles can feed. A young nest pollinates the tiles right around it; a big colony reaches 3 tiles.'},
+  'queens:bee':{sp:['bee'],cause:'bloom',name:'New queens fly out',hint:'Watch a big colony in late summer.',
+    text:'In late summer a colony raises new queens, more in a big one. They fly off up to 6 tiles to a spot of their own and sleep through the winter there. In autumn the workers and the old queen die.'},
+  'wake:bee':{sp:['bee','willow','weeds'],cause:'bloom',name:'Early nectar wakes the queens',hint:'Watch where sleeping queens wake in spring.',
+    text:'In early spring a queen only founds a nest where something already flowers within 3 tiles: willow catkins or dandelions. Catkins give the colony a fast start. A queen that finds neither by the end of spring dies.'},
   'mix:earthworm':{sp:['earthworm'],cause:'dig',name:'Earthworms mix the soil',hint:'Watch the soil around its home with the Lens.',
     text:'On its tile and the 8 around it, toxicity falls twice as fast and soil richness evens out between neighbours.'},
   'root:boar':{sp:['boar'],cause:'dig',name:'Boar root up the turf',hint:'Watch the turf around its home.',
@@ -1171,6 +1189,7 @@ function drawMark(p,k){
     case 'soil':case 'leaf':X.save();X.translate(x,y);X.rotate(-.7);ell(0,0,2.2,1,p.c==='soil'?'#c49a5c':'#9fd36a');seg(-1.8,0,1.8,0,'rgba(22,30,24,.6)',.3);X.restore();break;
     case 'graze':ell(x-.8,y,.65,1.2,'#d9b48a');ell(x+.8,y,.65,1.2,'#d9b48a');break;
     case 'dig':circ(x-.9,y+.5,.9,'#a07850');circ(x+.8,y+.3,.8,'#8a6440');circ(x,y-.6,.8,'#b08a60');break;
+    case 'fire':X.beginPath();X.moveTo(x,y-2.5);X.quadraticCurveTo(x+2.2,y,x+1,y+1.8);X.lineTo(x-1,y+1.8);X.quadraticCurveTo(x-2.2,y,x,y-2.5);X.fillStyle=tc('#f08a2c');X.fill();circ(x,y+.7,.8,'#ffd35c');break;
     case 'bloom':for(let r=0;r<5;r++){const an=r*1.257;circ(x+Math.cos(an)*1.1,y+Math.sin(an)*1.1,.75,'#e59ad6')}circ(x,y,.6,'#ffd76a');break;
   }
   X.restore();X.globalAlpha=1}
@@ -1944,7 +1963,7 @@ function crowded(a,x,y){
   return n>Math.max(2,Math.floor(food/per));
 }
 const CAPS={
-  bee:['flowering tiles',tilesOf('flowers'),25],butterfly:['nettle tiles',tilesOf('nettle'),6],moth:['willowherb and foxglove tiles',tilesOf('weeds','foxglove'),12],
+  bee:['flowering tiles (one colony each)',tilesOf('flowers'),25],butterfly:['nettle tiles',tilesOf('nettle'),6],moth:['willowherb and foxglove tiles',tilesOf('weeds','foxglove'),12],
   beetle:['grassland and scrub tiles',tilesOf('meadow','hawthorn'),20],hoverfly:['flowering tiles',tilesOf('flowers'),20],mayfly:['water tiles',tilesOf('water'),15],
   dragonfly:['reed tiles',tilesOf('reed'),15],stagbeetle:['oak tiles',tilesOf('oak'),10],glowworm:['grassland tiles',tilesOf('meadow'),25],
   earthworm:['grown plants',Object.assign(()=>D.grown,{ids:['grown']}),15],salmon:['water tiles',tilesOf('water'),12],
@@ -1986,7 +2005,7 @@ function computeFields(){
   for(const a of S.an){const x=Math.round(a.hx),y=Math.round(a.hy);if(a.sp==='fox')stamp(FOXF,x,y,3,1);else if(a.sp==='wolf')stamp(WOLFF,x,y,5,1);else if(a.sp==='boar')stamp(BOARF,x,y,2,1)}
   // berry bushes draw in birds, which drop scrub seed nearby; willow catkins feed bees in spring
   BOOST.fill(0);for(const sp of GEN_POLL)POLS[sp].fill(0);
-  for(const a of S.an)if(POLS[a.sp])stamp(POLS[a.sp],Math.round(a.hx),Math.round(a.hy),4,1);
+  for(const a of S.an)if(POLS[a.sp]&&a.st!=='hib')stamp(POLS[a.sp],Math.round(a.hx),Math.round(a.hy),4,1);
   for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.p||t.p.g<.6||!t.u)continue;const x=i%N,y=(i/N)|0,b0=bid(t.p.id);
     // thorns: browsers can hardly reach seedlings in and beside hawthorn (an old hedge shelters 2 tiles out)
     if(b0==='hawthorn'){const r=t.p.id==='hawthorn4'?2:1;for(let yy=Math.max(0,y-r);yy<=Math.min(N-1,y+r);yy++)for(let xx=Math.max(0,x-r);xx<=Math.min(N-1,x+r);xx++){const j=yy*N+xx,v=xx===x&&yy===y?.3:.5;if(SHEL[j]>v)SHEL[j]=v}}
@@ -1999,7 +2018,8 @@ function computeFields(){
     if(a.sp==='thrush')stamp(BIRD,x,y,5,1);
     // jays bury acorns far and wide, but only with an oak or beech within 8 tiles to gather them from
     else if(a.sp==='jay')stamp(JAY,x,y,6,Math.min(DIST.oak[i],DIST.beech[i])<=8?1:.25);
-    else if(a.sp==='bee'||a.sp==='hoverfly'||a.sp==='butterfly')stamp(POL,x,y,2,1);
+    else if(a.sp==='bee'){if(a.st!=='hib')stamp(POL,x,y,beeReach(a),1)}
+    else if(a.sp==='hoverfly'||a.sp==='butterfly')stamp(POL,x,y,2,1);
     // browsing pressure adds up; grazers inside a predator's fear radius graze a fraction as much (the landscape of fear)
     else if(a.sp==='boar')addStamp(BROWSE,x,y,2,.3*(WOLFF[i]?.4:1));
     else if(a.sp==='rabbit')addStamp(BROWSE,x,y,2,.45*(FOXF[i]?.25:1));
@@ -2162,7 +2182,7 @@ function apply(x,y,quiet){
     case 'sow':t.p={id:tool.id,g:SOWN_G()};S.sown=(S.sown||0)+1;sfx('sow');discover('flora',tool.id);burst(sx,sy-4,'leaf',8);break;
     case 'reintro':{
       const F=FAUNA[tool.id];
-      S.an.push({id:S.nid++,sp:tool.id,x,y,hx:x,hy:y,tx:x,ty:y,w:.5,f:1,bad:0,m:0,rel:1});
+      S.an.push({id:S.nid++,sp:tool.id,x,y,hx:x,hy:y,tx:x,ty:y,w:.5,f:1,bad:0,m:0,rel:1,...(tool.id==='bee'?{st:SEA.p>=1.5&&SEA.p<3.9?'hib':'nest',col:0}:{})});
       if(e.warn&&!quiet)say(`Released, but: ${e.warn}`,'bad');
       burst(sx,sy-6,'ring',1);sfx('release',F.cls);discover('fauna',tool.id,`${F.name} reintroduced`);
       break;
@@ -2196,17 +2216,59 @@ function levelDown(t,x,y,k,to){
   if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-4,'dust',3)}
   if(!S.flags.leveldown){S.flags.leveldown=1;toast(`${FLORA[k].name} slipped back`,`Its ground changed: it is now ${FLORA[to].name.toLowerCase()}. Levels fall or switch branch when the balance moves against them: overgrazing, over-rich soil, shade, drying out or flooding. Survey a tile to see what each level needs.`,'warn')}
 }
+/* ---------- wildfire ----------
+   In a drought summer a fire can break out in dry fuel (old heather, pine, broom, dry grassland) and run from tile to tile.
+   Wet ground, water, roads and bare ground stop it. What burns leaves ash: richer soil, disturbed ground where fireweed and
+   birch move in first; heather and broom sprout again from the seed in the ground; veteran oaks and old pines survive.
+   S.burning lists the tiles on fire, t.fire how much fuel each has left, t.ash the burnt ground fading over two seasons. */
+const FLAM={heath:.9,heath3:1,pine:.75,pine3:.8,broom:.8,meadowD:.7,meadowO:.6,weeds:.5,meadow:.5,meadow2:.45,meadow3:.4,meadow4:.4,meadowR:.35,
+  birch:.45,hawthorn:.35,oak:.15,beech:.12,willow:.05,reed:.08,meadowW:.04,meadowF:0,reed3:0,willow2:0};
+const FIRE_CAP=45; // a fire burns at most this many tiles before it dies down
+const flam=(t,i)=>{if(!t.p||!t.u||t.b||t.gd!=='soil'||t.fire||t.p.g<.3)return 0;const f=FLORA[t.p.id];if(f.pre||f.crop||f.managed)return 0;
+  const v=FLAM[t.p.id]??FLAM[bid(t.p.id)]??.3;return v*clamp(1-WET[i]/.7,0,1)};
+function ignite(i){const t=S.tiles[i];t.fire=1;S.burning.push(i);S.fireN=(S.fireN||0)+1;markDirty()}
+function fireTick(){
+  if(!S.burning)S.burning=[];const K=TICK_K;
+  // a fire breaks out now and then in a drought summer
+  if(!S.burning.length&&WX.dry>.35&&SEA.p>.8&&SEA.p<2.6&&S.t-(S.fireAt||-1e9)>600&&Math.random()<.002*WX.dry*K)
+    for(let k=0;k<30&&UT.length;k++){const i=UT[(Math.random()*UT.length)|0],t=S.tiles[i];if(flam(t,i)<.5)continue;
+      S.fireAt=S.t;S.fireN=0;ignite(i);const x=i%N,y=(i/N)|0;seeFx('fire:spread',x,y);
+      if(!S.flags.fire){S.flags.fire=1;toast('Wildfire!','A fire has broken out in the drought. It runs through dry heather, pine, broom and grassland, and stops at water, roads and wet ground. Burnt land comes back: watch what moves in.','warn')}
+      break}
+  if(!S.burning.length)return;
+  const still=[],spread=[];
+  for(const i of S.burning){const t=S.tiles[i],x=i%N,y=(i/N)|0;
+    // fire jumps to dry fuel next door, more easily the deeper the drought
+    if(S.fireN<FIRE_CAP)for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const j=ny*N+nx,v=flam(S.tiles[j],j);
+      if(v&&Math.random()<Math.min(.9,v*(.25+WX.dry)*(dx&&dy?.03:.06)*K))spread.push(j)}
+    t.fire-=.04*K;if(t.fire>0)still.push(i);else burnOut(x,y)}
+  S.burning=still;for(const j of spread)if(!S.tiles[j].fire&&S.fireN<FIRE_CAP)ignite(j);
+  // it has burnt out against ground that would not burn
+  if(!S.burning.length){S.fireAt=S.t;if(S.fireLast)seeFx('fire:out',S.fireLast[0],S.fireLast[1])}
+}
+function burnOut(x,y){
+  const t=T(x,y),i=y*N+x;delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);
+  if(t.p){const k=t.p.id,b=bid(k),f=FLORA[k];
+    if(k==='oak3'||k==='pine3'){seeFx('bark:fire',x,y)}
+    else if(b==='heath'||b==='broom'){t.p={id:b,g:.12};seeFx('renew:fire',x,y)}
+    else{if(f.kind==='tree'&&t.p.g>=.6)t.dw=1;t.p=null}}
+  // bare ash: fireweed first, or birch where its seed can blow in
+  if(!t.p){if(has('birch')&&DIST.birch[i]<=6&&Math.random()<.35){t.p={id:'birch',g:.05};seeFx('ash:birch',x,y)}
+    else{t.p={id:'weeds',g:.1};seeFx('fireweed',x,y)}}
+  mark(x,y,'fire');markDirty();
+}
 function tick(){
   IN_TICK=true;try{tick0()}finally{IN_TICK=false}
 }
 function tick0(){
-  S.t++;if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();
+  S.t++;fireTick();if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();
   const smogF=1-.3*S.smog;
   let shaded=0,drowned=0,parched=0,parchedAt=0;
   for(let i=0;i<N*N;i++){
     const t=S.tiles[i];if(!t.u)continue;
     // a fallen trunk rots away in about twenty-five minutes, feeding the soil
     if(t.dw){t.dw=Math.max(0,t.dw-.0007*TICK_K);if(t.fert<1)t.fert=Math.min(1,t.fert+.0006*TICK_K);if(t.dw<=0){delete t.dw;markDirty()}}
+    if(t.ash){t.ash-=.0015*TICK_K;if(t.ash<=0){delete t.ash;markDirty()}}
     // disturbed ground heals over about a season
     if(t.ds){t.ds-=.003*TICK_K;if(t.ds<=0)delete t.ds}
     if(t.p){
@@ -2423,7 +2485,7 @@ function habitatCheck(){
   const gone=[],moved=[];
   for(const a of S.an)if(a.sp==='beaver'&&!a.lodge){for(let r=0;r<=2&&!a.lodge;r++)for(let dy=-r;dy<=r&&!a.lodge;dy++)for(let dx=-r;dx<=r;dx++){const x=a.hx+dx,y=a.hy+dy;if(inb(x,y)&&T(x,y).gd==='water'){T(x,y).lodge=1;a.lodge=1;markDirty();break}}}
   const fled=[],roamed=[];
-  for(const a of S.an){const F=FAUNA[a.sp];
+  for(const a of S.an){const F=FAUNA[a.sp];if(a.st==='hib'||a.sp==='bee'&&SEA.p<1&&earlyNectar(a.hx,a.hy))continue; // a queen founding her nest lives on early nectar
     // a rabbit with a fox den close by, or deer and boar with a wolf pack, move their home out of its reach
     const fear=FEAR_OF[a.sp];if(fear&&fear()[a.hy*N+a.hx]&&Math.random()<.2){const h=pickHome(a,F,F.range+2);if(h&&!fear()[h[1]*N+h[0]]){a.hx=h[0];a.hy=h[1];a.bad=0;fled.push(a);continue}}
     if(habOk(a.sp,a.hx,a.hy)&&canStand(F.mv,T(a.hx,a.hy))){a.bad=0;a.rel=0;
@@ -2449,9 +2511,10 @@ function habitatCheck(){
 }
 function removeAnimal(a){const i=S.an.indexOf(a);if(i>=0){S.an.splice(i,1);const[sx,sy]=isoG(a.x,a.y);burst(sx,sy-4,'dust',4)}}
 function populations(){
+  colonies();
   // young are born in spring and summer only, and slowly
   const season=SEA.idx<=1;
-  for(const sp in FAUNA){const F=FAUNA[sp],list=S.an.filter(a=>a.sp===sp),cap=Math.max(F.keystone?1:0,capOf(sp));
+  for(const sp in FAUNA){if(sp==='bee')continue;const F=FAUNA[sp],list=S.an.filter(a=>a.sp===sp),cap=Math.max(F.keystone?1:0,capOf(sp));
     if(list.length>cap&&list.length){if(cap>0&&Math.random()<.03*TICK_K){const a=list[(Math.random()*list.length)|0];if(PREY[sp])seeFx('starve:'+sp,a.hx,a.hy);removeAnimal(a)}continue}
     if(season&&list.length>=(F.cls==='insect'?1:2)&&list.length<cap&&Math.random()<Math.min(.9,(F.cls==='insect'?.02:.008)*TICK_K)){
       const p=list[(Math.random()*list.length)|0],h=pickHome(p,F,F.range+1);
@@ -2473,9 +2536,67 @@ function progress(){
 }
 
 /* ---------- moving things ---------- */
+/* ---------- bumblebee colonies ----------
+   What you release is a queen. She founds a nest, and workers hatch through spring and summer, as many as the flowers
+   within 3 tiles can feed. In late summer the colony raises new queens that fly off and sleep through the winter;
+   in autumn the workers and the old queen die. In spring a sleeping queen only founds a nest where something already
+   flowers: willow catkins or dandelions (pioneer weeds). a.st is 'nest' or 'hib', a.col the number of workers. */
+const beeReach=a=>a.col>=8?3:a.col>=3?2:1;
+function earlyNectar(x,y){let dand=false;
+  for(let yy=Math.max(0,y-3);yy<=Math.min(N-1,y+3);yy++)for(let xx=Math.max(0,x-3);xx<=Math.min(N-1,x+3);xx++){const t=T(xx,yy);if(!t.p||!t.u)continue;const b=bid(t.p.id);
+    if(b==='willow'&&t.p.g>=.6)return {cat:[xx,yy]};if(b==='weeds'&&t.p.g>=.4)dand=true}
+  return dand?{}:null}
+function colonies(){
+  const yr=Math.floor(S.clock/YEAR),p=SEA.p,F=FAUNA.bee,born=[],dead=[];
+  let next=0;for(const a of S.an)if(a.sp==='bee'&&a.st==='hib')next++;
+  const cap=capOf('bee');
+  for(const a of S.an){if(a.sp!=='bee')continue;
+    if(a.st==null){a.st=p>=2.3&&p<3.9?'hib':'nest';a.col=0}
+    if(a.st==='hib'){
+      if(p<1){const e=earlyNectar(a.hx,a.hy);
+        if(e){a.st='nest';a.col=0;a.made=-1;a.boost=e.cat?1.6:1;a.x=a.hx;a.y=a.hy;a.tx=a.hx;a.ty=a.hy;next--;seeFx('wake:bee',a.hx,a.hy);if(e.cat)seeFx('cat:willow',e.cat[0],e.cat[1]);continue}
+        // she flies about looking for flowers, and dies if spring ends before she finds any
+        if(Math.random()<.15)for(let k=0;k<12;k++){const x=a.hx+((Math.random()*9)|0)-4,y=a.hy+((Math.random()*9)|0)-4;if(inb(x,y)&&T(x,y).u&&!T(x,y).b&&earlyNectar(x,y)){a.hx=x;a.hy=y;break}}
+        if(p>.9)dead.push(a)}
+      continue}
+    if(p<2){
+      // workers hatch as long as the flowers around can feed them; a fast start beside willow catkins
+      const target=Math.min(14,near(a.hx,a.hy,3,isFlower)/2);
+      a.col=a.col<target?Math.min(target,a.col+.1*(p<1?a.boost||1:1)*TICK_K):Math.max(target,a.col-.05*TICK_K);
+      if(a.col>=3)seeFx('colony:bee',a.hx,a.hy);
+      if(p>=1.6&&a.made!==yr){a.made=yr;const nq=a.col>=11?3:a.col>=6?2:a.col>=2?1:0;let k0=0;
+        for(let k=0;k<nq&&next<cap;k++){const h=pickHome({sp:'bee',x:a.hx,y:a.hy},F,6);if(!h)continue;
+          born.push({id:S.nid++,sp:'bee',x:a.hx,y:a.hy,hx:h[0],hy:h[1],tx:h[0],ty:h[1],w:0,f:1,bad:0,m:0,st:'hib',col:0});next++;k0++}
+        if(k0)seeFx('queens:bee',a.hx,a.hy)}
+    }else{a.col=Math.max(0,a.col-.15*TICK_K);if(p>=2.6)dead.push(a)}
+  }
+  for(const a of dead){
+    if(a.st==='nest'&&!S.an.some(b=>b.sp==='bee'&&b.st==='hib'&&!dead.includes(b))&&!born.length&&!S.flags.bee_end){S.flags.bee_end=1;
+      toast('The bumblebees died out','The last colony died in autumn without raising new queens. A colony needs plenty of flowers within 3 tiles all summer to grow big enough. Release a new queen in spring or summer.','warn')}
+    else if(a.st==='hib'&&!S.flags.bee_cold){S.flags.bee_cold=1;
+      toast('A queen found no early flowers','Spring ended before she found willow catkins or dandelions within 3 tiles, and she died. Willow beside the meadows gives queens a place to start.','warn')}
+    removeAnimal(a)}
+  for(const b of born)S.an.push(b);
+}
+// the workers you see: a few flying from each nest to the flowers around it (not saved; the colony size is)
+let WORKERS=[];
+function updateWorkers(dt){
+  const live=new Map;for(const a of S.an)if(a.sp==='bee'&&a.st!=='hib')live.set(a,sleepy(a)?0:Math.min(7,Math.floor(a.col||0))); // at night the workers are inside the nest
+  WORKERS=WORKERS.filter(w=>live.has(w.q)&&w.k<live.get(w.q));
+  for(const[q,n]of live)for(let k=0;k<n;k++)if(!WORKERS.some(w=>w.q===q&&w.k===k))WORKERS.push({q,k,id:q.id*8+k+1e5,sp:'bee',wk:1,x:q.x,y:q.y,tx:q.hx,ty:q.hy,w:Math.random()*2,f:1,m:0});
+  const F=FAUNA.bee;
+  for(const w of WORKERS){if(w.w>0){w.w-=dt;w.m=0;continue}
+    const dx=w.tx-w.x,dy=w.ty-w.y,d=Math.hypot(dx,dy);
+    if(d<.04){w.w=.4+Math.random()*1.6;const r=beeReach(w.q);let x=w.q.hx,y=w.q.hy;
+      // out to a flower, then home again
+      if(Math.hypot(w.x-w.q.hx,w.y-w.q.hy)<.3)for(let k=0;k<8;k++){const xx=w.q.hx+((Math.random()*(2*r+1))|0)-r,yy=w.q.hy+((Math.random()*(2*r+1))|0)-r;if(inb(xx,yy)&&isFlower(T(xx,yy))){x=xx;y=yy;break}}
+      w.tx=x+(Math.random()-.5)*.5;w.ty=y+(Math.random()-.5)*.5;continue}
+    const st=Math.min(d,F.spd*dt);w.x+=dx/d*st;w.y+=dy/d*st;w.m=1;const[du,dv]=vecF(dx,dy),sdx=du-dv;if(Math.abs(sdx)>.02)w.f=sdx>0?1:-1}
+}
 function updateAnimals(dt){
   if(!dt)return;
-  for(const a of S.an){const F=FAUNA[a.sp],zz=sleepy(a)&&!(a.path&&a.path.length);
+  updateWorkers(dt);
+  for(const a of S.an){if(a.st==='hib')continue;const F=FAUNA[a.sp],zz=sleepy(a)&&!(a.path&&a.path.length);
     // resting at home: it stays put until its waking hour
     if(zz&&Math.abs(a.x-a.hx)<.35&&Math.abs(a.y-a.hy)<.35&&(a.sl||Math.hypot(a.tx-a.x,a.ty-a.y)<.04)){a.sl=1;a.m=0;continue}
     a.sl=0;
@@ -2538,7 +2659,10 @@ function burst(x,y,kind,n){
 function updateParts(dt){
   if(SEA.aut>.3&&SEA.leaves>.1&&D.treeTiles.length&&parts.length<380&&Math.random()<dt*10*SEA.leaves){const i=D.treeTiles[(Math.random()*D.treeTiles.length)|0],x=i%N,y=(i/N)|0,[sx,sy]=isoG(x,y,12+Math.random()*16);parts.push({k:'fall',x:sx+(Math.random()-.5)*14,y:sy,vx:3+Math.random()*4,vy:7+Math.random()*4,l:0,m:2.4+Math.random(),c:AUT_LEAF[(Math.random()*4)|0],ph:Math.random()*6})}
   if(D.chim.length&&parts.length<220)for(const i of D.chim){if(SEEN[i]&&Math.random()<dt*1.6){const x=i%N,y=(i/N)|0,hi=Math.max(...corners(x,y));let sx,sy;asSprite(x,y,()=>{[sx,sy]=iso(x-.22,y-.22,hi+2*FL+34)});parts.push({k:'smoke',x:sx,y:sy,vx:5+Math.random()*4,vy:-9-Math.random()*5,l:0,m:4+Math.random()*2,r:3})}}
-  for(const p of parts){p.l+=dt;if(p.vx!==undefined){p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.k==='fall')p.x+=Math.sin(p.l*3+p.ph)*12*dt;else if(p.k==='fluff')p.vy-=6*dt;else if(p.k!=='smoke'&&p.k!=='mist'&&p.k!=='mk')p.vy+=40*dt}}
+  if(S.burning&&S.burning.length&&parts.length<500)for(const i of S.burning){if(!SEEN[i])continue;const x=i%N,y=(i/N)|0,t=S.tiles[i],big=t.p&&FLORA[t.p.id].kind==='tree'?2:1;
+    if(Math.random()<dt*14*big){const[sx,sy]=isoG(x+(Math.random()-.5)*.7,y+(Math.random()-.5)*.7,1+Math.random()*4*big);parts.push({k:'flame',x:sx,y:sy,vx:(Math.random()-.5)*5,vy:-14-Math.random()*12*big,l:0,m:.45+Math.random()*.35,r:1.6+Math.random()*1.6*big})}
+    if(Math.random()<dt*2.5){const[sx,sy]=isoG(x,y,10+8*big);parts.push({k:'smoke',x:sx,y:sy,vx:4+Math.random()*4,vy:-10-Math.random()*6,l:0,m:3+Math.random()*2,r:3+Math.random()*2,dark:1})}}
+  for(const p of parts){p.l+=dt;if(p.vx!==undefined){p.x+=p.vx*dt;p.y+=p.vy*dt;if(p.k==='fall')p.x+=Math.sin(p.l*3+p.ph)*12*dt;else if(p.k==='fluff')p.vy-=6*dt;else if(p.k!=='smoke'&&p.k!=='mist'&&p.k!=='mk'&&p.k!=='flame')p.vy+=40*dt}}
   parts=parts.filter(p=>p.l<p.m);MARKS=0;for(const p of parts)if(p.k==='mk')MARKS++;
 }
 
@@ -2658,7 +2782,7 @@ let lastClockTxt='';
 function updateClockUI(){
   const idx=SEA.idx;if(S.lastSeason==null)S.lastSeason=idx;
   if(idx!==S.lastSeason){S.lastSeason=idx;const nt=yearType(Math.floor(WX.n/4)+1);
-    if(idx===0&&WX.type==='drought')toast('A drought year begins','Little rain is coming this year, and the summer will be dry. Land far from water dries out first: beech, willow and lush meadows suffer, while heather, broom, pine and dry grassland hold on. Fen and wet meadow keep the ground around them damp.','warn');
+    if(idx===0&&WX.type==='drought')toast('A drought year begins','Little rain is coming this year, and the summer will be dry. Land far from water dries out first: beech, willow and lush meadows suffer, while heather, broom, pine and dry grassland hold on. Fen and wet meadow keep the ground around them damp. In the summer heat, fire can break out in dry heather and pine.','warn');
     else if(idx===0&&WX.type==='wet')toast('A wet year begins','Rain all year: the streams will burst their banks. Fen, wet meadow and willow spread along the water, and oaks, beeches and pines within 2 tiles of it drown.','warn');
     else if(idx===3&&nt!=='normal')toast(`Forecast: ${YEAR_NAME[nt]} ahead`,nt==='drought'?'Next year will be dry. Wet ground holds out longest: fen, wet meadow and reed beds keep the land around them damp.':'Next year will be wet. Trees on the banks may drown; willow, reeds and wet meadow will spread.','warn');
     else toast(`${SEASONS[idx]} arrives`,SEASON_MSG[idx])}
@@ -3733,7 +3857,13 @@ function drawDeadwood(t,x,y){
   if(d<.7)for(let k=0;k<4;k++){const p=P(-len+k*len*.5,4.5);ell(p[0],p[1],2.4,1.2,'rgba(110,150,70,.85)')}
   if(d>.6){const s0=iso(x-.18,y-.2,z),top=8+10*d;isoBox(x-.18,y-.2,.07,.07,z,top,'#8a7458','#5a4836','#463828')}
 }
+function drawAsh(t,x,y){
+  const z=hAt(x,y),a=Math.min(1,t.ash*1.4);X.globalAlpha=.75*a;
+  for(let k=0;k<6;k++){const u=hash(x,y,70+k)-.5,v=hash(y,x,80+k)-.5,[px,py]=iso(x+u*.8,y+v*.8,z);ell(px,py,5+4*hash(x,k,90),2.4+2*hash(k,y,91),k%2?'#2c2622':'#3d342c')}
+  X.globalAlpha=a;for(let k=0;k<3;k++){const[px,py]=iso(x+(hash(x,y,100+k)-.5)*.7,y+(hash(y,x,110+k)-.5)*.7,z);ell(px,py,1.6,.8,'#8a8178')}
+  X.globalAlpha=1}
 function drawGroundExtras(t,x,y){
+  if(t.ash&&!t.b&&t.gd==='soil')drawAsh(t,x,y);
   if(t.dw&&!t.b&&t.gd==='soil')drawDeadwood(t,x,y);
   // a tree drowned by a beaver pond stands on as a bare grey snag
   if(t.gd==='water'&&t.snag){const[sx,sy]=isoG(x,y);seg(sx-1,sy,sx-1,sy-18,'#8f8778',2.2);seg(sx-1,sy-11,sx+5,sy-16,'#8f8778',1.2);seg(sx-1,sy-14,sx-6,sy-19,'#8f8778',1)}
@@ -4166,14 +4296,14 @@ function drawCar(o){const c=hx(o.c),ox=o.dy?(o.dy>0?-.2:.2):0,oy=o.dx?(o.dx>0?.2
   if(NIGHT>.2){const[hx2,hy2]=iso(o.x+ox+o.dx*.18,o.y+oy+o.dy*.18,cz+2);circ(hx2,hy2,.9,'#fff4c8');glow(hx2,hy2,9,WARM,NIGHT*.7)}}
 // draw animals and cars, then repaint whatever stands in front of each one, clipped to its outline box
 function drawMovers(){
-  const list=S.an.concat(cars.filter(c=>T(clamp(Math.round(c.x),0,N-1),clamp(Math.round(c.y),0,N-1)).u)).sort((p,q)=>depth(p.x,p.y)-depth(q.x,q.y));
+  const list=S.an.filter(a=>a.st!=='hib').concat(WORKERS,cars.filter(c=>T(clamp(Math.round(c.x),0,N-1),clamp(Math.round(c.y),0,N-1)).u)).sort((p,q)=>depth(p.x,p.y)-depth(q.x,q.y));
   for(const o of list){
     let[mx,my]=isoG(o.x,o.y);
     // asleep at home: out of sight in its burrow or den, sitting in its nest, or resting where it lives
     if(o.sp&&o.sl){const hs=homeSpot(o.sp,o.hx,o.hy);if(hs&&!hs.out)continue;if(hs){mx=hs.x;my=hs.y-hs.h}}
     // animals off screen are skipped: their shaded sprites are the costliest thing drawn each frame
     if(o.sp){const z=cam.z,px=(mx-cam.x)*z+W/2,py=(my-cam.y)*z+H/2,m=18*z+8;if(px<-m||px>W+m||py<-6*z-8||py>H+42*z+8)continue}
-    if(o.sp){X.save();X.translate(mx,my);X.scale(o.f,1);LO=cam.z<.75;animalArt(o.sp,o,time);LO=false;X.restore()}else drawCar(o);
+    if(o.sp){X.save();X.translate(mx,my);X.scale(o.f,1);if(o.sp==='bee')X.scale(o.wk?.8:1.15,o.wk?.8:1.15);LO=cam.z<.75;animalArt(o.sp,o,time);LO=false;X.restore()}else drawCar(o);
     // whatever stands in front of it is drawn again over it, inside the box its picture fills
     const sh=o.sp&&SHEETS.animal[o.sp],half=sh?Math.max(sh.ax,sh.w-sh.ax)/sh.scale:o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(sh?sh.ay/sh.scale:o.sp?MOVER_H[o.sp]:9),bot=my+(sh?Math.max(3,(sh.h-sh.ay)/sh.scale):3);
     const tx=Math.round(o.x),ty=Math.round(o.y);let occ=null;
@@ -4269,7 +4399,9 @@ function render(){
   if(S.blocks&&hm&&!T(hm[0],hm[1]).u){const b=blockAt(hm[0],hm[1]);if(b>=0){const ok=blockStatus(b).ok;
     for(const[x,y]of blockTiles(b)){const q=quad(x,y,.5);X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let k=1;k<4;k++)X.lineTo(q[k][0],q[k][1]);X.closePath();X.fillStyle=ok?'rgba(207,220,132,.24)':'rgba(240,144,128,.16)';X.fill()}}}
   for(const p of parts){const k=p.l/p.m;
-    if(p.k==='smoke'){X.globalAlpha=.42*(1-k);circ(p.x,p.y,p.r+k*12,'#8c8276')}
+    if(p.k==='smoke'){X.globalAlpha=.42*(1-k);circ(p.x,p.y,p.r+k*12,p.dark?'#4a4440':'#8c8276')}
+    else if(p.k==='flame'){const r=p.r*(1-k*.45),h=r*2.6;X.globalAlpha=1-k*.7;X.beginPath();X.moveTo(p.x,p.y-h);X.quadraticCurveTo(p.x+r*1.3,p.y-r*.2,p.x,p.y+r*.6);X.quadraticCurveTo(p.x-r*1.3,p.y-r*.2,p.x,p.y-h);
+      X.fillStyle=tc(k<.3?'#ffd35c':k<.65?'#f08a2c':'#c2452a');X.fill();if(k<.15)glow(p.x,p.y-r,6,WARM,.35)}
     else if(p.k==='mist'){X.globalAlpha=.3*(1-k);circ(p.x,p.y,p.r+k*5,'#eef6f8')}
     else if(p.k==='dust'){X.globalAlpha=.6*(1-k);circ(p.x,p.y,p.r*(1+k),'#b3a896')}
     else if(p.k==='splash'){X.globalAlpha=1-k;circ(p.x,p.y,p.r,'#cfeaf2')}
@@ -4481,7 +4613,10 @@ const MODE_TXT={bird:'eats berries and drops the seeds far away, so hawthorn spr
 // an effect it has: told in full once seen in the city, as a hint before
 const fxLine=(k,html)=>fxSeen(k)?html:`<span class="unseen"><b>Not yet seen.</b> ${FX[k].hint}</span>`;
 function animalMechanics(sp){const F=FAUNA[sp],out=[];
-  if(GEN_POLL.includes(sp))out.push(fxLine('poll',`<b>Pollinator.</b> Flowers within 4 tiles of its home can set seed, so meadow, heather, hedges and broom there mature to their flowering levels. Flowers within 2 tiles grow 30% faster, and grassland there spreads 50% faster. Every one in the city also makes all wild plants spread 5% faster (up to double).`));
+  if(sp==='bee'){out.push(fxLine('colony:bee','<b>Colony.</b> A queen founds a nest and raises workers through spring and summer, as many as the flowers within 3 tiles can feed. Her pollination reaches 1 tile around a young nest, 2 with 3+ workers, 3 with 8+.'));
+    out.push(fxLine('queens:bee','<b>New queens.</b> In late summer a colony raises 1 to 3 new queens, which fly off up to 6 tiles and sleep through the winter. In autumn the workers and the old queen die.'));
+    out.push(fxLine('wake:bee','<b>Early nectar.</b> In spring a sleeping queen only founds a nest with willow catkins or dandelions within 3 tiles; catkins give a fast start.'))}
+  if(GEN_POLL.includes(sp))out.push(fxLine('poll',`<b>Pollinator.</b> Flowers within 4 tiles of its home can set seed, so meadow, heather, hedges and broom there mature to their flowering levels. Flowers its workers reach grow 30% faster, and grassland there spreads 50% faster. Every one in the city also makes all wild plants spread 5% faster (up to double).`));
   if(sp==='earthworm')out.push(fxLine('mix:earthworm','<b>Soil mixer.</b> On its tile and the 8 around it, toxicity falls twice as fast and soil richness evens out between neighbours.'));
   if(sp==='salmon')out.push(fxLine('feed:salmon','<b>Carries the sea inland.</b> Each autumn the spawned-out fish feed the banks: soil richness rises on land within 2 tiles of its home.'));
   if(sp==='boar')out.push(fxLine('root:boar','<b>Rooting.</b> Turns turf into bare, disturbed earth around its home, where pioneers and acorns sprout faster and beech seedlings struggle.'));
@@ -4805,7 +4940,7 @@ function webDetail(k){
     what=`<b>An upgrade of ${b.name}</b>, not a new stage: when ${b.name.toLowerCase()} takes hold ${v.where}, about ${Math.round(v.p*100)}% of new patches grow as ${f.name.toLowerCase()} instead (fewer if none grows nearby and its seed rain is weak). Once established it also moves into nearby ${b.name.toLowerCase()} patches. Sowing it by hand works anywhere ${b.name.toLowerCase()} could grow.`;
     rows=[['Earns',`${f.sps} seeds/s per tile, against ${b.sps} for ${b.name.toLowerCase()} (${K.up>0?'+'+K.up+'%':'the same'})`],['Bonus',f.fx],['Same as',`everything ${b.name.toLowerCase()} does in succession: it moves on to the same next stage`],['Seed travels',seedTravel(k)]]}
   else if(isA){const F=FAUNA[k];what=`<b>A new animal.</b> ${F.desc}`;
-    rows=[['What it adds',mechList(animalMechanics(k))],['Needs',F.need],['Room for',capInfo(k).text],['Release',`${relCost(k)} seeds each by hand; ${F.cls==='insect'?'one is enough to breed':'release two so they can breed'}`],['Eats',webChips((ENC[k]&&ENC[k].eats)||[])]]}
+    rows=[['What it adds',mechList(animalMechanics(k))],['Needs',F.need],['Room for',capInfo(k).text],['Release',`${relCost(k)} seeds each by hand; ${k==='bee'?'you release a queen, who founds a colony':F.cls==='insect'?'one is enough to breed':'release two so they can breed'}`],['Eats',webChips((ENC[k]&&ENC[k].eats)||[])]]}
   else{what=`<b>A force of nature</b>, upgraded level by level (now ${st.l} of ${R0.max}). ${R0.desc}`;rows=[['Per level',R0.sub]]}
   if(isF&&POLLINATED.has(k))rows.push(['Pollinators',`spreads on its own only where ${pollNames(k)} live within 4 tiles`]);
   if(isF&&PARTNER[k])rows.push(['Partner',`${FAUNA[PARTNER[k][0]].name}: ${PARTNER[k][1]}`]);
@@ -4908,10 +5043,13 @@ const CASCADES=[
   {id:'c_shadecycle',name:'The Shade Cycle',sp:['birch','oak','beech'],steps:['shade',['fall:age','fall:storm']],r:1200,bio:18,
     hint:'Trees close over a meadow, and one day the light comes back.',
     about:'A wood closed its canopy and shaded the meadow out. Then an old tree fell, light reached the floor again, and willowherb and scrub started the cycle over.'},
+  {id:'c_fire',name:'The Fire Cycle',sp:['heath','weeds','birch'],steps:['fire:spread',['fireweed','ash:birch'],'renew:fire'],r:1500,bio:20,
+    hint:'A drought, a spark, and what comes back.',
+    about:'A drought fire ran through the dry heath. Fireweed and birch took the ash first, and the heather came back young from the seed in the ground.'},
   {id:'c_jays',name:'Oaks from Jays',sp:['jay','oak'],steps:['acorn:oak','jay:oak'],r:1500,bio:20,
     hint:'A bird that forgets where it hid its food.',
     about:'A veteran oak dropped a feast of acorns. Jays carried them off and buried them far from any oak, forgot some, and new oaks came up where no oak had grown.'},
-  {id:'c_nectar',name:'Nectar All Year',sp:['willow','bee','heath'],steps:['cat:willow',['pol:heath','pol:meadow','pol:hawthorn','pol:broom'],'poll'],r:1200,bio:18,
+  {id:'c_nectar',name:'Nectar All Year',sp:['willow','bee','heath'],steps:[['cat:willow','wake:bee'],['pol:heath','pol:meadow','pol:hawthorn','pol:broom'],'poll'],r:1200,bio:18,
     hint:'Food for bees from the first catkins to the last heather.',
     about:'Willow catkins fed the bees in early spring and flowers carried them through to the late heather. With bees all season, the meadows around them set seed and flowered.'},
   {id:'c_hedgerow',name:'Hedgerow Highway',sp:['hawthorn','thrush'],steps:['berry:hawthorn','hedge:road'],r:900,bio:14,
@@ -5190,7 +5328,7 @@ function showGuide(k){
       needs=!isF?WILD_FLORA.filter(p=>FAUNA[k].ok.toString().includes(`isP('${p}')`)):[];
     const lessons=LESSONS.filter(l=>l.pics.includes(k));
     const game=isF?`${POLLINATED.has(k)?`<li><b>Pollinators</b> its flowers need insects to set seed, so it only spreads where ${pollNames(k)} live within 4 tiles. Sowing by hand works anywhere.</li>`:''}${PARTNER[k]?`<li><b>Depends on</b> ${FAUNA[PARTNER[k][0]].name}: ${PARTNER[k][1]}.</li>`:''}<li><b>Earns</b> ${d.sps} seeds a second per grown tile.</li>${fxItems(k)}<li><b>Spreads</b> ${d.arrive}</li>${DISP[k]?`<li><b>Seed travels</b> ${seedTravel(k)}</li>`:''}${SOW_NEED[k]||SOW_NEED[d.base]?`<li><b>Sow on</b> ${sowNeed(k)} Costs ${sowCost(k)} seeds by hand.</li>`:''}`
-      :`<li><b>In the city</b> ${d.desc}</li>${animalMechanics(k).map(x=>`<li>${x}</li>`).join('')}<li><b>Room for</b> ${capOf(k)} right now: ${capInfo(k).text}.</li><li><b>Needs</b> ${d.need}</li><li><b>Moves</b> ${MV_TEXT[d.mv](d.reach)}</li>${ARRIVE[k]?`<li><b>Arrives</b> on its own once its home is ready${ARRIVE[k].bio?` and the city has reached ${ARRIVE[k].bio} BIO`:''}. It cannot be released by hand.</li>`:`<li><b>Release</b> ${relCost(k)} seeds each, ${d.cls==='insect'?'one is enough to breed':'release two so they can breed'}.</li>`}`;
+      :`<li><b>In the city</b> ${d.desc}</li>${animalMechanics(k).map(x=>`<li>${x}</li>`).join('')}<li><b>Room for</b> ${capOf(k)} right now: ${capInfo(k).text}.</li><li><b>Needs</b> ${d.need}</li><li><b>Moves</b> ${MV_TEXT[d.mv](d.reach)}</li>${ARRIVE[k]?`<li><b>Arrives</b> on its own once its home is ready${ARRIVE[k].bio?` and the city has reached ${ARRIVE[k].bio} BIO`:''}. It cannot be released by hand.</li>`:`<li><b>Release</b> ${relCost(k)} seeds each, ${k==='bee'?'you release a queen, who founds a colony':d.cls==='insect'?'one is enough to breed':'release two so they can breed'}.</li>`}`;
     const res=R0?`<li><b>Wood Wide Web</b> ${has(k)?'researched':`${fmt(resCost(k))} seeds${bioNeed(k)?`, needs ${bioNeed(k)} BIO`:''}${(R0.req||[]).length?`, after ${(R0.req||[]).map(resName).join(' and ')}`:''}`}.</li>`:'';
     pg.innerHTML=`<div class="ghero"><img class="gbig" src="${speciesPic(k,256)}" alt=""><div>
         <div class="eyebrow">${cls}</div><h2>${d.name}</h2><em class="glatin">${d.latin}</em>
@@ -5334,6 +5472,8 @@ function updateInfo(){
     notes+=`<p class="note" style="color:var(--ink)"><b style="color:var(--lichen);font-weight:600">${STAGE_NAMES[Math.min(5,now)]}.</b> ${line}</p>`;
     if(sc.next){const pc=pollCount();notes+=`<p class="note">${pc?`${pc} pollinator${pc>1?'s':''} in the city: wild plants everywhere spread ${Math.round((POLX()-1)*100)}% faster${POLX()>=1+POLL_MAX?' (the most they can add)':''}.`:'No pollinators in the city yet. Each bumblebee makes wild plants everywhere spread 5% faster.'}</p>`}
   }
+  if(t.fire)notes+=`<p class="note" style="color:#f0a060"><b style="font-weight:600">On fire.</b> It will spread to dry fuel next door; water, roads and wet ground stop it.</p>`;
+  else if(t.ash)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89a8a;font-weight:600">Burnt ground.</b> The ash makes the soil richer, and the bare ground is open to fireweed and birch.</p>`;
   if(t.dw)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#c9a77a;font-weight:600">Dead wood.</b> A fallen trunk is rotting here (${Math.round(t.dw*100)}% left). Beetles and fungi are turning it back into rich soil while flowers and young growth fill the gap.</p>`;
   if(t.p&&!t.b&&DISP[t.p.id]){const up=upgradeNote(t,x,y,i);if(up)notes+=`<p class="note">${up}</p>`}
   if(passable(t))notes+=`<p class="note">${TCONN[TCOMP[i]]?'Part of a large, connected habitat patch.':'A small habitat patch, cut off by roads or buildings.'}</p>`;
