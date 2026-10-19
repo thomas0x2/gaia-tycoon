@@ -1084,17 +1084,20 @@ const flowing=(x,y)=>near(x,y,1,(t,j)=>isWater(t)&&!!WCONN[WCOMP[j]])>0;
 // can this patch mature to its next level, and if not, why not
 function upgradeNote(t,x,y,i){
   const k=t.p.id,lv=`<b>Level ${levelOf(k)} of ${levelsOfLine(k)}</b>`,kids=(KIDS[k]||[]).filter(v=>DEPTH[v.id]>levelOf(k));
+  const rich=bid(k)==='meadow'&&t.fert>.6?' This soil is too rich for wildflowers: something has to carry its nutrients away.':'';
+  // rank grassland is a step down, not the top of the tree
+  if(LEVEL[k]&&LEVEL[k].down)return `${lv}. The flowers have been crowded out. It turns back into meadow once the soil is under 60% richness (now ${Math.round(t.fert*100)}%).${rich}`;
   if(!kids.length)return `${lv}: the oldest ${FLORA[bid(k)].name.toLowerCase()} there is.`;
   const v=nextLevel(t,x,y,i);
   if(v){const nb=near(x,y,1,n=>!!n.p&&atLeast(n.p.id,v.id)),mins=Math.round(1/(LV_RATE*SUCC()*(1+Math.min(3,nb)))/60),gain=Math.round((FLORA[v.id].sps/FLORA[k].sps-1)*100),nm=S.seen[v.id]?FLORA[v.id].name:'a level you have not seen yet';
     return t.p.g<.95?`${lv}. Once grown it matures into ${nm}${gain>0?` (+${gain}% seeds)`:''}.`
-      :`${lv}. Maturing into ${nm}${gain>0?` (+${gain}% seeds)`:''}, in about ${mins} min${nb?', faster for the older patches next door':''}.`}
+      :`${lv}. Maturing into ${nm}${gain>0?` (+${gain}% seeds)`:''}, in about ${mins} min${nb?', faster for the older patches next door':''}.${v.down?rich:''}`}
   // nothing suits this spot yet: say what each branch is waiting for
   const w=kids.find(q=>!q.ok||q.ok(t,x,y,i))||kids[0],n=S.seen[w.id]?FLORA[w.id].name:'The next level';
   if(!has(w.id))return `${lv}. The next level is a secret, revealed by a hidden ecosystem.`;
   if((!w.ok||w.ok(t,x,y,i))&&!pollinatedAt(w.id,i))return `${lv}. ${n} would be next, but it needs ${pollNames(w.id)} within 4 tiles to set seed.`;
   if((!w.ok||w.ok(t,x,y,i))&&PARTNER[w.id]&&!GEN_POLL.includes(PARTNER[w.id][0])&&!D.fa[PARTNER[w.id][0]])return `${lv}. ${n} would be next, but ${PARTNER[w.id][1]}: it needs ${FAUNA[PARTNER[w.id][0]].pl} in the city.`;
-  return `${lv}. No higher level suits this spot. ${kids.map(q=>`${S.seen[q.id]?FLORA[q.id].name:'A level you have not seen'} grows ${q.where}`).join('; ')}.`}
+  return `${lv}. No higher level suits this spot. ${kids.map(q=>`${S.seen[q.id]?FLORA[q.id].name:'A level you have not seen'} grows ${q.where}`).join('; ')}.${rich}`}
 /* ---------- levels: the same plant growing up ----------
    A grown patch slowly matures through the levels of its own plant, as far as its ground allows: soil, water and light,
    and the bees and partner animals living nearby. Each level earns more, and many strengthen what the plant does around it.
@@ -2472,6 +2475,7 @@ function discover(kind,id,title){
 
 /* ---------- simulation ---------- */
 // how rich the soil on a tile can ever get: crushed rubble, the sand under old downtown and the thin soils of the high ground stay poor
+const PIONEER_SOIL=.5;
 const soilCap=(t,x,y)=>Math.min(1-.75*(t.stony||0),1-.5*(t.poor||0),hAt(x,y)>=HILL?.55:1);
 // trees grow old: pioneer trees live short lives, oaks long ones; each tile has its own span
 const LIFE={birch:7200,willow:7200,pine:10800,oak:18000,beech:18000};
@@ -2589,8 +2593,9 @@ function tick0(){
       const g=t.p.g;
       // the work of each stage on the soil
       const K=TICK_K;if(t.stony)t.stony=Math.max(0,t.stony-(f.stage===1?.00025*g:.0001)*K*(1+.3*lvl('roots')));
-      // crushed rubble holds few nutrients: stony ground stays poor until the stones break down
-      if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K*(1+.5*lvl('deep')));const cap=soilCap(t,x,y);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.004*g*K)}
+      // crushed rubble holds few nutrients: stony ground stays poor until the stones break down.
+      // pioneers rot down into a thin humus of middling richness; anything richer has to be brought in (dung, wood, salmon, broom, silt)
+      if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K*(1+.5*lvl('deep')));const cap=Math.min(PIONEER_SOIL,soilCap(t,x,y));if(t.fert<cap)t.fert=Math.min(cap,t.fert+.004*g*K)}
       // heather and pine lock nutrients away in their litter: their own ground grows poorer, not richer
       else if(f.lean){t.tox=Math.max(0,t.tox-.002*g*K);if(t.fert>.12)t.fert=Math.max(.12,t.fert-.0008*g*K)}
       // grassland holds its soil as it is: what makes a meadow rank or poor is dung, grazing and the plants around it
@@ -6760,8 +6765,13 @@ function migrateRoster(){
   S.seeds+=refund;
   if(moved||refund)setTimeout(()=>toast('A wilder, leaner city',`Your city now grows the plants and animals of Central Europe. Old plant varieties became the levels of the plant that fills their place, and ${refund?`${fmt(refund)} seeds came back for the species that left`:'nothing was lost'}. Open the Lens to read the ground.`,'unlock'),1200);
 }
+// older versions let pioneer weeds build soil to full richness, so every wild grassland went rank:
+// bring weed-built soil back to what pioneers can really make (old farmland keeps its richness)
+function migrateSoil(){
+  if(S.soil2)return;S.soil2=1;
+  for(const t of S.tiles)if(t.gd==='soil'&&!t.fm&&t.p&&t.fert>.55&&(bid(t.p.id)==='weeds'||bid(t.p.id)==='meadow'))t.fert=.55}
 function boot(state){
-  S=state;migrateRoster();if(!S.gread)S.gread={...(S.fx||{})};if(S.tiles[0].ph==null)startPh(true);worldDirty=true;SEEN_STAGE.clear();ROT=S.rot||0;
+  S=state;migrateRoster();migrateSoil();if(!S.gread)S.gread={...(S.fx||{})};if(S.tiles[0].ph==null)startPh(true);worldDirty=true;SEEN_STAGE.clear();ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
   RACT={};CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   // saves from before stepped terrain kept smooth corner heights: turn them into levels
