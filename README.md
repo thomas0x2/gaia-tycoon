@@ -12,6 +12,9 @@ The whole game is a single file: open `index.html` in a browser. Progress is sav
   forces of nature. Every node explains what it adds to the game.
 - **Plants level up on their own.** A grown tile slowly turns into richer species of its own stage, as far
   as its spot allows: soil, height, damp, shade, pollinators and partner animals.
+- **Neighbours matter.** Every grown plant earns more or less depending on what grows and lives right next to it:
+  mixed planting, edges where grassland, scrub, woodland and water meet, nitrogen fixers, pollinators, light grazing
+  and partner animals help; monocultures, deep shade and overgrazing hurt. The Synergies view shows where.
 - **Seed travels like it does in nature.** On the wind, inside birds, buried by jays and squirrels, in the
   fur of grazers or on water. Once enough parent plants grow, their seed rains in everywhere.
 - **A field guide** with an entry for every plant and animal, and lessons on how ecosystems work.

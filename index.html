@@ -228,6 +228,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 #tip b{font-family:var(--mono);font-weight:500;color:var(--lichen);margin-left:6px}
 #tip.bad{color:var(--bad)}
 #tip i{display:block;max-width:300px;white-space:normal;font-style:normal;color:#e2b86c;margin-top:3px;font-size:11.5px}
+#tip i.syn{color:var(--lichen)}
 
 /* Dialogs */
 .dialog.gpanel{max-width:1120px;height:100%;max-height:none;display:flex;flex-direction:column;gap:10px;padding:18px 20px;overflow:hidden}
@@ -1181,6 +1182,8 @@ const TOOLS = {
   corridors:{name:'Corridors',latin:'Habitat network',desc:'Shows how habitat links up. Walking animals and creeping plants only spread through connected land, and river life only through connected water.',
     need:'<b style="color:#8fd06a">Green</b> habitat patch of 15+ connected tiles · <b style="color:#e2a76c">Amber</b> small, isolated patch · <b style="color:#7cc9db">Blue</b> 15+ connected water tiles · <b style="color:#f09080">Red</b> roads and buildings that block the way.'},
   unbuild:{name:'Unbuild',latin:'Demolish · depave · stop farming',desc:'Hit a building or paving to break it down: buildings fall to rubble, rubble and paving break into bare soil. On lawns, pastures and fields it stops the mowing, grazing or farming.',need:'<b>Free, but slow by hand.</b> Houses take 3 hits, flats and towers 2 per floor, factories 10. Grow Crowbars & Sledgehammers to hit harder, and Roots & Frost or Ivy & Damp to let nature do it.'},
+  synergy:{name:'Synergies',latin:'What grows well together',desc:'Shows how much each grown plant gains or loses from what grows and lives right next to it. Mixed planting, edges where grassland, scrub, woodland and water meet, nitrogen fixers, pollinators, light grazing and partner animals raise its seed yield; monocultures, deep shade and overgrazing lower it. Survey a tile to see why.',
+    need:'<b style="color:#8fd06a">Green</b> gains from its neighbours, the brighter the more · <b style="color:#f09080">Red</b> loses from them · When you sow, the tip shows what the new plant would earn here.'},
   toxview:{name:'Toxicity',latin:'Poison in the ground',desc:'Shows how toxic the soil is, and where spray drifts from farmed fields. Plants die back on soil too toxic for them; herbicide kills seedlings and slows growth; insecticide keeps every insect away. Stop the farming, demolish the factories, and let weeds, reeds and irises clean up.',
     need:'<b style="color:#f09080">Red</b> toxic soil · <b style="color:#c89ae8">Purple</b> herbicide drift · <b style="color:#e2b86c">Dotted</b> insecticide drift'},
   dig:{name:'Dig Pond',latin:'Soil → open water',cost:20,desc:'Excavates soil into open water. The bare banks around it are where reed beds can colonise.',need:'Needs soil without a building.'},
@@ -1193,7 +1196,7 @@ const TOOLS = {
 // releasing rare animals costs far more: by rarity, and by how much life they need around them
 const REL_RAR=[1,1.5,3,8,25];
 const relCost=sp=>{const R=RES[sp],c=(R?R.cost:100)*.3*REL_RAR[rarityOf(sp)]*(1+Math.pow((R&&R.bio||0)/150,2));return Math.max(25,c<1000?Math.round(c/5)*5:Math.round(c/100)*100)};
-const PASSIVE=new Set(['inspect','corridors','guide','toxview']);
+const PASSIVE=new Set(['inspect','corridors','guide','toxview','synergy']);
 const STAGES=[{n:'Megacity',b:0},{n:'Pocket Parks',b:40},{n:'Green Corridors',b:120},{n:'Wetland City',b:280},{n:'Rewilded',b:520},{n:'Gaia',b:850}];
 const GNAME={road:'road',pave:'pavement',rubble:'rubble',soil:'soil',water:'water',path:'gravel path',garden:'garden'};
 const SHOPS=['Corner café','Grocer','Pharmacy','Bakery'];
@@ -1513,7 +1516,7 @@ function computeMoist(){
 
 function computeDerived(){
   computeNetworks();computeFields();
-  const forests=computeForests();
+  const forests=computeForests();computeSynergy();
   const fl={},gw={},fa={},flB={},gwB={};for(const k in FLORA){fl[k]=0;gw[k]=0;flB[k]=0;gwB[k]=0}for(const k in FAUNA)fa[k]=0;
   let trees=0,flowers=0,grazing=0,water=0,conc=0,factories=0,bldg=0,roads=0,grown=0,income=0,A=0,E=0,parkMeadow=0,crops=0,farmWild=0;
   const chim=[],flowerTiles=[],treeTiles=[],rp={batroost:0,nestmast:0,owlbarn:0,greenbridge:0};
@@ -1523,7 +1526,7 @@ function computeDerived(){
     else if(t.gd==='water'){if(t.u)water++;A+=.004}
     if(t.p&&t.u){const f=FLORA[t.p.id],g=t.p.g;fl[t.p.id]++;if(f.base)flB[f.base]++;
       if(g>=.4){gw[t.p.id]++;if(f.base)gwB[f.base]++;if(f.kind==='tree'){trees++;treeTiles.push(i)}if(f.flower){flowers++;flowerTiles.push(i)}if(f.graze)grazing++;if(t.pk&&t.p.id==='meadow')parkMeadow++}
-      if(g>=.6&&!f.pre)grown++;if(!f.pre)income+=(f.sps||0)*g*(FS[i]?1.5:1);A+=f.absorb*g*(FS[i]?1.3:1);
+      if(g>=.6&&!f.pre)grown++;if(!f.pre)income+=(f.sps||0)*g*(FS[i]?1.5:1)*SYN[i];A+=f.absorb*g*(FS[i]?1.3:1);
       if(f.crop)crops++;if(t.fm&&!f.pre&&g>=.4)farmWild++}
   }
   for(const a of S.an)fa[a.sp]++;
@@ -1639,6 +1642,67 @@ function computeFields(){
     else if(a.sp==='deer')addStamp(BROWSE,x,y,3,wolves?.35:1);
     else if(a.sp==='bison')addStamp(BROWSE,x,y,3,1.3);}
 }
+/* ---------- neighbour synergies ----------
+   No plant lives alone. What grows and lives right next to a grown tile changes how many seeds it yields:
+   mixed planting, edges where habitats meet, nitrogen fixers, pollinators, light grazing and partner animals help;
+   monocultures, deep shade and overgrazing hurt. SYN holds each tile's multiplier on its seed yield. */
+const SYN=new Float32Array(N*N).fill(1),PNEAR={};
+const SYN_MIN=.5,SYN_MAX=2;
+const synPlant=t=>!!t&&!!t.p&&!!t.u&&t.p.g>=.4&&!FLORA[t.p.id].pre&&!FLORA[t.p.id].crop&&!FLORA[t.p.id].managed;
+// the broad layer of habitat a tile belongs to: edges are where several meet
+const LAYER_NAME={grass:'grassland',scrub:'scrub',wood:'woodland',wet:'water'};
+function layerOf(t){if(t.gd==='water')return 'wet';if(!synPlant(t))return null;const f=FLORA[t.p.id],b=bid(t.p.id);
+  return b==='reed'?'wet':f.kind==='tree'?'wood':b==='hawthorn'?'scrub':f.stage===2&&f.kind!=='aquatic'?'grass':null}
+// plants of the woodland floor (and the foxglove of the woodland edge) like dappled shade; every other low plant wants sun
+const shadeLover=k=>k==='foxglove'||(!!LINE_AT[k]&&LINE_AT[k][0].name==='Woodland floor');
+const partnerNear=(sp,i)=>POLS[sp]?!!POLS[sp][i]:!!(PNEAR[sp]&&PNEAR[sp][i]);
+// every effect on a tile: [key, change to its yield, why]
+function synergyList(i){
+  const t=S.tiles[i];if(!synPlant(t))return [];
+  const k=t.p.id,f=FLORA[k],b=bid(k),x=i%N,y=(i/N)|0,out=[],ids=new Set([k]),layers=new Set(),fixer=EFF[k]&&EFF[k].fe;
+  let same=0,trees=0,fed=null,nectar=false;const L0=layerOf(t);if(L0)layers.add(L0);
+  for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=S.tiles[ny*N+nx],L=layerOf(n);if(L)layers.add(L);if(!synPlant(n))continue;
+    const nk=n.p.id,E=EFF[nk];ids.add(nk);if(nk===k)same++;if(FLORA[nk].kind==='tree')trees++;if(E&&E.fe&&!fixer&&!fed)fed=nk;if(E&&E.pol)nectar=true}
+  if(ids.size>1)out.push(['mix',Math.min(.3,.05*(ids.size-1)),`Mixed planting: ${ids.size} species side by side use light, water and soil in different ways, so together they grow more than any one alone.`]);
+  if(same>=7&&f.stage>=2&&b!=='reed'&&f.kind!=='aquatic')out.push(['mono',-.2,'Monoculture: surrounded by its own kind, so pests and disease pass easily from plant to plant.']);
+  if(layers.size>=3){const ls=[...layers].map(l=>LAYER_NAME[l]);out.push(['edge',.2,`Edge habitat: ${ls.slice(0,-1).join(', ')} and ${ls[ls.length-1]} meet here, and the edge holds life from all of them.`])}
+  if(fed)out.push(['fix',.1,`Fed by its neighbour: the roots of ${FLORA[fed].name.toLowerCase()} fix nitrogen from the air.`]);
+  const low=f.kind!=='tree'&&f.kind!=='shrub'&&f.kind!=='aquatic'&&b!=='reed';
+  if(low&&shadeLover(k)){if(trees>=2)out.push(['dapple',.2,'Dappled shade: it flowers under the trees before the canopy closes.'])}
+  else if(low&&trees>=3)out.push(['shade',-.25,'Shaded out: trees on three or more sides steal the light this open-ground plant needs.']);
+  if(f.flower&&(POL[i]||POLS.moth[i]||nectar))out.push(['pol',.2,'Pollinated: insects working the flowers nearby carry its pollen, so it sets more seed.']);
+  if(f.graze){const br=BROWSE[i]*TBRW[i];
+    if(br>=1.5)out.push(['over',-.2,'Overgrazed: too many grazers crop it to the ground before it can flower.']);
+    else if(br>=.05)out.push(['graze',.15,'Lightly grazed: grazers keep coarse grasses from smothering the flowers, and their dung feeds the soil.'])}
+  const P=PARTNER[k];
+  if(P&&partnerNear(P[0],i))out.push(['partner',.15,`Partner close by: ${FAUNA[P[0]].pl} live within 4 tiles, and ${FLORA[k].name.toLowerCase()} is ${P[1]}.`]);
+  if(DISP[k]==='bird'&&(!P||P[0]!=='thrush')&&BIRD[i]>=1)out.push(['fruit',.15,'Fruit eaten: thrushes nearby feast on its fruit and carry its seed away.']);
+  if(DISP[k]==='nut'&&(!P||P[0]!=='jay')&&JAY[i])out.push(['nut',.15,'Nuts buried: jays nearby cache its nuts, and the forgotten ones sprout.']);
+  return out;
+}
+const synOf=L=>clamp(Math.round(100+L.reduce((s,e)=>s+e[1]*100,0))/100,SYN_MIN,SYN_MAX);
+function computeSynergy(){
+  for(const sp in PNEAR)PNEAR[sp].fill(0);
+  for(const a of S.an){if(POLS[a.sp])continue;const P=PNEAR[a.sp]||(PNEAR[a.sp]=new Uint8Array(N*N));stamp(P,Math.round(a.hx),Math.round(a.hy),4,1)}
+  for(let i=0;i<N*N;i++)SYN[i]=synPlant(S.tiles[i])?synOf(synergyList(i)):1;
+}
+// what sowing a plant here would earn once grown, counting what it does for (and to) its neighbours
+function synPreview(i,id){
+  const t=S.tiles[i],old=t.p,x=i%N,y=(i/N)|0,mult=(1+.15*lvl('grant'))*mycMult()*INCOME_K;
+  const area=[i];for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(inb(nx,ny)&&synPlant(S.tiles[ny*N+nx]))area.push(ny*N+nx)}
+  const earn=j=>{const s=S.tiles[j];return synPlant(s)?(FLORA[s.p.id].sps||0)*s.p.g*(FS[j]?1.5:1)*synOf(synergyList(j)):0};
+  const was=earn(i),before=area.reduce((n,j)=>n+earn(j),0)-was;
+  t.p={id,g:1};let own,after,L;
+  try{L=synergyList(i);own=earn(i);after=area.reduce((n,j)=>n+earn(j),0)-own}finally{t.p=old}
+  return {pct:Math.round((synOf(L)-1)*100),own:own*mult,nb:(after-before)*mult};
+}
+const SYN_LABEL={mix:'Mixed planting',mono:'Monoculture',edge:'Edge habitat',fix:'Nitrogen from next door',dapple:'Dappled shade',shade:'Shaded out',
+  pol:'Pollinated',graze:'Lightly grazed',over:'Overgrazed',partner:'Partner nearby',fruit:'Birds eat its fruit',nut:'Jays cache its nuts'};
+const sgn=v=>{const p=Math.round(Math.abs(v)*100);return p?(v>0?'+':'−')+p+'%':'±0%'};
+// the survey's account of a tile's neighbours: every effect, and why for the ones that hurt
+function synergyHtml(i){const L=synergyList(i);if(!L.length)return '';const v=SYN[i]-1;
+  return `<p class="note" style="color:var(--ink)"><b style="color:${v>=0?'var(--lichen)':'var(--bad)'};font-weight:600">Neighbours ${sgn(v)}.</b> ${L.map(e=>`${SYN_LABEL[e[0]]} <span style="color:${e[1]>0?'var(--lichen)':'var(--bad)'}">${sgn(e[1])}</span>`).join(' · ')}</p>`+
+    L.filter(e=>e[1]<0).map(e=>`<p class="note" style="color:#e2b86c">${e[2]}</p>`).join('')}
 function seedField(type,i){
   const x=i%N,y=(i/N)|0,d=DIST[type][i];let s=d<99?Math.exp(-(d-1)/2.5):0;
   return Math.min(1,s);
@@ -1723,7 +1787,9 @@ function evaluate(x,y){
       if(t.b||t.gd!=='soil')return {ok:false,msg:'Remediate soil tiles only.'};
       if(t.tox<.02&&t.fert>.95&&!t.stony)return {ok:false,msg:'This soil is already healthy.'};
       return {ok:true,cost:10,label:'Spread compost and biochar'};
-    case 'sow':{const m=sowRule(tool.id,x,y);if(m)return {ok:false,msg:m};return {ok:true,cost:sowCost(tool.id),label:t.p?`Replace ${FLORA[t.p.id].name.toLowerCase()} with ${FLORA[tool.id].name.toLowerCase()}`:`Sow ${FLORA[tool.id].name}`}}
+    case 'sow':{const m=sowRule(tool.id,x,y);if(m)return {ok:false,msg:m};const pv=synPreview(y*N+x,tool.id),f2=n=>n.toFixed(Math.abs(n)<.1?3:2);
+      const syn=`Once grown: ${f2(pv.own)} seeds/s${pv.pct?`, ${sgn(pv.pct/100)} from its neighbours`:''}${Math.abs(pv.nb)>=.0005?`. Neighbours ${pv.nb>0?'+':'−'}${f2(Math.abs(pv.nb))} seeds/s`:''}.`;
+      return {ok:true,cost:sowCost(tool.id),syn,label:t.p?`Replace ${FLORA[t.p.id].name.toLowerCase()} with ${FLORA[tool.id].name.toLowerCase()}`:`Sow ${FLORA[tool.id].name}`}}
     case 'reintro':{
       const T0=TOOLS[tool.id],F=FAUNA[tool.id];
       if(!has(tool.id))return {ok:false,msg:`Grow ${F.name} in the Wood Wide Web first.`};
@@ -1963,6 +2029,8 @@ function progress(){
   if(st>S.stage){S.stage=st;toast(`Meridian is now: ${STAGES[st].n}`,st===STAGES.length-1?'The city breathes. Rivers run clear, wolves walk the old avenues. Gaia rating achieved.':st===3?'Your rating has risen. Beavers can now be reintroduced.':st===4?'Your rating has risen. Wolves can now be reintroduced.':'Your rating has risen. Keep the land healing.','unlock')}
   if(D.forests.length>(S.forestCount||0)){const f=D.forests.reduce((a,b)=>b.size>a.size?b:a);toast(`A forest has formed: ${f.name}`,`${f.size} trees growing together. Trees in a forest grow 25% faster, earn 50% more seeds and build soil twice as fast. Mixing species adds biodiversity.`,'unlock')}
   S.forestCount=Math.max(S.forestCount||0,D.forests.length);
+  if(!S.flags.syn&&D.grown>=6){let up=0;for(let i=0;i<N*N;i++)if(SYN[i]>1.01)up++;if(up>=3){S.flags.syn=1;
+    toast('Plants work together','What grows and lives next to a plant changes how many seeds it yields. Mixed planting, edges where grassland, scrub, woodland and water meet, nitrogen fixers, pollinators, light grazing and partner animals help; monocultures, deep shade and overgrazing hurt. The Synergies view in the Land tab shows where, and sowing shows what a plant would earn on that spot.','unlock')}}
   for(const g of GOALS)if(!S.done[g.id]&&g.ok()){S.done[g.id]=1;const r=Math.round(g.r*GOAL_K*mycMult());S.seeds+=r;toast('Milestone reached',`${g.text}. +${fmt(r)} seeds.`,'unlock');renderGoals()}
   renderTabs();
 }
@@ -3062,6 +3130,10 @@ function drawOverlay(){
       if(HERB[i])fillQ(x,y,'rgba(170,110,220,.28)');
       if(INS[i]){const[sx,sy]=isoG(x,y);for(let k=0;k<3;k++){circ(sx-6+k*6,sy,1.3,'rgba(226,184,108,.9)')}}}
     return}
+  if(tool.type==='synergy'){
+    for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!synPlant(t))continue;const v=SYN[i]-1;
+      fillQ(i%N,(i/N)|0,Math.abs(v)<.01?'rgba(200,200,190,.18)':v>0?`rgba(120,215,90,${(.15+.55*Math.min(1,v/.8)).toFixed(2)})`:`rgba(240,110,100,${(.25+.5*Math.min(1,-v/.4)).toFixed(2)})`)}
+    return}
   if(tool.type==='corridors'){
     for(let i=0;i<N*N;i++){const t=S.tiles[i],x=i%N,y=(i/N)|0;let c=null;if(!t.u)continue;
       if(t.gd==='water')c=WCONN[WCOMP[i]]?'rgba(90,190,230,.55)':'rgba(170,200,215,.3)';
@@ -3110,7 +3182,7 @@ function render(){
   ctx.drawImage(cache,dx,dy,CW*s,CH*s);
   X=ctx;ctx.setTransform(DPR*z,0,0,DPR*z,DPR*(W/2-cam.x*z),DPR*(H/2-cam.y*z));
   drawMovers();drawPods();drawHighlight();
-  if(tool.type==='corridors'||tool.type==='guide'||tool.type==='toxview')drawOverlay();
+  if(tool.type==='corridors'||tool.type==='guide'||tool.type==='toxview'||tool.type==='synergy')drawOverlay();
   const hm=hover||pinned;
   if(S.blocks&&hm&&!T(hm[0],hm[1]).u){const b=blockAt(hm[0],hm[1]);if(b>=0){const ok=blockStatus(b).ok;
     for(const[x,y]of blockTiles(b)){const q=quad(x,y,.5);X.beginPath();X.moveTo(q[0][0],q[0][1]);for(let k=1;k<4;k++)X.lineTo(q[k][0],q[k][1]);X.closePath();X.fillStyle=ok?'rgba(207,220,132,.24)':'rgba(240,144,128,.16)';X.fill()}}}
@@ -3954,6 +4026,11 @@ const LESSONS=[
   {id:'cascade',name:'Trophic cascades',pics:['wolf','deer','birch'],arrows:1,
     text:['When a top predator returns, its effects cascade down the food web. Wolves hunt deer; deer become warier and avoid places where they could be ambushed; young trees in those places stop being eaten and grow back.',
       'The return of wolves to Yellowstone in 1995 is the best-known example, although scientists still debate how large the effect was. In the game, wolves and lynx cut browsing and help woodland spread.']},
+  {id:'synergy',name:'Living together',pics:['gorse','meadow','bee','thrush'],
+    text:['A mix of plants grows more than any one of them alone. Deep roots and shallow roots, early flowers and late ones, grasses and legumes: each uses light, water and soil a little differently, so together they leave less unused. Ecologists call this complementarity, and long experiments on grassland show richer plots produce more year after year.',
+      'Plants also feed each other. Gorse, broom, alder and bird’s-foot trefoil carry bacteria in their roots that fix nitrogen from the air, and their neighbours grow on it. Where grassland, scrub, woodland and water meet, the edge holds species from all of them, so edges are often the richest places of all.',
+      'Animals join in. Bees and hoverflies carry pollen, thrushes eat berries and drop the seeds, jays bury acorns, and a few grazers keep coarse grasses from smothering the flowers. But too much of one thing hurts: a field of a single species lets pests spread from plant to plant, trees shade out sun-loving meadow flowers, and too many grazers crop everything to the ground.',
+      'In the game: every grown plant earns more or less depending on what grows and lives right next to it. The Synergies view in the Land tab shows where your land works together, Survey explains each tile, and when you sow, the tip shows what the new plant would earn on that spot and what it does for its neighbours.']},
   {id:'corridors',name:'Habitat connectivity',pics:['hedgehog','hawthorn','dormouse'],
     text:['Animals and plants need to move: to find food and mates, and to recolonise places where they have died out. Roads, walls and buildings cut habitat into small islands.',
       'Small, isolated patches lose species over time. Hedgerows, green bridges, river corridors and wildlife-friendly gardens join them up again.',
@@ -4115,7 +4192,7 @@ function plantPanel(k){
   return kv([
     ['Rarity',rarTag(k)],
     ['Status',lk?`<b class="warn">Not researched</b> · ${fmt(resCost(k))} seeds${bioNeed(k)?`, ${bioNeed(k)} BIO`:''} in the Wood Wide Web`:`<b>${sowCost(k)} seeds</b> a tile · planted ${Math.round(SOWN_G()*100)}% grown${(S.sown||0)>=SOW_FREE?' · each tile sown makes the next 3% dearer':` · ${SOW_FREE-(S.sown||0)} more before prices rise`}`],
-    ['Earns',`<b>${f.sps} seeds/s</b> per grown tile`],
+    ['Earns',`<b>${f.sps} seeds/s</b> per grown tile, more or less with its neighbours (see Synergies)`],
     ['Bonus',f.fx],
     ['Pollinators',POLLINATED.has(k)?`Spreads on its own only where ${pollNames(k)} live within 4 tiles. ${miniChips(pollList(k))}`:''],
     ['Partner',PARTNER[k]?`${miniChips([PARTNER[k][0]])} ${FAUNA[PARTNER[k][0]].name}: ${PARTNER[k][1]}. Research it first; it must live in the city for ${f.name.toLowerCase()} to spread on its own.`:''],
@@ -4191,6 +4268,7 @@ function updateInfo(){
     notes+=`<p class="note" style="color:var(--ink)"><b style="color:var(--lichen);font-weight:600">${STAGE_NAMES[Math.min(5,now)]}.</b> ${line}</p>`;
     if(sc.next){const pc=pollCount();notes+=`<p class="note">${pc?`${pc} pollinator${pc>1?'s':''} in the city: wild plants everywhere spread ${Math.round((POLX()-1)*100)}% faster${POLX()>=1+POLL_MAX?' (the most they can add)':''}.`:'No pollinators in the city yet. Each bumblebee, hoverfly, butterfly or moth makes wild plants everywhere spread 5% faster.'}</p>`}
   }
+  notes+=synergyHtml(i);
   if(t.dw)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#c9a77a;font-weight:600">Dead wood.</b> A fallen trunk is rotting here (${Math.round(t.dw*100)}% left). Beetles and fungi are turning it back into rich soil while flowers and young growth fill the gap.</p>`;
   if(t.p&&!t.b&&DISP[t.p.id]){const up=upgradeNote(t,x,y,i);if(up)notes+=`<p class="note">${up}</p>`}
   if(passable(t))notes+=`<p class="note">${TCONN[TCOMP[i]]?'Part of a large, connected habitat patch.':'A small habitat patch, cut off by roads or buildings.'}</p>`;
@@ -4208,7 +4286,8 @@ function updateInfo(){
   if(INS[i])notes+=`<p class="note" style="color:var(--bad)">Insecticide drift: no insects can live here.</p>`;
   if(t.p&&!FLORA[t.p.id].pre&&!FLORA[t.p.id].crop&&t.tox>TOX_MAX(FLORA[t.p.id]))notes+=`<p class="note" style="color:var(--bad)">The soil is too toxic for ${FLORA[t.p.id].name.toLowerCase()} (over ${pct(TOX_MAX(FLORA[t.p.id]))}): it is dying back.</p>`;
   if(t.b&&t.b.k==='factory')notes+=`<p class="note" style="color:var(--smog)">Its runoff poisons the soil next to it.</p>`;
-  if(t.p&&FLORA[t.p.id].sps&&t.p.g>.05)notes+=kv([['Earns',`${(FLORA[t.p.id].sps*t.p.g*(FS[i]?1.5:1)).toFixed(3)} seeds/s now`],['Bonus',FLORA[t.p.id].fx]]);
+  if(t.p&&FLORA[t.p.id].sps&&t.p.g>.05){const sy=synPlant(t)?SYN[i]:1;notes+=kv([['Earns',`${(FLORA[t.p.id].sps*t.p.g*(FS[i]?1.5:1)*sy).toFixed(3)} seeds/s now${sy!==1?` (${sy>1?'+':'−'}${Math.round(Math.abs(sy-1)*100)}% from its neighbours)`:''}`],['Bonus',FLORA[t.p.id].fx]])}
+
   if(t.b&&t.b.rp)notes+=`<p class="note" style="color:var(--lichen)">${REP[t.b.k].desc}</p>`;
   else if(t.b&&REP[t.b.k])notes+=`<p class="note">${has('reclaim')?`Nature will repurpose this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down${t.b.ivy?` (${Math.round(t.b.ivy*100)}% overgrown)`:''}. Demolishing it by hand still works.`:`Grow Reclamation in the Wood Wide Web and nature will turn this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down.`}</p>`;
   if(t.b&&t.b.k==='factory')notes+=`<p class="note" style="color:var(--smog)">Smokestack. The biggest single source of smog.</p>`;
@@ -4224,7 +4303,7 @@ function updateTip(px,py){
     if(st.ok){tip.className=S.seeds<st.cost?'bad':'';tip.innerHTML=`Unlock ${B.name}<b>${fmt(st.cost)}</b>`}else{tip.className='bad';tip.textContent=`${B.name}: ${st.msg}`}return}}
   if(!hover||PASSIVE.has(tool.type)||!mouseIn){tip.hidden=true;return}
   const e=evaluate(hover[0],hover[1]);tip.hidden=false;tip.style.left=px+'px';tip.style.top=py+'px';
-  if(e.ok){const poor=S.seeds<e.cost;tip.className=poor?'bad':e.warn?'warn':'';tip.innerHTML=`${e.label}${e.cost?`<b>${e.cost}</b>`:''}${e.warn?`<i>${e.warn}</i>`:''}`}
+  if(e.ok){const poor=S.seeds<e.cost;tip.className=poor?'bad':e.warn?'warn':'';tip.innerHTML=`${e.label}${e.cost?`<b>${e.cost}</b>`:''}${e.syn?`<i class="syn">${e.syn}</i>`:''}${e.warn?`<i>${e.warn}</i>`:''}`}
   else{tip.className='bad';tip.textContent=e.msg}
 }
 
@@ -4248,6 +4327,8 @@ function drawIcon0(cvs,tl,season){
   else if(key==='inspect'){c.scale(1.2,1.2);poly(diamond(0,0,.6),'#8b8c87');c.strokeStyle='#cfdc84';c.lineWidth=2.4;c.beginPath();c.arc(-2,-12,7,0,Math.PI*2);c.stroke();seg(3,-7,9,-1,'#cfdc84',3)}
   else if(key==='toxview'){c.scale(1.2,1.2);poly(diamond(0,0,.62),'#6e5a48');poly(diamond(-7,-2,.26),'rgba(230,90,70,.85)');poly(diamond(6,3,.2),'rgba(170,110,220,.85)');poly(diamond(2,-6,.16),'rgba(230,90,70,.55)');
     seg(-4,-16,-4,-8,'#d8d0c0',1.4);ell(-4,-16,3.4,2.2,'#d8d0c0');for(let k=0;k<4;k++)circ(-8+k*2.6,-20-k%2,1,'#c89ae8')}
+  else if(key==='synergy'){c.scale(1.2,1.2);poly(diamond(0,0,.62),'#3f6a3a');poly(diamond(-8,-4,.24),'#8fd06a');poly(diamond(8,4,.24),'#cfe88a');poly(diamond(8,-4,.24),'#f09080');
+    ell(-8,-9,3.2,3.2,'#5f9a3c');circ(8,-2,2.6,'#f2d03a');seg(-5,-6,5,-2,'#e8f0a8',1.4);seg(-5,-6,5,-6,'#e8f0a8',1.4)}
   else if(key==='corridors'){c.scale(1.2,1.2);poly(diamond(0,0,.62),'#3f6a3a');poly(diamond(-9,-4,.2),'#8fd06a');poly(diamond(0,0,.2),'#8fd06a');poly(diamond(9,4,.2),'#e2a76c');seg(-9,-4,0,0,'#8fd06a',2);seg(0,0,9,4,'#f09080',2);c.setLineDash([2,2]);seg(-14,4,14,-8,'#7cc9db',2);c.setLineDash([])}
   else if(key==='unbuild'){c.scale(1.2,1.2);poly(diamond(0,0,.6),'#7d7366');
     const ib=(x,y,ex,ey,z,h,a,b,d)=>{const A=[(x-ex-(y+ey))*HW*.6,(x-ex+y+ey)*HH*.6-z],B=[(x+ex-(y+ey))*HW*.6,(x+ex+y+ey)*HH*.6-z],C=[(x+ex-(y-ey))*HW*.6,(x+ex+y-ey)*HH*.6-z],Dd=[(x-ex-(y-ey))*HW*.6,(x-ex+y-ey)*HH*.6-z];
@@ -4263,7 +4344,7 @@ function drawIcon0(cvs,tl,season){
   Object.assign(SEA,sv);TINT_ON=true;X=ctx;
 }
 function cardList(){
-  if(tab==='land')return ['inspect','corridors','toxview','unbuild','dig','compost'].map(k=>({type:k,id:k}));
+  if(tab==='land')return ['inspect','corridors','toxview','unbuild','synergy','dig','compost'].map(k=>({type:k,id:k}));
   const shown=k=>!RES[k]||!RES[k].secret||secretOk(k)||has(k);
   if(tab==='flora')return SOWABLE.filter(k=>!VBASE[k]&&shown(k)).map(k=>({type:'sow',id:k}));
   const ord=['insect','bird','mammal','water'];return Object.keys(FAUNA).filter(k=>!ARRIVE[k]&&shown(k)).sort((p,q)=>ord.indexOf(FAUNA[p].cls)-ord.indexOf(FAUNA[q].cls)).map(k=>({type:'reintro',id:k}));
@@ -4670,7 +4751,7 @@ function censusCount(){
   const mult=(1+.15*lvl('grant'))*mycMult()*INCOME_K;
   for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u||!t.p)continue;const f=FLORA[t.p.id];
     if(f.pre){cult.street++;continue}if(f.managed==='mow'||f.managed==='graze'){cult.lawn++;continue}if(f.crop){cult.crop++;continue}
-    const k=t.p.id;fl[k]=(fl[k]||0)+1;if(t.p.g>=.6)grown[k]=(grown[k]||0)+1;earn[k]=(earn[k]||0)+(f.sps||0)*t.p.g*(FS[i]?1.5:1)*mult}
+    const k=t.p.id;fl[k]=(fl[k]||0)+1;if(t.p.g>=.6)grown[k]=(grown[k]||0)+1;earn[k]=(earn[k]||0)+(f.sps||0)*t.p.g*(FS[i]?1.5:1)*SYN[i]*mult}
   for(const a of S.an)fa[a.sp]=(fa[a.sp]||0)+1;
   return {fl,grown,earn,cult,fa};
 }
