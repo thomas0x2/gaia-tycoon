@@ -188,7 +188,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .meter .bar{height:4px;margin-top:3px}
 .meter.tox .bar i{background:var(--smog)}
 .meter.moi .bar i{background:var(--water)}
-.meter.lit .bar i{background:#e8d27a}.meter.grz .bar i{background:#c8783c}.meter.dst .bar i{background:#a8784a}.meter.hum .bar i{background:#e05a96}
+.meter.lit .bar i{background:#e8d27a}.meter.grz .bar i{background:#c8783c}.meter.dst .bar i{background:#a8784a}.meter.hum .bar i{background:#e05a96}.meter.stn .bar i{background:#9a9aaa}
 .note{font-size:12px;color:var(--water);margin:0}
 #msg{margin:0;font-size:12.5px;min-height:1em;color:var(--ink-dim)}
 #msg.bad{color:var(--bad)}
@@ -772,7 +772,7 @@ const FLORA = {
     arrive:'Creeps onto grown willowherb from neighbouring wild grassland; roads stop it. Grazers carry its seed further. Needs soil richness of 22% or more.'},
   heath:{name:'Heather',latin:'Calluna vulgaris',stage:2,kind:'ground',grow:.012,yield:.035,absorb:.014,flower:true,lean:true,
     desc:'Low purple heath on poor, sandy, dry ground. Its tough litter locks nutrients away, so the soil around it stays poor: the ground heather needs, and grass does not.',
-    arrive:'Takes over grown willowherb on poor ground (soil richness under 30%), spreading from heather nearby or carried by grazers.'},
+    arrive:'Takes over grown willowherb on poor ground (soil richness under 30%) or stony ground, spreading from heather nearby or carried by grazers.'},
   reed:{name:'Common Reed',latin:'Phragmites australis',stage:2,kind:'herb',grow:.02,yield:.04,absorb:.02,
     desc:'A living filter. Its root zone strips runoff of nutrients and poisons and keeps the water clear.',
     arrive:'Colonises bare soil beside water, spreading along the banks from other reed beds. Once researched, stray seed also arrives slowly on its own.'},
@@ -1137,12 +1137,16 @@ const LENS=[
   ['water','Water','Dry ground to flooded. Open water, reed beds and valleys raise it; hilltops, sand and sealed ground stay dry. Reed and willow need it high; beech dies back where it waterlogs.',i=>WET[i],[214,190,140],[50,140,220]],
   ['light','Light','Deep shade to open sky. Every canopy shades its own tile, and half as much on the 8 around it: light under birch and pine, deep under oak, deepest under beech.',i=>LIGHT[i],[30,40,60],[250,232,150]],
   ['soil','Soil richness','Poor sand to rich earth. Broom, dead wood and salmon feed it; heather and pine keep it poor; rubble, old downtown and the hilltops stay poor. Heather wants it poor, beech rich.',i=>S.tiles[i].fert,[236,222,180],[80,52,26]],
+  ['stony','Stony','Deep soil to bare stone. Broken roads and rubble leave crushed stone that drains dry and holds few nutrients; pioneer roots and frost wear it down. Grass and hawthorn cannot root above 35%, but heather, broom, pine and birch can.',i=>stonyOf(S.tiles[i]),null,[150,150,165]],
   ['graze','Grazing','How hard rabbits, deer and boar browse each tile. Light grazing keeps meadows open; heavy grazing eats every seedling. Foxes and wolves move the grazers on.',i=>grazeOf(i),null,[200,120,60]],
   ['dist','Disturbance','Fresh bare earth from unbuilding, fallen trees, boar rooting and rabbit scrapes, healing over about a season. Pioneers and acorns sprout faster on it; beech seedlings struggle.',i=>S.tiles[i].ds||0,null,[170,110,60]],
   ['human','Human pressure','Standing buildings and busy roads, felt up to 2 tiles away. Deer and herons only settle under 60%, wolves under 40%. Bring buildings down and break up roads to quieten the land.',i=>HUM[i],null,[240,90,150]],
   ['tox','Toxicity','How poisoned the soil is, and where spray drifts from farmed fields. Plants die back on soil too toxic for them; herbicide kills seedlings; insecticide keeps every insect away.',i=>S.tiles[i].tox,null,[230,90,70]],
 ];
 let lensI=0;
+const stonyOf=t=>t.gd==='rubble'?1:t.gd==='soil'?t.stony||0:0;
+// what can root in crushed stone: pioneers, and the plants of poor, rocky ground
+const STONE_OK=new Set(['weeds','heath','broom','pine','birch']);
 const lensNeed=()=>`<span class="lchips">${LENS.map((L,i)=>`<button class="lchip${i===lensI?' on':''}" data-lens="${i}">${L[1]}</button>`).join('')}</span>`+
   (LENS[lensI][0]==='tox'?'<b style="color:#f09080">Red</b> toxic soil · <b style="color:#c89ae8">Purple</b> herbicide drift · <b style="color:#e2b86c">Dotted</b> insecticide drift':LENS[lensI][4]?`Tap the Lens again for the next condition. Colours run from <b style="color:rgb(${LENS[lensI][4]})">low</b> to <b style="color:rgb(${LENS[lensI][5]})">high</b>.`:`Tap the Lens again for the next condition. The stronger the <b style="color:rgb(${LENS[lensI][5]})">colour</b>, the higher it is.`);
 const STAGES=[{n:'Megacity',b:0},{n:'Pocket Parks',b:40},{n:'Green Corridors',b:120},{n:'Wetland City',b:280},{n:'Rewilded',b:520},{n:'Gaia',b:850}];
@@ -1570,7 +1574,7 @@ function computeConditions(){
     if(hp)for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const d=Math.max(Math.abs(dx),Math.abs(dy)),j=ny*N+nx,v=hp*(d===0?1:d===1?.6:.3);if(HUM[j]<v)HUM[j]=v}
   }
   for(let i=0;i<N*N;i++){const t=S.tiles[i],x=i%N,y=(i/N)|0;LIGHT[i]=1-Math.min(.95,LIGHT[i]);
-    WET[i]=t.gd==='water'?1:clamp(.15+.75*MO[i]+(t.p&&bid(t.p.id)==='reed'?.1:0)-(hAt(x,y)>=HILL?.15:0)-.15*(t.poor||0),0,1)}
+    WET[i]=t.gd==='water'?1:clamp(.15+.75*MO[i]+(t.p&&bid(t.p.id)==='reed'?.1:0)-(hAt(x,y)>=HILL?.15:0)-.15*(t.poor||0)-.25*(t.gd==='soil'?t.stony||0:0),0,1)}
 }
 // shade on a tile and half of it on the 8 around it (LIGHT holds shade until computeConditions turns it into light)
 function stampMax(arr,cx,cy,v){for(let y=Math.max(0,cy-1);y<=Math.min(N-1,cy+1);y++)for(let x=Math.max(0,cx-1);x<=Math.min(N-1,cx+1);x++){const i=y*N+x,w=x===cx&&y===cy?v:v*.5;if(arr[i]<w)arr[i]=w}}
@@ -1669,11 +1673,12 @@ function succRaw(x,y){
       need:[w?'':rainNote('weeds'),ds>.1?'Freshly disturbed ground: pioneers take hold here up to 3× faster.':''].filter(Boolean).join(' ')};
   }
   if(st===1){
-    if((t.stony||0)>.35)return {next:'meadow',chance:0,need:`Stony ground (${pct(t.stony)} crushed rubble): only pioneers can root here until their roots and the frost break the stones down. Remediate Soil clears them.`};
+    const sn=t.stony||0;
+    if(sn>.35&&!(has('heath')&&WET[i]<.7&&t.tox<=.6))return {next:'meadow',chance:0,need:`Stony ground (${pct(sn)} crushed stone): grass cannot root here until pioneer roots and the frost break the stones down.${has('heath')?'':' Heather could: grow it in the Wood Wide Web.'} Remediate Soil clears them.`};
     if(t.tox>.55)return {next:'meadow',chance:0,need:`Soil is ${pct(t.tox)} toxic; grassland needs under 55%. The willowherb is cleaning it slowly. Remediate Soil speeds it up.`};
     // poor, dry ground goes to heather rather than grass
-    if(t.fert<.3&&has('heath')&&WET[i]<.6){const n=Math.min(3,near(x,y,2,isP('heath'))),s=n?n/3:.04+.6*rainOf('heath');
-      return {next:'heath',chance:.0004*s,need:`Poor soil (richness ${pct(t.fert)}): heather takes it, not grass.${n?'':' '+rainNote('heath')}`}}
+    if((t.fert<.3||sn>.2)&&has('heath')&&WET[i]<.6+.1*(sn>.35)){const n=Math.min(3,near(x,y,2,isP('heath'))),s=n?n/3:.04+.6*rainOf('heath');
+      return {next:'heath',chance:.0004*s,need:`${sn>.2?`Stony ground (${pct(sn)} crushed stone)`:`Poor soil (richness ${pct(t.fert)})`}: heather takes it, not grass.${n?'':' '+rainNote('heath')}`}}
     if(t.fert<.22)return {next:'meadow',chance:0,need:`Soil richness is ${pct(t.fert)}; grassland needs 22%.${has('heath')?' Heather grows on poorer ground, but only where it is dry.':''}`};
     const n=Math.min(3,near(x,y,1,isGrassSrc));
     if(!n)return {next:'meadow',chance:(.00004+.0003*rainOf('meadow'))*(POL[i]?1.5:1),need:rainNote('meadow')};
@@ -1688,9 +1693,10 @@ function succRaw(x,y){
   if(st===2){
     if(t.tox>.45)return {next:'hawthorn',chance:0,need:`Soil is ${pct(t.tox)} toxic; scrub needs under 45%.`};
     const rs=meadowResist(p.id),rich=rs>1?` An old meadow (level ${levelOf(p.id)}): scrub moves in ${Math.round(rs*10)/10}× slower here.`:'';
-    if(t.fert<.35){
-      if(!has('broom'))return {next:'hawthorn',chance:0,need:`Soil richness is ${pct(t.fert)}; hawthorn needs 35%. Broom can take poorer ground.`};
-      const s=seedOr('broom',i,.03);return {next:'broom',chance:.00015*s/rs*Math.max(.05,1-.7*b),need:`Poor soil (richness ${pct(t.fert)}): broom moves in, not hawthorn.${seedField('broom',i)<.05?' '+rainNote('broom'):''}${rich}`};
+    const sn=t.stony||0;
+    if(t.fert<.35||sn>.2){const why=sn>.2?`Stony ground (${pct(sn)} crushed stone)`:`Poor soil (richness ${pct(t.fert)})`;
+      if(!has('broom'))return {next:'hawthorn',chance:0,need:sn>.2?`${why}: hawthorn cannot root among the stones. Broom can.`:`Soil richness is ${pct(t.fert)}; hawthorn needs 35%. Broom can take poorer ground.`};
+      const s=seedOr('broom',i,.03);return {next:'broom',chance:.00015*s/rs*Math.max(.05,1-.7*b),need:`${why}: broom moves in, not hawthorn.${seedField('broom',i)<.05?' '+rainNote('broom'):''}${rich}`};
     }
     const adj=Math.min(2,near(x,y,1,isScrubSrc)),bird=BIRD[i];
     let ch=.00025*adj+.0002*bird;const stray=!adj&&!bird;if(stray)ch=.00006+.00018*rainOf('hawthorn');
@@ -1700,8 +1706,8 @@ function succRaw(x,y){
   }
   if(st===3){
     const wet=MO[i]>=.4,hill=hAt(x,y)>=HILL;
-    // pine is the tree of poor, dry ground: hilltops, sand and rubble, or anywhere broadleaves can't yet grow
-    let type=wet?'willow':hill||(t.poor||0)>.2&&t.fert<.5?'pine':'birch';
+    // pine is the tree of poor, dry ground: hilltops, sand and stony rubble, or anywhere broadleaves can't yet grow
+    let type=wet?'willow':hill||(t.stony||0)>.2||(t.poor||0)>.2&&t.fert<.5?'pine':'birch';
     if(t.fert<.4){if(wet)return {next:'willow',chance:0,need:`Soil richness is ${pct(t.fert)}; willow needs 40%.`};type='pine'}
     const f0=seedField(type,i),s=seedOr(type,i,.03);
     if(b>.05)return {next:type,chance:.0003*s*Math.max(.08,1-.5*b),need:`Browsing animals eat most tree seedlings here ${brNote(b)}; thorny scrub shelters a few.`};
@@ -3711,7 +3717,7 @@ function hitGround(x,y,dmg,src){
   else{const was=t.gd;t.gd='soil';t.plane=0;t.hw=0;t.rw=0;t.ds=1;burst(sx,sy,'dust',6);
     // crushed concrete and stone: only pioneers can root in it until roots and frost break it down
     t.stony=was==='rubble'?1:was==='road'||was==='pave'?.6:was==='path'?.3:0;
-    if(t.stony>.5&&!S.flags.stony){S.flags.stony=1;toast('Stony ground','Broken rubble leaves crushed concrete and stone, not soil. Only pioneer weeds can root in it, so they hold on here for a long time, until their roots and the frost break the stones down. Brownfield like this, an "open mosaic" of bare ground and pioneers, is one of the richest habitats in a city: Berlin’s old Südgelände rail yard became a nature park this way. Remediate Soil clears the stones at once.','unlock')}}
+    if(t.stony>.5&&!S.flags.stony){S.flags.stony=1;toast('Stony ground','Broken rubble leaves crushed concrete and stone, not soil. Grass and hawthorn cannot root in it. Pioneer weeds can, and so can heather, broom, pine and birch, the plants of poor rocky ground, until roots and frost break the stones down. Brownfield like this, an "open mosaic" of bare ground and pioneers, is one of the richest habitats in a city: Berlin’s old Südgelände rail yard became a nature park this way. Remediate Soil clears the stones at once.','unlock')}}
   if(src==='nature'){S.natCracked=(S.natCracked||0)+1;if(!S.flags.rootcrack){S.flags.rootcrack=1;toast('Roots broke the paving','Nobody touched it: frost and roots split it open. The more green around hard ground, the faster it goes.','unlock')}}
   markDirty();
 }
@@ -3772,8 +3778,8 @@ function naturalForces(){
 
 /* ---------- sowing by hand ---------- */
 const SOW_COST={weeds:5,meadow:15,heath:30,reed:20,hawthorn:35,broom:35,birch:60,willow:70,pine:90,oak:160,beech:260};
-const SOW_NEED={weeds:'any bare soil.',meadow:'soil under 55% toxicity with 22%+ richness.',heath:'poor soil (richness under 45%), under 60% toxicity.',reed:'soil beside water, under 80% toxicity.',hawthorn:'soil under 45% toxicity with 35%+ richness.',
-  broom:'soil under 60% toxicity with richness under 55%.',birch:'soil under 60% toxicity with 40%+ richness.',willow:'soil within 2 tiles of water with 40%+ richness.',pine:'soil under 50% toxicity.',oak:'clean soil (under 30% toxicity) with 50%+ richness.',beech:'clean soil (under 30% toxicity) with 55%+ richness that never waterlogs.'};
+const SOW_NEED={weeds:'any bare soil.',meadow:'soil under 55% toxicity with 22%+ richness.',heath:'poor soil (richness under 45%), under 60% toxicity It roots in stony ground too.',reed:'soil beside water, under 80% toxicity.',hawthorn:'soil under 45% toxicity with 35%+ richness.',
+  broom:'soil under 60% toxicity with richness under 55% It roots in stony ground too.',birch:'soil under 60% toxicity with 40%+ richness It roots in stony ground too.',willow:'soil within 2 tiles of water with 40%+ richness.',pine:'soil under 50% toxicity It roots in stony ground too.',oak:'clean soil (under 30% toxicity) with 50%+ richness.',beech:'clean soil (under 30% toxicity) with 55%+ richness that never waterlogs.'};
 // [most toxicity it stands, least soil richness it needs, most richness it stands]
 const SOIL_LIM={meadow:[.55,.22],heath:[.6,0,.45],reed:[.8,0],hawthorn:[.45,.35],broom:[.6,0,.55],birch:[.6,.4],willow:[.6,.4],pine:[.5,0],oak:[.3,.5],beech:[.3,.55]};
 const sowNeed=id=>SOW_NEED[id]||SOW_NEED[bid(id)];
@@ -3794,7 +3800,7 @@ function sowRule(id,x,y){
   if(b0==='reed'&&!near(x,y,1,isWater))return `${f.name} must stand beside water.`;
   if(b0==='willow'&&MO[y*N+x]<.4)return `${f.name} needs water within 2 tiles.`;
   if(b0==='beech'&&WET[y*N+x]>=.7)return `${f.name} cannot stand waterlogged ground.`;
-  if(b0!=='weeds'&&(t.stony||0)>.35)return `Too stony for ${f.name.toLowerCase()}: only pioneer weeds root in crushed rubble. Remediate Soil clears the stones.`;
+  if((t.stony||0)>(STONE_OK.has(b0)?.7:.35))return `Too stony for ${f.name.toLowerCase()}: ${STONE_OK.has(b0)?'even it needs some soil between the stones':'only willowherb, heather, broom, pine and birch root in crushed stone'}. Remediate Soil clears the stones.`;
   const lim=SOIL_LIM[b0];
   if(lim){if(t.tox>lim[0])return `Soil is ${pct(t.tox)} toxic; ${f.name.toLowerCase()} needs under ${pct(lim[0])}.`;if(t.fert<lim[1])return `Soil richness is ${pct(t.fert)}; ${f.name.toLowerCase()} needs ${pct(lim[1])}.`;
     if(lim[2]!=null&&t.fert>lim[2])return `Soil richness is ${pct(t.fert)}: too rich for ${f.name.toLowerCase()}, which needs under ${pct(lim[2])}. Grass would swamp it.`}
@@ -4456,7 +4462,7 @@ function updateInfo(){
   else if(t.b&&t.b.k==='flyover')notes+=`<p class="note">${has('reclaim')?`Nature will repurpose this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down${t.b.ivy?` (${Math.round(t.b.ivy*100)}% overgrown)`:''}. Demolishing it by hand still works.`:`Grow Reclamation in the Wood Wide Web and nature will turn this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down.`}</p>`;
   if(t.b&&t.b.k==='factory')notes+=`<p class="note" style="color:var(--smog)">Smokestack. The biggest single source of smog.</p>`;
   ti.innerHTML=`<div class="tname"><span>${name}</span><span>${x}, ${y} · ${el} m</span></div>
-  <div class="meters">${[['moi','Water',WET[i]],['lit','Light',LIGHT[i]],['','Soil',t.fert],['grz','Grazing',grazeOf(i)],['dst','Disturbed',t.ds||0],['hum','People',HUM[i]],['tox','Toxic',t.tox]]
+  <div class="meters">${[['moi','Water',WET[i]],['lit','Light',LIGHT[i]],['','Soil',t.fert],['stn','Stony',stonyOf(t)],['grz','Grazing',grazeOf(i)],['dst','Disturbed',t.ds||0],['hum','People',HUM[i]],['tox','Toxic',t.tox]]
     .map(([c,l,v])=>`<div class="meter ${c}"><label>${l}<span>${pct(v)}</span></label><div class="bar"><i style="width:${pct(v)}"></i></div></div>`).join('')}</div>${notes}`;
 }
 function updateTip(px,py){
