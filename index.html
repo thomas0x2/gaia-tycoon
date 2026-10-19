@@ -569,11 +569,14 @@ body.touring #dock{visibility:hidden}
   .brand{order:0;flex:1 1 100%;flex-direction:row;align-items:center;gap:8px;min-width:0;padding:3px 10px}
   .brand h1,.brand .wx,.brand .stage{display:none}
   .brand .clock{font-size:12px;gap:8px;margin-left:0}
-  /* the calendar and the stats share one panel; the menu buttons stand beside it */
-  #hud:not(.more){display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:6px;row-gap:0}
-  #hud:not(.more) .brand{grid-column:1;grid-row:1;border-bottom:0;border-radius:var(--r) var(--r) 0 0;box-shadow:none;padding:5px 12px 1px}
-  #hud:not(.more) #stats{grid-column:1;grid-row:2;border-top:0;border-radius:0 0 var(--r) var(--r)}
-  #hud:not(.more) .ctrl{grid-column:2;grid-row:1/3}
+  /* season and year lead the stats in one panel; the menu buttons stand beside it */
+  #hud:not(.more){display:grid;grid-template-columns:auto minmax(0,1fr) auto;column-gap:0}
+  #hud:not(.more) .brand{grid-column:1;border-right:0;border-radius:var(--r) 0 0 var(--r);box-shadow:none;padding:4px 4px 4px 10px}
+  #hud:not(.more) .brand .clock{flex-direction:column;align-items:flex-start;gap:0;line-height:1.15}
+  #hud:not(.more) #sClock{display:none}
+  #hud:not(.more) #stats{grid-column:2;border-left:0;border-radius:0 var(--r) var(--r) 0}
+  #hud:not(.more) .ctrl{grid-column:3;margin-left:6px}
+  #hud:not(.more) .ctrl button{min-width:38px}
   #stats{order:1;flex:1 1 0;min-width:0;padding:2px}
   #stats .stat:not(.keep){display:none}
   #stats .stat.keep{flex:1 1 auto;min-width:0;padding:4px 8px;flex-direction:row;align-items:center;gap:6px}
@@ -584,11 +587,12 @@ body.touring #dock{visibility:hidden}
   .stat.seeds label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2021c-4-3-6-7-6-10a6%206%200%200%201%2012%200c0%203-2%207-6%2010z%22/%3E%3Cpath%20d%3D%22M12%208v8%22/%3E%3C/svg%3E")}
   #stats .stat.keep:nth-child(3) label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%207v13%22/%3E%3Cpath%20d%3D%22M12%209C10%205%204%204%203%207s3%207%209%206%22/%3E%3Cpath%20d%3D%22M12%209c2-4%208-5%209-2s-3%207-9%206%22/%3E%3Cpath%20d%3D%22M12%2013c-3%200-6%202-5%205s4%201%205-2M12%2013c3%200%206%202%205%205s-4%201-5-2%22/%3E%3C/svg%3E")}
   /* the numbers stay only a little bigger than the calendar line above them */
-  #stats .stat.keep,#stats .stat.keep:first-child,#stats .stat.keep:nth-child(3){flex:0 0 auto;padding:1px 5px 3px;gap:4px}
+  #stats .stat.keep,#stats .stat.keep:first-child,#stats .stat.keep:nth-child(3){flex:0 0 auto;padding:2px 4px;gap:4px}
   #stats .stat span{font-size:13px}
   #stats .stat.keep.seeds{flex:1 0 auto}
   .stat>div{white-space:nowrap;min-width:0}
-  .stat.seeds small{font-size:10px}
+  .stat.seeds>div{display:flex;flex-direction:column;line-height:1.05}
+  .stat.seeds small{margin-left:0;font-size:9.5px}
   .stat label{width:14px;height:14px}
   #stats .stat.keep:nth-child(3) small,#sBlkS{display:none}
   #stats .stat.keep:nth-child(3){border-right:0}
@@ -726,7 +730,7 @@ body.touring #dock{visibility:hidden}
   <header id="hud">
     <div class="brand panel">
       <h1>Idle Nature <small id="cityName">Meridian</small></h1>
-      <div class="clock" title="Plants grow fastest in spring and almost stop in winter."><b id="sSeason">Spring</b><span id="sClock"></span></div>
+      <div class="clock" title="Plants grow fastest in spring and almost stop in winter."><b id="sSeason">Spring</b><span id="sYear"></span><span id="sClock"></span></div>
       <div id="wx" class="wx" role="button" tabindex="0" aria-label="Weather forecast" title="Weather forecast: this season and the next three. Tap for more."></div>
       <div class="stage"><b id="stageName">Megacity</b><div class="bar"><i id="stageBar"></i></div><span id="stageNext"></span></div>
     </div>
@@ -3232,8 +3236,8 @@ function updateClockUI(){
     else toast(`${SEASONS[idx]} arrives`,SEASON_MSG[idx])}
   if(NIGHT>.6&&!S.flags.night){S.flags.night=1;toast('Night falls over Meridian','Every lit window and streetlight you take away gives the stars back to the city.')}
   const dp=(S.clock%DAY)/DAY,hh=Math.floor(dp*24),mm=Math.floor((dp*24-hh)*6)*10,day=Math.floor(S.clock/DAY)%SDAYS+1,yr=Math.floor(S.clock/YEAR)+1;
-  const txt=`${SEASONS[idx]}|Y${yr} · Day ${day}${S.dayNight===false?'':` · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`}`;
-  if(txt!==lastClockTxt){lastClockTxt=txt;const[a,b]=txt.split('|');$('sSeason').textContent=a;$('sClock').textContent=b}
+  const txt=`${SEASONS[idx]}|Y${yr}|· Day ${day}${S.dayNight===false?'':` · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`}`;
+  if(txt!==lastClockTxt){lastClockTxt=txt;const[a,y,b]=txt.split('|');$('sSeason').textContent=a;$('sYear').textContent=y;$('sClock').textContent=b}
   updateWxUI();
 }
 // the forecast strip: this season and the three after it; on a phone only an icon, and only in drought or flood
