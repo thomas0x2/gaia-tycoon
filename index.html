@@ -6662,8 +6662,14 @@ function noteAsk(){
   if(!NATIVE||notePref()||catching||!Object.keys(S.rec||{}).length)return;
   if([...document.querySelectorAll('.veil')].some(v=>!v.hidden))return;$('noteAsk').hidden=false;
 }
+// iOS asks only once: after a no, the answer can only change in the Settings app. A build without the plugin rejects every call.
+const NOTE_WHY={denied:'Notifications are blocked. Open the iPhone Settings app, go to Notifications, then Idle Nature, turn on Allow Notifications, and try again.',
+  missing:'This copy of the app was built without notification support. On the Mac, run npm install and then npm run ios, and run it from Xcode again.'};
+let noteWhy='denied';
 async function noteOn(){
-  let ok=false;try{const r=await LN('requestPermissions');ok=r&&r.display==='granted'}catch(e){}
+  let ok=false;noteWhy='denied';
+  try{const c=await LN('checkPermissions');ok=c&&c.display==='granted';if(!ok&&c&&c.display!=='denied'){const r=await LN('requestPermissions');ok=r&&r.display==='granted'}}
+  catch(e){noteWhy='missing'}
   ls.set(NOTE_KEY,ok?'on':'off');renderNoteSet();return ok;
 }
 function renderNoteSet(){
@@ -6680,10 +6686,10 @@ if(NATIVE){
     if(x&&x.x!=null){noteGo=[x.x,x.y,x.slot];setTimeout(noteFocus,300)}});
   noteBack();
 }
-$('noteYes').addEventListener('click',async()=>{$('noteAsk').hidden=true;if(!await noteOn())toast('Notifications are off','To hear from your city later, allow notifications for Idle Nature in the iPhone Settings app, then turn them on in the menu.')});
+$('noteYes').addEventListener('click',async()=>{$('noteAsk').hidden=true;if(!await noteOn())toast('Notifications are off',NOTE_WHY[noteWhy]+' You can turn them on later in the menu.')});
 $('noteNo').addEventListener('click',()=>{$('noteAsk').hidden=true;ls.set(NOTE_KEY,'off')});
 $('noteTog').addEventListener('click',async()=>{if(notePref()==='on'){ls.set(NOTE_KEY,'off');renderNoteSet()}
-  else if(!await noteOn())$('noteState').textContent='Notifications are blocked. Allow them for Idle Nature in the iPhone Settings app, then try again.'});
+  else if(!await noteOn())$('noteState').textContent=NOTE_WHY[noteWhy]});
 function valid(s){return s&&s.v===4&&Array.isArray(s.tiles)&&s.tiles.length===N*N&&(Array.isArray(s.lv)&&s.lv.length===N*N||Array.isArray(s.vh)&&s.vh.length===M*M)}
 // saves from the old single-slot, 28×28 version cannot be loaded, but their mycelium and field guide carry over
 function legacyCarry(){let c=null;for(const k of [KEY,OLD_KEY,...slots().map(m=>SLOT_PRE+m.id)]){try{const s=JSON.parse(ls.get(k));if(s&&(s.myc||s.cities)){c={myc:s.myc||0,cities:s.cities||0,seen:s.seen||{},dayNight:s.dayNight!==false};break}}catch(e){}}return c}
@@ -6747,6 +6753,8 @@ try{const v=JSON.parse(ls.get('idle-nature-sound')||'null');if(v){SND.on=v.on!==
 const sndSave=()=>ls.set('idle-nature-sound',JSON.stringify({on:SND.on,vol:SND.vol}));
 function audioInit(){
   if(SND.ctx||!SND.on)return;const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+  // on an iPhone, play even with the ring switch on silent, like a game, not like a ringtone (the app also sets this natively)
+  try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(e){}
   let c;try{c=SND.ctx=new AC()}catch(e){return}
   const comp=c.createDynamicsCompressor();comp.threshold.value=-14;comp.connect(c.destination);
   const master=c.createGain();master.gain.value=1;master.connect(comp);SND.bus.master=master;
@@ -6870,8 +6878,8 @@ function sndApply(){
   if(SND.on){audioInit();if(SND.ctx&&SND.ctx.state!=='running'&&!document.hidden)SND.ctx.resume()}else if(SND.ctx)SND.ctx.suspend();
 }
 function sndToggle(){SND.on=!SND.on;sndSave();sndApply();if(SND.on)setTimeout(()=>sfx('chime'),60)}
-// browsers only allow audio after a click or key press
-for(const ev of ['pointerdown','keydown'])window.addEventListener(ev,()=>{if(!SND.on)return;audioInit();if(SND.ctx&&SND.ctx.state!=='running'&&!document.hidden)SND.ctx.resume()},{capture:true});
+// browsers only allow audio after a click or key press; iPhones only count the end of a touch
+for(const ev of ['pointerdown','pointerup','touchend','click','keydown'])window.addEventListener(ev,()=>{if(!SND.on)return;audioInit();if(SND.ctx&&SND.ctx.state!=='running'&&!document.hidden)SND.ctx.resume()},{capture:true});
 document.addEventListener('visibilitychange',()=>{if(!SND.ctx)return;if(document.hidden)SND.ctx.suspend();else if(SND.on)SND.ctx.resume()});
 document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('button');if(b&&b.id!=='sndBtn')sfx('click')},true);
 $('sndBtn').addEventListener('click',sndToggle);
