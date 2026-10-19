@@ -30,6 +30,18 @@ carry, values that went NaN or negative, animals stuck or living somewhere they 
 Options: `-- --years 6 --seed 7 --poor` (`--poor` earns seeds like a player instead of being given them, and prints what it
 could buy when, which shows where progress stalls). It needs `npm install` once for Playwright.
 
+## Pacing
+
+The Wood Wide Web is paced for someone who looks in every 4 to 6 hours: about one new plant or animal per visit, placed
+and then seen at work on the next visit. Prices follow `PACE` in `index.html` (the price of the nth plant or animal).
+`npm run pacing -- --days 7 --seed 7` plays a week of check-ins (visits at 8, 13, 18 and 23 h, `--visits` to change),
+letting the game catch up between visits as on the phone, and prints what each visit unlocked, what the next one waits
+for, and how far the last new species spread. `--csv f.csv` saves the curve.
+
+To test without waiting, open the Menu and turn on **Developer mode** (×10, ×60 or ×360): time runs that much faster,
+while you play and while you are away, and a DEV badge shows next to the date. It is a setting of the device, never saved
+with a city; turn it off to feel the real pacing.
+
 ## Play on iPhone
 
 The game is also an installable web app. Open it in Safari at

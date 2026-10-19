@@ -8,7 +8,8 @@
     "ios": "npm run build && cap sync ios && cap open ios",
     "sync": "npm run build && cap sync ios",
     "sprites": "node scripts/bake-sprites.mjs",
-    "playtest": "node tests/playtest.mjs"
+    "playtest": "node tests/playtest.mjs",
+    "pacing": "node tests/pacing.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^8.5.3",
