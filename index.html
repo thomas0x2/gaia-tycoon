@@ -78,6 +78,7 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 .ctrl button:hover{background:rgba(255,255,255,.06);color:var(--ink)}
 .ctrl button[aria-pressed="true"]{background:var(--lichen);color:#1d2614}
 .ctrl .sep{width:1px;align-self:stretch;background:var(--line);margin:4px 4px}
+#moreBtn{display:none}
 
 /* Charter (objectives) */
 /* rarity */
@@ -468,28 +469,45 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 @media (max-height: 520px) and (orientation: landscape){
   #stats{flex:0 1 auto}.ctrl{flex:1 1 200px}
 }
-/* phones: keep the city in view. One-line title bar, the three key stats, icon toggles,
-   short toasts that a tap dismisses, a toolbar of tall narrow buttons, and an info panel that shows
+/* phones: keep the city in view. One slim strip of stats and icons with the rest behind a menu button,
+   short toasts that a tap dismisses, a picture-only tool tray, and an info panel that shows
    only the tool and tile at a glance and opens for the rest */
 @media (max-width: 760px){
-  .brand{flex-wrap:nowrap;align-items:center;gap:10px;padding:6px 12px}
-  .brand h1{display:none}
-  .brand .clock{margin-left:0;flex:0 0 auto;font-size:11px;gap:6px}
-  .brand .stage{flex:1 1 auto;min-width:0;font-size:11px;gap:6px}
-  .brand .stage .bar{display:none}
-  #stageName{white-space:nowrap}
-  #stageNext{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-  #stats{padding:2px}
+  /* one slim strip: three stats as icons, research, and a menu button that opens everything else */
+  #hud{gap:6px;flex-wrap:wrap;align-items:stretch}
+  .brand{display:none}
+  #stats{order:1;flex:1 1 0;min-width:0;padding:2px}
   #stats .stat:not(.keep){display:none}
-  #stats .stat.keep{flex:1 1 0;min-width:0;padding:3px 10px}
-  .stat label{font-size:9px}
-  .stat>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .ctrl{padding:3px;gap:2px;align-items:stretch;justify-content:space-between}
-  .ctrl .rotgrp{gap:2px;flex:2 1 0}
-  /* toolbar as icons; the text stays in the button for screen readers */
-  .ctrl button,.ctrl .rotgrp button{font-size:0 !important;flex:1 1 0;min-width:0;min-height:46px;padding:4px 2px;display:grid;place-items:center}
+  #stats .stat.keep{flex:1 1 auto;min-width:0;padding:4px 8px;flex-direction:row;align-items:center;gap:6px}
+  #stats .stat.keep:first-child,#stats .stat.keep:nth-child(3){flex:0 1 auto}
+  .stat label{font-size:0;flex:0 0 auto;width:18px;height:18px;background:var(--ink-dim);-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+  .stat.seeds label{background:var(--lichen)}
+  #blkStat label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%2214%22%20y%3D%223%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%223%22%20y%3D%2214%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2214%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3C/svg%3E")}
+  .stat.seeds label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2021c-4-3-6-7-6-10a6%206%200%200%201%2012%200c0%203-2%207-6%2010z%22/%3E%3Cpath%20d%3D%22M12%208v8%22/%3E%3C/svg%3E")}
+  #stats .stat.keep:nth-child(3) label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%207v13%22/%3E%3Cpath%20d%3D%22M12%209C10%205%204%204%203%207s3%207%209%206%22/%3E%3Cpath%20d%3D%22M12%209c2-4%208-5%209-2s-3%207-9%206%22/%3E%3Cpath%20d%3D%22M12%2013c-3%200-6%202-5%205s4%201%205-2M12%2013c3%200%206%202%205%205s-4%201-5-2%22/%3E%3C/svg%3E")}
+  .stat>div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  #stats .stat.keep:nth-child(3) small,#sBlkS{display:none}
+  #stats .stat.keep:nth-child(3){border-right:0}
+  .stat small{margin-left:2px}
+  .ctrl{order:2;flex:0 0 auto;padding:2px;gap:2px;align-items:stretch}
+  .ctrl>*{display:none}
+  #moreBtn,#webBtn,#newBtn:not([hidden]){display:grid}
+  .ctrl button,.ctrl .rotgrp button{font-size:0 !important;min-width:42px;min-height:42px;padding:4px;place-items:center;gap:3px}
   .ctrl button::before{content:'';width:22px;height:22px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
   .ctrl button[aria-pressed="true"]{color:#1d2614}
+  #moreBtn[aria-expanded="true"]{background:rgba(255,255,255,.1);color:var(--ink)}
+  /* the opened menu: the season and rating, then a grid of labelled icons */
+  #hud.more .brand{display:flex;order:3;flex:1 1 100%;flex-direction:row;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:8px 12px}
+  #hud.more .brand h1{display:none}
+  #hud.more .brand .clock{margin-left:0}
+  #hud.more .brand .stage{flex:1 1 100%}
+  #hud.more .ctrl{order:4;flex:1 1 100%;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px}
+  #hud.more .ctrl>*{display:grid}
+  #hud.more .rotgrp{display:contents}
+  #hud.more #moreBtn,#hud.more #webBtn,#hud.more #newBtn[hidden]{display:none}
+  #hud.more .ctrl button{display:grid;min-height:58px;padding:6px 2px}
+  #hud.more .ctrl button::after{content:attr(data-lbl);font:500 11px var(--body);line-height:1.1}
+  #moreBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%225%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3Ccircle%20cx%3D%2219%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3C/svg%3E")}
   #menuBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%206h16M4%2012h16M4%2018h16%22/%3E%3C/svg%3E")}
   #dnBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%224%22/%3E%3Cpath%20d%3D%22M12%202v2M12%2020v2M4.9%204.9l1.4%201.4M17.7%2017.7l1.4%201.4M2%2012h2M20%2012h2M4.9%2019.1l1.4-1.4M17.7%206.3l1.4-1.4%22/%3E%3C/svg%3E")}
   #sndBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%209h4l5-4v14l-5-4H4z%22/%3E%3Cpath%20d%3D%22M16.5%208.5a5%205%200%200%201%200%207M19%206a8.5%208.5%200%200%201%200%2012%22/%3E%3C/svg%3E")}
@@ -501,6 +519,20 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   #recBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2019c0-8%205-14%2015-14%200%2010-6%2015-14%2015%22/%3E%3Cpath%20d%3D%22M5%2019%2013%2011%22/%3E%3C/svg%3E")}
   #guideBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%206c-2-1.5-5-2-8-1.5V19c3-.5%206%200%208%201.5%202-1.5%205-2%208-1.5V4.5c-3-.5-6%200-8%201.5zM12%206v14.5%22/%3E%3C/svg%3E")}
   #newBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012h15M13%206l6%206-6%206%22/%3E%3C/svg%3E")}
+  /* tool tray: pictures first, names live in the panel above once a card is picked */
+  .tray{padding:4px 6px 6px}
+  .tabs{padding:0 0 4px;gap:2px}
+  .tabs button,#dockHide{font-size:0 !important;min-width:44px;min-height:34px;padding:4px 10px;display:grid;place-items:center}
+  .tabs button::before,#dockHide::before{content:'';width:20px;height:20px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
+  #tab-land{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M14.5%205.5a4%204%200%200%200-5%205L4%2016v4h4l5.5-5.5a4%204%200%200%200%205-5l-2.5%202.5-2.5-.5-.5-2.5z%22/%3E%3C/svg%3E")}
+  #tab-flora{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2021v-9%22/%3E%3Cpath%20d%3D%22M12%2012C12%207%208%204%204%204c0%205%203%208%208%208z%22/%3E%3Cpath%20d%3D%22M12%2014c0-4%203-7%208-7%200%204-3%207-8%207z%22/%3E%3C/svg%3E")}
+  #tab-fauna{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%227%22%20cy%3D%229%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%226%22%20r%3D%222%22/%3E%3Ccircle%20cx%3D%2217%22%20cy%3D%229%22%20r%3D%222%22/%3E%3Cpath%20d%3D%22M8%2017c0-3%202-5%204-5s4%202%204%205-2%203-4%203-4%200-4-3z%22/%3E%3C/svg%3E")}
+  #dockHide{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%209l6%206%206-6%22/%3E%3C/svg%3E")}
+  .card{flex-basis:60px;padding:4px 2px 4px;gap:1px}
+  .card canvas{width:48px;height:39px}
+  .card .nm{display:none}
+  .card .cs{font-size:10.5px}
+  #info:not(.open) #tileInfo .meters{display:none}
   .toast{padding:7px 12px;pointer-events:auto;cursor:pointer}
   .toast b{font-size:14px;margin-bottom:0}
   .toast p{font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -563,16 +595,17 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
       <div class="stat" id="mycStat" hidden title="Carried over from the cities you rewilded before"><label>Mycelium</label><div><span id="sMyc">0</span><small id="sMycS"></small></div></div>
     </div>
     <div class="ctrl panel" role="group" aria-label="Game speed">
-      <button id="menuBtn" title="Save slots and new games">Menu</button>
-      <button id="dnBtn" aria-pressed="true" title="Turn the day and night cycle on or off">Day/night</button>
-      <button id="sndBtn" aria-pressed="true" title="Sound on or off (M). Volumes are in the Menu.">Sound</button>
-      <span class="rotgrp" role="group" aria-label="Rotate view"><button id="rotL" title="Rotate the view left (Q)" aria-label="Rotate view left">⟲</button><button id="rotR" title="Rotate the view right (E)" aria-label="Rotate view right">⟳</button></span>
+      <button id="moreBtn" aria-expanded="false" title="More">More</button>
+      <button id="menuBtn" title="Save slots and new games" data-lbl="Saves">Menu</button>
+      <button id="dnBtn" data-lbl="Day/night" aria-pressed="true" title="Turn the day and night cycle on or off">Day/night</button>
+      <button id="sndBtn" data-lbl="Sound" aria-pressed="true" title="Sound on or off (M). Volumes are in the Menu.">Sound</button>
+      <span class="rotgrp" role="group" aria-label="Rotate view"><button id="rotL" data-lbl="Rotate" title="Rotate the view left (Q)" aria-label="Rotate view left">⟲</button><button id="rotR" data-lbl="Rotate" title="Rotate the view right (E)" aria-label="Rotate view right">⟳</button></span>
       <button id="webBtn" title="Research: unlock plants, animals and forces of nature">Wood Wide Web</button>
-      <button id="charterBtn" title="Milestones">Milestones</button>
-      <button id="censusBtn" title="Census: every plant and animal in the city, and how many">Census</button>
-      <button id="recBtn" title="Ecosystems you have discovered">Ecosystems</button>
-      <button id="guideBtn" title="Field guide: every plant and animal, and how ecosystems work">Field guide</button>
-      <button id="newBtn" title="Move on to the next city" hidden>Next city</button>
+      <button id="charterBtn" data-lbl="Milestones" title="Milestones">Milestones</button>
+      <button id="censusBtn" data-lbl="Census" title="Census: every plant and animal in the city, and how many">Census</button>
+      <button id="recBtn" data-lbl="Ecosystems" title="Ecosystems you have discovered">Ecosystems</button>
+      <button id="guideBtn" data-lbl="Guide" title="Field guide: every plant and animal, and how ecosystems work">Field guide</button>
+      <button id="newBtn" data-lbl="Next city" title="Move on to the next city" hidden>Next city</button>
     </div>
   </header>
 
@@ -4736,6 +4769,11 @@ $('webClose').addEventListener('click',()=>{$('web').hidden=true});
 $('web').addEventListener('keydown',e=>{if(e.key==='Escape')$('web').hidden=true});
 $('web').addEventListener('click',e=>{if(e.target.id==='web')$('web').hidden=true});
 $('menuBtn').addEventListener('click',openMenu);
+// phones: everything but research folds into a menu behind one button; toggles leave it open, anything that opens a screen closes it
+function setMore(on){$('hud').classList.toggle('more',on);$('moreBtn').setAttribute('aria-expanded',String(on))}
+$('moreBtn').addEventListener('click',()=>setMore(!$('hud').classList.contains('more')));
+document.querySelector('.ctrl').addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!['moreBtn','dnBtn','sndBtn','rotL','rotR'].includes(b.id))setMore(false)});
+$('world').addEventListener('pointerdown',()=>setMore(false));
 $('info').querySelector('.tool-head').addEventListener('click',()=>{const i=$('info'),phone=matchMedia('(max-width: 760px)').matches;if(!phone&&!i.classList.contains('mini')&&!i.classList.contains('open'))return;i.classList.toggle('open');i.classList.toggle('mini',!i.classList.contains('open'));fitPanels()});
 $('guideBtn').addEventListener('click',()=>openGuide());
 $('gClose').addEventListener('click',()=>{$('guide').hidden=true});
