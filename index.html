@@ -3725,10 +3725,6 @@ function drawRange(h){const r=FAUNA[h.sp].range,x0=Math.max(0,h.x-r)-.5,x1=Math.
   X.save();X.beginPath();X.moveTo(pts[0][0],pts[0][1]);for(const p of pts)X.lineTo(p[0],p[1]);X.closePath();
   X.fillStyle='rgba(246,236,160,.14)';X.fill();X.setLineDash([6/cam.z,4/cam.z]);X.lineWidth=2.2/cam.z;X.strokeStyle='rgba(246,236,160,.9)';X.stroke();X.setLineDash([]);
   const[sx,sy]=isoG(h.x,h.y),w=Math.sin(time*4);X.globalAlpha=.6+.3*w;X.lineWidth=1.6/cam.z;X.beginPath();X.ellipse(sx,sy,16+2*w,8+w,0,0,7);X.stroke();X.restore()}
-// a sleeping animal: little z's drifting up
-function drawZz(sx,sy,sd){const c=X;c.save();c.textAlign='center';c.lineJoin='round';c.lineWidth=2;c.strokeStyle='rgba(21,30,27,.55)';c.fillStyle='#f4f6ea';
-  for(let k=0;k<2;k++){const f=(time*.35+k*.5+sd*.13)%1;c.globalAlpha=Math.sin(f*Math.PI);c.font=`700 ${6+3*f}px Figtree, system-ui, sans-serif`;
-    const x=sx+3+f*6,y=sy-f*11;c.strokeText('z',x,y);c.fillText('z',x,y)}c.restore()}
 function drawTileObjects(x,y){
   const t=T(x,y);drawGroundExtras(t,x,y);
   if(t.b){RPDARK=!!t.b.rp;asSprite(x,y,()=>{drawBuilding(t,x,y);if((t.b.hp!=null||t.b.ivy)&&t.b.k!=='mast')drawWear(t,x,y);if(t.b.rp)drawReclaimed(t.b,x,y)});RPDARK=false}
@@ -3839,21 +3835,18 @@ function drawCar(o){const c=hx(o.c),ox=o.dy?(o.dy>0?-.2:.2):0,oy=o.dx?(o.dx>0?.2
 // draw animals and cars, then repaint whatever stands in front of each one, clipped to its outline box
 function drawMovers(){
   const list=S.an.concat(cars.filter(c=>T(clamp(Math.round(c.x),0,N-1),clamp(Math.round(c.y),0,N-1)).u)).sort((p,q)=>depth(p.x,p.y)-depth(q.x,q.y));
-  const zzDone=new Set();
   for(const o of list){
     let[mx,my]=isoG(o.x,o.y);
-    // asleep at home: inside the burrow, den or nest, or curled up where it lives
-    if(o.sp&&o.sl){const hs=homeSpot(o.sp,o.hx,o.hy),key=o.sp+(o.hy*N+o.hx);
-      if(hs&&!hs.out){if(!zzDone.has(key)){zzDone.add(key);drawZz(hs.x,hs.y-6,o.id)}continue}
-      if(hs){mx=hs.x;my=hs.y-hs.h}
-      if(!zzDone.has(key)){zzDone.add(key);drawZz(mx,my-(MOVER_H[o.sp]||8),o.id)}}
+    // asleep at home: out of sight in its burrow or den, sitting in its nest, or resting where it lives
+    if(o.sp&&o.sl){const hs=homeSpot(o.sp,o.hx,o.hy);if(hs&&!hs.out)continue;if(hs){mx=hs.x;my=hs.y-hs.h}}
     // animals off screen are skipped: their shaded sprites are the costliest thing drawn each frame
     if(o.sp){const z=cam.z,px=(mx-cam.x)*z+W/2,py=(my-cam.y)*z+H/2,m=18*z+8;if(px<-m||px>W+m||py<-6*z-8||py>H+42*z+8)continue}
     if(o.sp){X.save();X.translate(mx,my);X.scale(o.f,1);LO=cam.z<.75;animalArt(o.sp,o,time);LO=false;X.restore()}else drawCar(o);
-    const half=o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(o.sp?MOVER_H[o.sp]:9),bot=my+3;
+    // whatever stands in front of it is drawn again over it, inside the box its picture fills
+    const sh=o.sp&&SHEETS.animal[o.sp],half=sh?Math.max(sh.ax,sh.w-sh.ax)/sh.scale:o.sp?(BIGM.has(o.sp)?12:7):11,l=mx-half,r=mx+half,top=my-(sh?sh.ay/sh.scale:o.sp?MOVER_H[o.sp]:9),bot=my+(sh?Math.max(3,(sh.h-sh.ay)/sh.scale):3);
     const tx=Math.round(o.x),ty=Math.round(o.y);let occ=null;
     for(let dv=-1;dv<=5;dv++)for(let du=-1;du<=5;du++){
-      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!REV[y*N+x])continue;const t=T(x,y);let h,w;
+      if(du+dv<=0)continue;const[dx,dy]=vecB(du,dv),x=tx+dx,y=ty+dy;if(!inb(x,y)||!SEEN[y*N+x])continue;const t=T(x,y);let h,w;
       if(t.b){h=bTop(t.b)+Math.max(...corners(x,y))-hAt(x,y)+4;w=HW}
       else if(t.p){const k=FLORA[t.p.id].kind,g=t.p.g;if(k==='tree'){h=16+42*g;w=6+12*g}else if(k==='shrub'){h=4+10*g;w=4+8*g}else if(k==='herb'){h=6+20*g;w=HW*.7}else if(k==='crop'&&t.p.id==='maize'){h=16;w=HW}else continue}
       else continue;
