@@ -407,7 +407,8 @@ li.fresh,span.fresh{border-radius:6px}
 .aw-go{font-size:22px;color:var(--ink-dim);padding:0 2px}
 @keyframes awin{from{opacity:0;transform:translateY(10px) scale(.97)}}
 #tour{position:absolute;left:50%;transform:translateX(-50%);bottom:max(14px, env(safe-area-inset-bottom, 0px));width:min(440px, calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:10px 12px;border-left:3px solid var(--c);background:var(--panel-hi);animation:tin .35s ease-out}
-.tr-txt p{margin:2px 0 0;font-size:12.5px;line-height:1.4;color:var(--ink-dim);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+/* the whole lesson is shown; a very long one scrolls inside the card instead of being cut off */
+.tr-txt p{margin:2px 0 0;font-size:12.5px;line-height:1.4;color:var(--ink-dim);max-height:38vh;overflow-y:auto;overscroll-behavior:contain}
 .tr-nav{display:flex;flex-direction:column;gap:6px}
 .tr-nav button{width:40px;height:34px;border-radius:9px;background:rgba(255,255,255,.08);font-size:20px;line-height:1}
 .tr-nav button.primary{background:var(--c);color:#18201a}.tr-nav button:disabled{opacity:.3}
@@ -569,6 +570,17 @@ body.touring #dock{visibility:hidden}
   .brand{order:0;flex:1 1 100%;flex-direction:row;align-items:center;gap:8px;min-width:0;padding:3px 10px}
   .brand h1,.brand .wx,.brand .stage{display:none}
   .brand .clock{font-size:12px;gap:8px;margin-left:0}
+  /* season and year lead the stats in one full-width panel; the menu button sits on its own row below */
+  #hud:not(.more){display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:0;row-gap:6px}
+  #hud:not(.more) .brand{grid-column:1;grid-row:1;border-right:0;border-radius:var(--r) 0 0 var(--r);box-shadow:none;padding:4px 4px 4px 10px}
+  #hud:not(.more) .brand .clock{align-items:baseline;gap:6px}
+  #hud:not(.more) #sClock{display:none}
+  #hud:not(.more) #stats{grid-column:2;grid-row:1;border-left:0;border-radius:0 var(--r) var(--r) 0}
+  /* the menu button on the left, the eye and alerts on the right, the middle left free for the map */
+  #hud:not(.more) .ctrl{grid-column:1/3;grid-row:2;background:none;border:0;box-shadow:none;padding:0;gap:6px;pointer-events:none}
+  #hud:not(.more) .ctrl button{pointer-events:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  #hud:not(.more) #moreBtn{order:-1;margin-right:auto}
+  #hud:not(.more) .ctrl button{min-width:44px}
   #stats{order:1;flex:1 1 0;min-width:0;padding:2px}
   #stats .stat:not(.keep){display:none}
   #stats .stat.keep{flex:1 1 auto;min-width:0;padding:4px 8px;flex-direction:row;align-items:center;gap:6px}
@@ -578,18 +590,20 @@ body.touring #dock{visibility:hidden}
   #blkStat label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%2214%22%20y%3D%223%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%223%22%20y%3D%2214%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2214%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3C/svg%3E")}
   .stat.seeds label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2021c-4-3-6-7-6-10a6%206%200%200%201%2012%200c0%203-2%207-6%2010z%22/%3E%3Cpath%20d%3D%22M12%208v8%22/%3E%3C/svg%3E")}
   #stats .stat.keep:nth-child(3) label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%207v13%22/%3E%3Cpath%20d%3D%22M12%209C10%205%204%204%203%207s3%207%209%206%22/%3E%3Cpath%20d%3D%22M12%209c2-4%208-5%209-2s-3%207-9%206%22/%3E%3Cpath%20d%3D%22M12%2013c-3%200-6%202-5%205s4%201%205-2M12%2013c3%200%206%202%205%205s-4%201-5-2%22/%3E%3C/svg%3E")}
-  #stats .stat.keep,#stats .stat.keep:first-child,#stats .stat.keep:nth-child(3){flex:0 0 auto;padding:4px 7px;gap:5px}
+  /* the numbers stay only a little bigger than the calendar line above them */
+  #stats .stat.keep,#stats .stat.keep:first-child,#stats .stat.keep:nth-child(3){flex:0 0 auto;padding:2px 4px;gap:4px}
+  #stats .stat span{font-size:13px}
   #stats .stat.keep.seeds{flex:1 0 auto}
   .stat>div{white-space:nowrap;min-width:0}
   .stat.seeds>div{display:flex;flex-direction:column;line-height:1.05}
-  .stat.seeds small{margin-left:0;font-size:10px}
-  .stat label{width:16px;height:16px}
+  .stat.seeds small{margin-left:0;font-size:9.5px}
+  .stat label{width:14px;height:14px}
   #stats .stat.keep:nth-child(3) small,#sBlkS{display:none}
   #stats .stat.keep:nth-child(3){border-right:0}
   .stat small{margin-left:2px}
   .ctrl{order:2;flex:0 0 auto;padding:2px;gap:2px;align-items:stretch}
   .ctrl>*{display:none}
-  #moreBtn,#webBtn,#newBtn:not([hidden]){display:grid}
+  #moreBtn,#newBtn:not([hidden]){display:grid}
   /* the weather only takes a place in the strip during a drought or a flood */
   #wxBtn.alert{display:grid;min-width:36px}
   #hud:has(#wxBtn.alert) #sIncome{display:none}
@@ -611,7 +625,7 @@ body.touring #dock{visibility:hidden}
   #hud.more .ctrl{order:4;flex:1 1 100%;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:6px}
   #hud.more .ctrl>*{display:grid}
   #hud.more .rotgrp{display:contents}
-  #hud.more #moreBtn,#hud.more #webBtn,#hud.more #newBtn[hidden]{display:none}
+  #hud.more #moreBtn,#hud.more #newBtn[hidden]{display:none}
   #hud.more .ctrl button{display:grid;min-height:58px;padding:6px 2px}
   #hud.more .ctrl button::after{content:attr(data-lbl);font:500 11px var(--body);line-height:1.1}
   #moreBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%225%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3Ccircle%20cx%3D%2219%22%20cy%3D%2212%22%20r%3D%221.3%22/%3E%3C/svg%3E")}
@@ -628,7 +642,7 @@ body.touring #dock{visibility:hidden}
   #soonBtn.has{display:grid;position:relative}
   #soonBtn.has::after{content:attr(data-n);position:absolute;top:3px;right:4px;min-width:15px;height:15px;border-radius:8px;background:var(--lichen);color:#1d2614;font:600 10px/15px var(--body);text-align:center}
   #hud.more #soonBtn.has::after{content:attr(data-lbl);position:static;min-width:0;height:auto;background:none;color:inherit;font:500 11px var(--body)}
-  #recBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M5%2019c0-8%205-14%2015-14%200%2010-6%2015-14%2015%22/%3E%3Cpath%20d%3D%22M5%2019%2013%2011%22/%3E%3C/svg%3E")}
+  #recBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%203h12v18H6z%22/%3E%3Cpath%20d%3D%22M6%203v18M9%203v18%22/%3E%3Cpath%20d%3D%22M13%208h2M13%2012h2%22/%3E%3Cpath%20d%3D%22M15%2016a2%202%200%201%201-2-2%22/%3E%3C/svg%3E")}
   #guideBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%206c-2-1.5-5-2-8-1.5V19c3-.5%206%200%208%201.5%202-1.5%205-2%208-1.5V4.5c-3-.5-6%200-8%201.5zM12%206v14.5%22/%3E%3C/svg%3E")}
   #newBtn{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2012h15M13%206l6%206-6%206%22/%3E%3C/svg%3E")}
   /* tool tray: pictures first, names live in the panel above once a card is picked */
@@ -665,6 +679,7 @@ body.touring #dock{visibility:hidden}
   .toast{padding:7px 12px;pointer-events:auto;cursor:pointer}
   .toast b{font-size:14px;margin-bottom:0}
   .toast p{font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .toast.open p{display:block;max-height:40vh;overflow-y:auto}
   .toast.full p{display:block}
   #toasts .toast:nth-last-child(n+3){display:none}
   #info:not(.open){padding:6px 10px;gap:4px}
@@ -720,7 +735,7 @@ body.touring #dock{visibility:hidden}
   <header id="hud">
     <div class="brand panel">
       <h1>Idle Nature <small id="cityName">Meridian</small></h1>
-      <div class="clock" title="Plants grow fastest in spring and almost stop in winter."><b id="sSeason">Spring</b><span id="sClock"></span></div>
+      <div class="clock" title="Plants grow fastest in spring and almost stop in winter."><b id="sSeason">Spring</b><span id="sYear"></span><span id="sClock"></span></div>
       <div id="wx" class="wx" role="button" tabindex="0" aria-label="Weather forecast" title="Weather forecast: this season and the next three. Tap for more."></div>
       <div class="stage"><b id="stageName">Megacity</b><div class="bar"><i id="stageBar"></i></div><span id="stageNext"></span></div>
     </div>
@@ -743,10 +758,10 @@ body.touring #dock{visibility:hidden}
       <button id="dnBtn" data-lbl="Day/night" aria-pressed="true" title="Turn the day and night cycle on or off">Day/night</button>
       <button id="sndBtn" data-lbl="Sound" aria-pressed="true" title="Sound on or off (M). Volumes are in the Menu.">Sound</button>
       <span class="rotgrp" role="group" aria-label="Rotate view"><button id="rotL" data-lbl="Rotate" title="Rotate the view left (Q)" aria-label="Rotate view left">⟲</button><button id="rotR" data-lbl="Rotate" title="Rotate the view right (E)" aria-label="Rotate view right">⟳</button></span>
-      <button id="webBtn" title="Research: unlock plants, animals and forces of nature">Wood Wide Web</button>
+      <button id="webBtn" data-lbl="Wood Wide Web" title="Research: unlock plants, animals and forces of nature">Wood Wide Web</button>
       <button id="charterBtn" data-lbl="Milestones" title="Milestones">Milestones</button>
       <button id="censusBtn" data-lbl="Census" title="Census: every plant and animal in the city, and how many">Census</button>
-      <button id="recBtn" data-lbl="Ecosystems" title="Ecosystems you have discovered">Ecosystems</button>
+      <button id="recBtn" data-lbl="Journal" title="Field journal: the cascades and cycles you have discovered">Journal</button>
       <button id="soonBtn" data-lbl="Coming soon" title="What is about to change in your city">Coming soon</button>
       <button id="guideBtn" data-lbl="Guide" title="Field guide: every plant and animal, and how ecosystems work">Field guide</button>
       <button id="newBtn" data-lbl="Next city" title="Move on to the next city" hidden>Next city</button>
@@ -3268,8 +3283,8 @@ function updateClockUI(){
     else toast(`${SEASONS[idx]} arrives`,SEASON_MSG[idx])}
   if(NIGHT>.6&&!S.flags.night){S.flags.night=1;toast('Night falls over Meridian','Every lit window and streetlight you take away gives the stars back to the city.')}
   const dp=(S.clock%DAY)/DAY,hh=Math.floor(dp*24),mm=Math.floor((dp*24-hh)*6)*10,day=Math.floor(S.clock/DAY)%SDAYS+1,yr=Math.floor(S.clock/YEAR)+1;
-  const txt=`${SEASONS[idx]}|Y${yr} · Day ${day}${S.dayNight===false?'':` · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`}`;
-  if(txt!==lastClockTxt){lastClockTxt=txt;const[a,b]=txt.split('|');$('sSeason').textContent=a;$('sClock').textContent=b}
+  const txt=`${SEASONS[idx]}|Y${yr}|· Day ${day}${S.dayNight===false?'':` · ${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`}`;
+  if(txt!==lastClockTxt){lastClockTxt=txt;const[a,y,b]=txt.split('|');$('sSeason').textContent=a;$('sYear').textContent=y;$('sClock').textContent=b}
   updateWxUI();
 }
 // the forecast strip: this season and the three after it; on a phone only an icon, and only in drought or flood
@@ -5548,7 +5563,7 @@ function drawForceIcon(cvs,k){
 function webState(k){const R0=RES[k],l=lvl(k),maxed=R0.max?l>=R0.max:l>0,hidden=R0.secret&&!secretOk(k)&&!l;
   return {maxed,hidden,open:resOpen(k),reqOk:(R0.req||[]).every(has),bio:bioOk(k),c:resCost(k),l}}
 function webWhy(k){const R0=RES[k],st=webState(k),miss=(R0.req||[]).filter(r=>!has(r));
-  if(st.hidden)return 'A secret. Discover the right hidden ecosystem to reveal it. The Ecosystems journal has hints.';
+  if(st.hidden)return 'A secret. Discover the right hidden ecosystem to reveal it. The field journal has hints.';
   const out=[];if(miss.length)out.push(`Needs ${miss.map(resName).join(' and ')} first.`);if(!st.bio)out.push(`Needs ${bioNeed(k)} BIO (highest so far ${S.peak||0}).`);return out.join(' ')}
 const webPhone=()=>matchMedia('(max-width: 760px)').matches;
 // ready: you can grow it right now
@@ -6239,17 +6254,22 @@ function toast(title,body,kind){
   if(QUIET){if(offLog)offLog.push({t:title,b:body,k:kind});return}
   sfx(kind==='unlock'?'chime':'note');
   const box=$('toasts');const el=document.createElement('div');el.className='toast '+(kind||'');el.innerHTML=`<b>${title}</b><p>${body}</p>`;
-  el.onclick=()=>el.remove();box.appendChild(el);while(box.children.length>3)box.firstChild.remove();
-  setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),450)},kind==='unlock'?6500:kind==='full'?9000:4500);
+  // a tap on a toast cut short on a phone opens it in full and keeps it up; the next tap closes it
+  el.onclick=()=>{const p=el.querySelector('p');if(!el.classList.contains('open')&&p&&p.scrollHeight>p.clientHeight+1){el.classList.add('open');clearTimeout(el._t);return}el.remove()};
+  box.appendChild(el);while(box.children.length>3)box.firstChild.remove();
+  el._t=setTimeout(()=>{el.classList.add('out');setTimeout(()=>el.remove(),450)},kind==='unlock'?6500:kind==='full'?9000:4500);
 }
 function fmt(n){const neg=n<0;n=Math.floor(Math.abs(n));let o;if(n<1e4)o=n.toLocaleString('en-US');else{const u=['K','M','B','T','Qa'];let i=-1;while(n>=1e3&&i<4){n/=1e3;i++}o=(n<100?n.toFixed(1):Math.round(n))+u[i]}return(neg?'−':'')+o}
-// the top bar keeps three digits, then K, M, B, T, so the numbers always fit on a phone
+// the top bar falls back to three digits, then K, M, B, T, so the numbers always fit on a phone
 function fmtC(n){n=Math.floor(Math.max(0,n));if(n<1e3)return String(n);const u=['K','M','B','T','Qa'];let i=-1;while(n>=1e3&&i<4){n/=1e3;i++}return(n<100?(Math.floor(n*10)/10).toFixed(1).replace(/\.0$/,''):Math.floor(n))+u[i]}
+// the seed count is written out in full when the top bar has room for it
+addEventListener('resize',()=>{$('sSeeds')._k=''});
 function updateHUD(){
-  $('sSeeds').textContent=fmtC(S.seeds);$('sSeeds').parentNode.title=`${fmt(S.seeds)} seeds`;$('sIncome').textContent=`+${D.income<100?D.income.toFixed(1):fmtC(D.income)}/s`;
+  $('sSeeds').parentNode.title=`${fmt(S.seeds)} seeds`;$('sIncome').textContent=`+${D.income<100?D.income.toFixed(1):fmtC(D.income)}/s`;
   $('mycStat').hidden=!S.myc;$('sMyc').textContent=S.myc||0;$('sMycS').textContent=`×${mycMult().toFixed(1)}`;
   const ready=!!S.blocks&&wildBlocks()>=NB*NB;$('newBtn').hidden=!ready;if(ready)$('newBtn').textContent=`Next city +${mycReward()}`;
-  $('sBio').textContent=fmtC(D.bio);$('sWF').textContent=D.W;$('sWFs').textContent=`×${D.F.toFixed(1)}`;if(!$('web').hidden&&S.t!==renderWeb.t){renderWeb.t=S.t;renderWeb()}
+  $('sBio').textContent=fmtC(D.bio);
+  {const el=$('sSeeds'),full=Math.floor(S.seeds).toLocaleString('en-US'),k=full+'|'+D.bio;if(el._k!==k){el._k=k;el.textContent=full;const st=$('stats');if(st.scrollWidth>st.clientWidth+1)el.textContent=fmtC(S.seeds)}}$('sWF').textContent=D.W;$('sWFs').textContent=`×${D.F.toFixed(1)}`;if(!$('web').hidden&&S.t!==renderWeb.t){renderWeb.t=S.t;renderWeb()}
   $('blkStat').hidden=!S.blocks;if(S.blocks){$('sBlk').textContent=ownedBlocks();$('sBlkS').textContent=`/${NB*NB} · ${wildBlocks()} wild`}
   const pm=$('sPm');pm.textContent=D.pm<10?D.pm.toFixed(1):Math.round(D.pm);pm.className=D.pm>25?'pm-bad':D.pm<10?'pm-ok':'';
   $('sConc').textContent=Math.round(D.conc/(N*N)*100);$('sCan').textContent=Math.round(D.trees/(N*N)*100);$('sCanS').textContent=D.forests.length?`% · ${D.forests.length} wood${D.forests.length>1?'s':''}`:'%';$('sWat').textContent=Math.round(D.water/(N*N)*100);
