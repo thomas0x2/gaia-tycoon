@@ -55,3 +55,8 @@ Program membership removes that limit and lets you share it through TestFlight o
 (Product → Archive in Xcode).
 
 After changing `index.html` or the sprites, run `npm run sync` (or `npm run ios`) so the app picks up the new version.
+
+The app can send local notifications (no server and no paid membership needed): after your first cascade it asks
+once, and you can switch them on or off in the menu. When you leave the app it books at most two a day, never between
+21:00 and 8:00, for things on the Coming soon list; opening the app cancels the rest. In the browser version this is
+hidden.
