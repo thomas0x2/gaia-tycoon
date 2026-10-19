@@ -1497,7 +1497,19 @@ function slope(x,y){const[a,b,c,d]=corners(x,y),sx=((b+c)-(a+d))/2,sy=((c+d)-(a+
 // height of a tile corner given as an offset of ±.5 from its centre
 function cornerH(x,y,ox,oy){const c=corners(x,y);return ox<0?(oy<0?c[0]:c[3]):(oy<0?c[1]:c[2])}
 function makeWater(x,y){
-  const t=T(x,y);t.gd='water';t.p=t.p&&FLORA[t.p.id].place==='water'?t.p:null;buildTerrain();
+  const t=T(x,y);t.gd='water';t.p=t.p&&FLORA[t.p.id].place==='water'?t.p:null;levelWater();buildTerrain();
+}
+// Water finds its level: every body of open water lies flat at the height of its lowest tile, so digging into
+// a slope next to a pond excavates the new tile down to the pond. The ground around is then eased back into
+// slopes. Only the brook's waterfall (S.fall) splits a body into two levels.
+function levelWater(){
+  const lv=S.lv,f=S.fall||[-1,-1],split=(a,b)=>a===f[0]&&b===f[1]||a===f[1]&&b===f[0],seen=new Uint8Array(N*N),wet=new Set();let changed=false;
+  for(let i=0;i<N*N;i++){if(seen[i]||S.tiles[i].gd!=='water')continue;
+    const body=[i];seen[i]=1;
+    for(let h=0;h<body.length;h++){const k=body[h],x=k%N,y=(k/N)|0;
+      for(const[dx,dy]of N4){const nx=x+dx,ny=y+dy,j=ny*N+nx;if(inb(nx,ny)&&!seen[j]&&S.tiles[j].gd==='water'&&!split(k,j)){seen[j]=1;body.push(j)}}}
+    const m=Math.min(...body.map(k=>lv[k]));for(const k of body){wet.add(k);if(lv[k]>m){lv[k]=m;changed=true}}}
+  if(changed)settleLevels(lv,[],(x,y,nx,ny)=>split(y*N+x,ny*N+nx),wet);
 }
 function unWater(x,y){const t=T(x,y);t.gd='soil';delete t.bv;delete t.snag;buildTerrain()}
 
@@ -1674,8 +1686,13 @@ function newGame(seed,carry){
   const fw=cul[fall-1][1]*N+cul[fall-1][0],fe=cul[fall][1]*N+cul[fall][0],creeks=trib.length?[cul,trib]:[cul];
   const cliffAt=(x,y,nx,ny)=>{const a=y*N+x,b=ny*N+nx;return a===fw&&b===fe||a===fe&&b===fw};
   settleLevels(lv,creeks,cliffAt);
-  lv[fe]=Math.min(lv[fe],lv[fw]-2);settleLevels(lv,creeks,cliffAt,new Set([fw,fe]));
-  const lo=Math.min(...lv);S.lv=lv.map(l=>l-lo);buildTerrain();
+  // the brook runs level above the fall and level below it, a full step lower, and the tributary at the height
+  // where it joins, so once daylit each stretch is one flat body of water; the banks are eased down to it
+  const dmin=Math.min(...cul.slice(fall).map(([cx,cy])=>lv[cy*N+cx])),bed=new Set();
+  cul.forEach(([cx,cy],k)=>{lv[cy*N+cx]=k<fall?dmin+2:dmin;bed.add(cy*N+cx)});
+  if(trib.length){const[jx,jy]=trib[trib.length-1],l=lv[jy*N+jx];for(const[tx,ty]of trib){lv[ty*N+tx]=l;bed.add(ty*N+tx)}}
+  settleLevels(lv,[],cliffAt,bed);
+  const lo=Math.min(...lv);S.lv=lv.map(l=>l-lo);S.fall=[fw,fe];buildTerrain();
   // the city, block by block
   const FARMS=[['pasture','maize'],['rapeseed','wheat'],['wheat','pasture'],['maize','rapeseed']];let farmN=0;
   const names=STREETS.slice();for(let i=names.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[names[i],names[j]]=[names[j],names[i]]}
@@ -5459,7 +5476,11 @@ function boot(state){
   if(!Array.isArray(S.lv)||S.lv.length!==N*N){const v=S.vh0||S.vh;S.lv=[];
     for(let y=0;y<N;y++)for(let x=0;x<N;x++){const k=y*M+x;S.lv.push(Math.round((v[k]+v[k+1]+v[k+M]+v[k+M+1])/4/HS))}
     settleLevels(S.lv,[],()=>false)}
-  buildTerrain();
+  // older saves do not know where the brook's waterfall is: it is the one full step between stream tiles
+  if(!S.fall){S.fall=[-1,-1];const st=i=>S.tiles[i].gd==='water'||S.tiles[i].cul;
+    for(let i=0;i<N*N&&S.fall[0]<0;i++){if(!st(i))continue;const x=i%N,y=(i/N)|0;
+      for(const[dx,dy]of N4){const j=(y+dy)*N+x+dx;if(inb(x+dx,y+dy)&&st(j)&&S.lv[i]-S.lv[j]>=2){S.fall=[i,j];break}}}}
+  levelWater();buildTerrain();
   HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;updateTime();cars=[];parts=[];
   S.rec=S.rec||{};S.ach=S.ach||{};S.fx=S.fx||{};S.fxc=S.fxc||{};
   // effects announced by older versions count as seen
