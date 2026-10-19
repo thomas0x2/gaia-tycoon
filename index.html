@@ -549,7 +549,23 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
   .card canvas{width:48px;height:39px}
   .card .nm{display:none}
   .card .cs{font-size:10.5px}
-  #info:not(.open) #tileInfo .meters{display:none}
+  /* collapsed Survey: rows of four condition icons with a bar each, numbers one tap away */
+  #info:not(.open) #tileInfo .meters{grid-template-columns:repeat(4,1fr);gap:9px 16px}
+  #info:not(.open) .meter label{font-size:0;justify-content:center}
+  #info:not(.open) .meter label span{display:none}
+  #info:not(.open) .meter label::before{content:'';width:15px;height:15px;background:currentColor;-webkit-mask:var(--mi) center/contain no-repeat;mask:var(--mi) center/contain no-repeat}
+  #info:not(.open) .meter .bar{height:3px}
+  #info:not(.open) .tspp .mchip,#info:not(.open) .tspp .mchip img{width:30px;height:25px}
+  #info:not(.open) .meter.moi label{color:var(--water)}#info:not(.open) .meter.lit label{color:#e8d27a}#info:not(.open) .meter.grz label{color:#c8783c}#info:not(.open) .meter.dst label{color:#a8784a}#info:not(.open) .meter.hum label{color:#e05a96}#info:not(.open) .meter.stn label{color:#9a9aaa}#info:not(.open) .meter.tox label{color:var(--smog)}
+  .meter{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%225%22/%3E%3C/svg%3E")}
+  .meter.moi{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203c4%205%206%208%206%2011a6%206%200%200%201-12%200c0-3%202-6%206-11z%22/%3E%3C/svg%3E")}
+  .meter.lit{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%224%22/%3E%3Cpath%20d%3D%22M12%202v2M12%2020v2M2%2012h2M20%2012h2M4.9%204.9l1.4%201.4M17.7%2017.7l1.4%201.4M4.9%2019.1l1.4-1.4M17.7%206.3l1.4-1.4%22/%3E%3C/svg%3E")}
+  .meter.soi{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2020h18%22/%3E%3Cpath%20d%3D%22M4%2016c3-3%2013-3%2016%200%22/%3E%3Cpath%20d%3D%22M12%2013V5%22/%3E%3Cpath%20d%3D%22M12%208c0-2%202-3%204-3%200%202-2%203-4%203z%22/%3E%3C/svg%3E")}
+  .meter.stn{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2019l3-6%205-1%203%203%201%204z%22/%3E%3Cpath%20d%3D%22M14%2019l3-5%203%201%201%204z%22/%3E%3C/svg%3E")}
+  .meter.grz{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2020c1-4%201-8%200-12M9%2020c0-5%201-9%203-13M15%2020c0-4%202-7%205-9%22/%3E%3Cpath%20d%3D%22M2%2020h20%22/%3E%3C/svg%3E")}
+  .meter.dst{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M3%2017l4-4%203%203%204-6%203%204%204-5%22/%3E%3Cpath%20d%3D%22M3%2021h18%22/%3E%3C/svg%3E")}
+  .meter.hum{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%226%22%20r%3D%222.5%22/%3E%3Cpath%20d%3D%22M12%209v6M8%2012h8M12%2015l-3%206M12%2015l3%206%22/%3E%3C/svg%3E")}
+  .meter.tox{--mi:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%203l9%2016H3z%22/%3E%3Cpath%20d%3D%22M12%2010v4M12%2017v.5%22/%3E%3C/svg%3E")}
   .toast{padding:7px 12px;pointer-events:auto;cursor:pointer}
   .toast b{font-size:14px;margin-bottom:0}
   .toast p{font-size:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -4908,8 +4924,6 @@ function updateInfo(){
   if(t.pk&&t.p&&FLORA[t.p.id].pre)notes+=`<p class="note">${FLORA[t.p.id].desc}</p>`;
   {const bb=S.blocks?blockOf(x,y):-1;if(bb>=0){const B=S.blocks[bb];notes+=`<p class="note" style="color:var(--lichen)">${B.name} · ${BT[B.t].name} · ${Math.round((B.pw||0)*100)}% wild${B.w?', rewilded':'; at 70% it counts as rewilded'}</p>`}}
   if(t.cul&&t.gd!=='water')notes+=`<p class="note">Drain grates. A buried stream runs beneath this tile.</p>`;
-  {const ids=[...(t.p&&!FLORA[t.p.id].pre&&!FLORA[t.p.id].crop?[t.p.id]:[]),...new Set(S.an.filter(a=>Math.round(a.x)===x&&Math.round(a.y)===y).map(a=>a.sp))];
-    if(ids.length)notes+=`<p class="note">${ids.map(k=>`<button class="glink" data-enc="${k}">${(FLORA[k]||FAUNA[k]).name} in the field guide ›</button>`).join(' ')}</p>`}
   if(here.length)notes+=`<p class="note" style="color:var(--lichen)">Here: ${[...new Set(here)].join(', ')}</p>`;
   if(t.p&&POLLINATED.has(t.p.id)&&!pollinatedAt(t.p.id,i))notes+=`<p class="note" style="color:#e2b86c">No ${pollNames(t.p.id)} within 4 tiles: ${FLORA[t.p.id].name.toLowerCase()} can’t set seed and spread from here.</p>`;
   if(HERB[i]&&!t.b)notes+=`<p class="note" style="color:var(--bad)">Herbicide drifts here from the farmed fields: plants grow slowly and seedlings die.</p>`;
@@ -4923,8 +4937,10 @@ function updateInfo(){
   if(t.b&&t.b.rp)notes+=`<p class="note" style="color:var(--lichen)">${REP[t.b.k].desc}</p>`;
   else if(t.b&&t.b.k==='flyover')notes+=`<p class="note">${has('reclaim')?`Nature will repurpose this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down${t.b.ivy?` (${Math.round(t.b.ivy*100)}% overgrown)`:''}. Demolishing it by hand still works.`:`Grow Reclamation in the Wood Wide Web and nature will turn this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down.`}</p>`;
   if(t.b&&t.b.k==='factory')notes+=`<p class="note" style="color:var(--smog)">Smokestack. The biggest single source of smog.</p>`;
-  ti.innerHTML=`<div class="tname"><span>${name}</span><span>${x}, ${y} · ${el} m</span></div>
-  <div class="meters">${[['moi','Water',WET[i]],['lit','Light',LIGHT[i]],['','Soil',t.fert],['stn','Stony',stonyOf(t)],['grz','Grazing',grazeOf(i)],['dst','Disturbed',t.ds||0],['hum','People',HUM[i]],['tox','Toxic',t.tox]]
+  // the plant growing here and the animals whose home this is, each a shortcut to its field guide entry
+  const spp=[...(t.p&&!FLORA[t.p.id].pre&&!FLORA[t.p.id].crop?[t.p.id]:[]),...new Set(S.an.filter(a=>a.hx===x&&a.hy===y).map(a=>a.sp))];
+  ti.innerHTML=`<div class="tname"><span>${name}</span><span>${x}, ${y} · ${el} m</span></div>${spp.length?`<div class="tspp">${miniChips(spp)}</div>`:''}
+  <div class="meters">${[['moi','Water',WET[i]],['lit','Light',LIGHT[i]],['soi','Soil',t.fert],['stn','Stony',stonyOf(t)],['grz','Grazing',grazeOf(i)],['dst','Disturbed',t.ds||0],['hum','People',HUM[i]],['tox','Toxic',t.tox]]
     .map(([c,l,v])=>`<div class="meter ${c}"><label>${l}<span>${pct(v)}</span></label><div class="bar"><i style="width:${pct(v)}"></i></div></div>`).join('')}</div>${notes}`;
 }
 function updateTip(px,py){
@@ -5116,7 +5132,8 @@ $('gClose').addEventListener('click',()=>{$('guide').hidden=true});
 $('guide').addEventListener('click',e=>{if(e.target.id==='guide')$('guide').hidden=true});
 $('guide').addEventListener('keydown',e=>{if(e.key==='Escape')$('guide').hidden=true});
 $('gSearch').addEventListener('input',renderGuideNav);
-function setDock(hide){$('dock').classList.toggle('collapsed',hide);$('dockShow').hidden=!hide;ls.set('idle-nature-dock',hide?'1':'0');fitPanels()}
+// with the toolbar tucked away there is nothing to aim, so taps on the map survey
+function setDock(hide){$('dock').classList.toggle('collapsed',hide);if(hide&&tool.type!=='inspect')selectTool({type:'inspect',id:'inspect'});$('dockShow').hidden=!hide;ls.set('idle-nature-dock',hide?'1':'0');fitPanels()}
 $('dockHide').addEventListener('click',()=>setDock(true));$('dockShow').addEventListener('click',()=>setDock(false));
 $('menuNew').addEventListener('click',()=>{if(slots().length<MAX_SLOTS)newCity()});
 $('slotList').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
