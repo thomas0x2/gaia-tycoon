@@ -9,6 +9,7 @@
 //   nan / negative a number on a tile, plant or animal went NaN, infinite or below zero
 //   bad-home       an animal's home has stayed somewhere it cannot live for a long while
 //   stuck          an animal stands where it cannot stand, or sits far outside its range, for a long while
+//   non-local      water cleaned with no plant in it or cleaning plant beside it, or drawn clearer than its own water
 //   runaway        one plant covers three quarters of the unlocked land
 //   error          page errors and console errors
 // The exit code is 1 when anything was flagged, so this can run in CI.
@@ -122,6 +123,14 @@ const BOT = `(()=>{
       const d=Math.max(Math.abs(a.x-a.hx),Math.abs(a.y-a.hy)),farOut=!inHole&&!(a.path&&a.path.length)&&d>F.range+3;h.far=farOut?h.far+1:0;
       if(h.far===6)B.flagIt('stuck','far:'+a.sp,a.sp+' '+d.toFixed(1)+' tiles from home (range '+F.range+') for 6 game hours')}
     for(const id in ah)if(!alive.has(+id))delete ah[id];
+    // cleaning is local: a water tile only gets cleaner with a cleaning plant within 1 tile, and its colour follows its own water
+    const wt=B.wt||(B.wt=new Float32Array(N*N).fill(-1));
+    for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.gd!=='water'||!t.u){wt[i]=-1;continue}const was=wt[i];wt[i]=t.tox;if(was<0||t.tox>=was-.01)continue; // a cleaner that died within the hour leaves a trace, so only a real drop counts
+      const x=i%N,y=(i/N)|0;let cleaner=!!(t.p&&!FLORA[t.p.id].crop); // a plant growing in the water (water-lily) cleans its own tile
+      for(let dy=-1;dy<=1&&!cleaner;dy++)for(let dx=-1;dx<=1;dx++){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const n=T(nx,ny);if(n.p&&EFF[n.p.id]&&EFF[n.p.id].dt){cleaner=true;break}}
+      if(!cleaner)B.flagIt('non-local','water-clean','water at '+x+','+y+' got cleaner ('+was.toFixed(2)+' to '+t.tox.toFixed(2)+') with nothing cleaning it within 1 tile')}
+    {const wc=waterCols();let lo=null,hi=null;for(const t of S.tiles){if(t.gd!=='water'||!t.u)continue;if(!lo||t.tox<lo.tox)lo=t;if(!hi||t.tox>hi.tox)hi=t}
+      if(lo&&hi&&hi.tox-lo.tox>.3&&wc.at&&wc.at(hi).cl>=wc.at(lo).cl)B.flagIt('non-local','water-colour','dirty water ('+hi.tox.toFixed(2)+') is drawn as clear as clean water ('+lo.tox.toFixed(2)+')')}
     // runaway: one plant (all its levels) over most of the land
     let land=0;const pc={};for(const t of S.tiles){if(!t.u||t.gd==='water')continue;land++;if(t.p){const b=bid(t.p.id);pc[b]=(pc[b]||0)+1}}
     row.plants=pc;
