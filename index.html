@@ -583,12 +583,13 @@ body.touring #dock{visibility:hidden}
   #blkStat label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Crect%20x%3D%223%22%20y%3D%223%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%2214%22%20y%3D%223%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%223%22%20y%3D%2214%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3Crect%20x%3D%2214%22%20y%3D%2214%22%20width%3D%227%22%20height%3D%227%22%20rx%3D%221%22/%3E%3C/svg%3E")}
   .stat.seeds label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%2021c-4-3-6-7-6-10a6%206%200%200%201%2012%200c0%203-2%207-6%2010z%22/%3E%3Cpath%20d%3D%22M12%208v8%22/%3E%3C/svg%3E")}
   #stats .stat.keep:nth-child(3) label{--ic:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23000%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M12%207v13%22/%3E%3Cpath%20d%3D%22M12%209C10%205%204%204%203%207s3%207%209%206%22/%3E%3Cpath%20d%3D%22M12%209c2-4%208-5%209-2s-3%207-9%206%22/%3E%3Cpath%20d%3D%22M12%2013c-3%200-6%202-5%205s4%201%205-2M12%2013c3%200%206%202%205%205s-4%201-5-2%22/%3E%3C/svg%3E")}
-  #stats .stat.keep,#stats .stat.keep:first-child,#stats .stat.keep:nth-child(3){flex:0 0 auto;padding:4px 7px;gap:5px}
+  /* the numbers stay only a little bigger than the calendar line above them */
+  #stats .stat.keep,#stats .stat.keep:first-child,#stats .stat.keep:nth-child(3){flex:0 0 auto;padding:1px 5px 3px;gap:4px}
+  #stats .stat span{font-size:13px}
   #stats .stat.keep.seeds{flex:1 0 auto}
   .stat>div{white-space:nowrap;min-width:0}
-  .stat.seeds>div{display:flex;flex-direction:column;line-height:1.05}
-  .stat.seeds small{margin-left:0;font-size:10px}
-  .stat label{width:16px;height:16px}
+  .stat.seeds small{font-size:10px}
+  .stat label{width:14px;height:14px}
   #stats .stat.keep:nth-child(3) small,#sBlkS{display:none}
   #stats .stat.keep:nth-child(3){border-right:0}
   .stat small{margin-left:2px}
