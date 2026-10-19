@@ -828,7 +828,10 @@ button:focus-visible{outline:2px solid var(--lichen);outline-offset:2px}
 'use strict';
 const NB = 8, N = NB*6+1, TW = 64, TH = 32, HW = TW / 2, HH = TH / 2, FL = 9, M = N + 1;
 const KEY = 'idle-nature-save-v1', OLD_KEY = 'gaia-tycoon-save-v2';
-const DAY = 100, SDAYS = 3, YEAR = DAY * SDAYS * 4; // game-seconds per day, days per season
+const DAY = 600, SDAYS = 3, YEAR = DAY * SDAYS * 4; // game-seconds per day, days per season: a 10-minute day, a 30-minute season, a 2-hour year
+// how much slower the calendar runs than it used to (a 20-minute year). Plants and animals keep their pace in real time;
+// what the weather does once a season or once a year (drought damage, fires) is spread over the longer season, so a year does as much as before
+const CAL = YEAR / 1200;
 const cv = document.getElementById('world');
 const ctx = cv.getContext('2d');
 let X = ctx; // current drawing context (swapped when drawing icons)
@@ -1419,7 +1422,7 @@ const LENS=[
   ['stony','Stony','Deep soil to bare stone. Broken roads and rubble leave crushed stone that drains dry and holds few nutrients; pioneer roots and frost wear it down. Grass and hawthorn cannot root above 35%, but heather, broom, pine and birch can.',i=>stonyOf(S.tiles[i]),null,[150,150,165]],
   ['ph','Acidity','Soil pH, from sour (orange, about 4) through neutral (pale, 6.5) to lime-rich (blue, 8). Old parkland on sand starts acid; concrete, mortar and rubble are full of lime, so broken ground and old building sites are lime-rich. Heather and broom need acid soil; orchid grassland and cowslips need lime or at least not acid; earthworms leave soil under pH 5.',i=>(phOf(S.tiles[i])-4)/5,[226,112,54],[70,120,220],[232,222,170]],
   ['graze','Grazing','How hard rabbits, deer and boar browse each tile. Light grazing keeps meadows open and poor; heavy grazing crops them bare and eats every seedling. Hawthorn thorns halve it next door; rabbits keep 3 tiles clear of foxes, deer and boar 5 tiles clear of wolves.',i=>grazeOf(i),null,[200,120,60]],
-  ['dist','Disturbance','Fresh bare earth from unbuilding, fallen trees, boar rooting and rabbit scrapes, healing over about a season. Pioneers and acorns sprout faster on it; beech seedlings struggle.',i=>S.tiles[i].ds||0,null,[170,110,60]],
+  ['dist','Disturbance','Fresh bare earth from unbuilding, fallen trees, boar rooting and rabbit scrapes, healing within about half a day. Pioneers and acorns sprout faster on it; beech seedlings struggle.',i=>S.tiles[i].ds||0,null,[170,110,60]],
   ['human','Human pressure','Standing buildings and busy roads, felt up to 2 tiles away. Deer and herons only settle under 60%, wolves under 40%. Bring buildings down and break up roads to quieten the land.',i=>HUM[i],null,[240,90,150]],
   ['tox','Toxicity','How poisoned the soil is, and where spray drifts from farmed fields. Plants die back on soil too toxic for them; herbicide kills seedlings; insecticide keeps every insect away.',i=>S.tiles[i].tox,null,[230,90,70]],
 ];
@@ -1689,7 +1692,7 @@ function newGame(seed,carry){
   seed = seed ?? (Math.random()*1e9|0);
   const R=rng(seed),tiles=[];
   for(let i=0;i<N*N;i++)tiles.push({gd:'pave',b:null,p:null,tox:.4,fert:.1,cul:false,gr:0,pk:0});
-  S={v:4,seed,tiles,lv:[],vh:[],vh0:[],seeds:150,an:[],unl:{},seen:{},rec:{},peak:0,t:0,demolished:0,dug:0,daylit:0,speed:1,done:{},nid:1,smog:1,E0:1,stage:0,flags:{},clock:DAY*.3,lastSeason:0,dayNight:true,eco:1,res:{weeds:1},myc:0,cities:0};
+  S={v:4,seed,tiles,lv:[],vh:[],vh0:[],seeds:150,an:[],unl:{},seen:{},rec:{},peak:0,t:0,demolished:0,dug:0,daylit:0,speed:1,done:{},nid:1,smog:1,E0:1,stage:0,flags:{},clock:DAY*.3,lastSeason:0,cal:CAL,dayNight:true,eco:1,res:{weeds:1},myc:0,cities:0};
   if(carry){S.myc=carry.myc;S.cities=carry.cities;S.seen={...carry.seen};S.rec={...(carry.rec||{})};S.fx={...(carry.fx||{})};S.ach={...(carry.ach||{})};S.dayNight=carry.dayNight;S.seeds=150+40*S.myc;S.slot=carry.slot}
   S.name=CITY_NAMES[S.cities%CITY_NAMES.length];
   const LAYOUT=genLayout(R);
@@ -2249,7 +2252,7 @@ function levelDown(t,x,y,k,to){
    In a drought summer a fire can break out in dry fuel (old heather, pine, broom, dry grassland) and run from tile to tile.
    Wet ground, water, roads and bare ground stop it. What burns leaves ash: richer soil, disturbed ground where fireweed and
    birch move in first; heather and broom sprout again from the seed in the ground; veteran oaks and old pines survive.
-   S.burning lists the tiles on fire, t.fire how much fuel each has left, t.ash the burnt ground fading over two seasons. */
+   S.burning lists the tiles on fire, t.fire how much fuel each has left, t.ash the burnt ground fading over about a season. */
 const FLAM={heath:.9,heath3:1,pine:.75,pine3:.8,broom:.8,meadowD:.7,meadowO:.6,meadowA:.65,weeds:.5,meadow:.5,meadow2:.45,meadow3:.4,meadow4:.4,meadowR:.35,
   birch:.45,hawthorn:.35,oak:.15,beech:.12,willow:.05,reed:.08,meadowW:.04,meadowF:0,reed3:0,willow2:0};
 const FIRE_CAP=45; // a fire burns at most this many tiles before it dies down
@@ -2259,21 +2262,22 @@ function ignite(i){const t=S.tiles[i];t.fire=1;S.burning.push(i);S.fireN=(S.fire
 function fireTick(){
   if(!S.burning)S.burning=[];const K=TICK_K;
   // a fire breaks out now and then in a drought summer
-  if(!S.burning.length&&WX.dry>.35&&SEA.p>.8&&SEA.p<2.6&&S.t-(S.fireAt||-1e9)>600&&Math.random()<.002*WX.dry*K)
+  if(!S.burning.length&&WX.dry>.35&&SEA.p>.8&&SEA.p<2.6&&S.clock-(S.fireAt||-1e9)>600*CAL&&Math.random()<.002*WX.dry*K/CAL)
     for(let k=0;k<30&&UT.length;k++){const i=UT[(Math.random()*UT.length)|0],t=S.tiles[i];if(flam(t,i)<.5)continue;
-      S.fireAt=S.t;S.fireN=0;ignite(i);const x=i%N,y=(i/N)|0;seeFx('fire:spread',x,y);
+      S.fireAt=S.clock;S.fireN=0;ignite(i);const x=i%N,y=(i/N)|0;seeFx('fire:spread',x,y);
       if(!S.flags.fire){S.flags.fire=1;toast('Wildfire!','A fire has broken out in the drought. It runs through dry heather, pine, broom and grassland, and stops at water, roads and wet ground. Burnt land comes back: watch what moves in.','warn')}
       break}
   if(!S.burning.length)return;
-  const still=[],spread=[];
+  // while catching up, a step stands for many seconds: burn in one-second steps so a fire spreads as it would have
+  for(let n=Math.ceil(K),s=0;s<n&&S.burning.length;s++){const k=K/n,still=[],spread=[];
   for(const i of S.burning){const t=S.tiles[i],x=i%N,y=(i/N)|0;
     // fire jumps to dry fuel next door, more easily the deeper the drought
     if(S.fireN<FIRE_CAP)for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(!inb(nx,ny))continue;const j=ny*N+nx,v=flam(S.tiles[j],j);
-      if(v&&Math.random()<Math.min(.9,v*(.25+WX.dry)*(dx&&dy?.03:.06)*K))spread.push(j)}
-    t.fire-=.04*K;if(t.fire>0)still.push(i);else burnOut(x,y)}
-  S.burning=still;for(const j of spread)if(!S.tiles[j].fire&&S.fireN<FIRE_CAP)ignite(j);
+      if(v&&Math.random()<Math.min(.9,v*(.25+WX.dry)*(dx&&dy?.03:.06)*k))spread.push(j)}
+    t.fire-=.04*k;if(t.fire>0)still.push(i);else burnOut(x,y)}
+  S.burning=still;for(const j of spread)if(!S.tiles[j].fire&&S.fireN<FIRE_CAP)ignite(j)}
   // it has burnt out against ground that would not burn
-  if(!S.burning.length){S.fireAt=S.t;if(S.fireLast)seeFx('fire:out',S.fireLast[0],S.fireLast[1])}
+  if(!S.burning.length){S.fireAt=S.clock;if(S.fireLast)seeFx('fire:out',S.fireLast[0],S.fireLast[1])}
 }
 function burnOut(x,y){
   const t=T(x,y),i=y*N+x;delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);t.ph=Math.min(8,phOf(t)+.3);
@@ -2297,8 +2301,8 @@ function tick0(){
     const t=S.tiles[i];if(!t.u)continue;
     // a fallen trunk rots away in about twenty-five minutes, feeding the soil
     if(t.dw){t.dw=Math.max(0,t.dw-.0007*TICK_K);if(t.fert<1)t.fert=Math.min(1,t.fert+.0006*TICK_K);if(t.dw<=0){delete t.dw;markDirty()}}
-    if(t.ash){t.ash-=.0015*TICK_K;if(t.ash<=0){delete t.ash;markDirty()}}
-    // disturbed ground heals over about a season
+    if(t.ash){t.ash-=.0015*TICK_K/(CAL/2);if(t.ash<=0){delete t.ash;markDirty()}}
+    // disturbed ground heals within about half a day
     if(t.ds){t.ds-=.003*TICK_K;if(t.ds<=0)delete t.ds}
     if(t.p){
       const f=FLORA[t.p.id],x=i%N,y=(i/N)|0;
@@ -2325,9 +2329,9 @@ function tick0(){
         // drought: thirsty plants dry out where the ground holds too little water. Lush meadow on poor soil turns to dry grassland
         const dm=WX.dry>.2?dryMin(t.p.id):0;
         if(dm&&WET[i]<dm){parched++;parchedAt=i+1;if(Math.random()<.004)mark(x,y,'water');
-          if(VBASE[t.p.id]){if(Math.random()<.0015*WX.dry*TICK_K)levelDown(t,x,y,t.p.id,bid(t.p.id)==='meadow'&&t.fert<.45&&has('meadowD')?'meadowD':PARENT[t.p.id])}
-          else if(f.kind==='tree'&&t.p.g>=1){if(Math.random()<.0004*WX.dry*TICK_K){fallTree(x,y,'drought');continue}}
-          else{t.p.g-=.001*WX.dry*TICK_K;if(t.p.g<=.05){t.p={id:'weeds',g:.2};continue}}}
+          if(VBASE[t.p.id]){if(Math.random()<.0015*WX.dry*TICK_K/CAL)levelDown(t,x,y,t.p.id,bid(t.p.id)==='meadow'&&t.fert<.45&&has('meadowD')?'meadowD':PARENT[t.p.id])}
+          else if(f.kind==='tree'&&t.p.g>=1){if(Math.random()<.0004*WX.dry*TICK_K/CAL){fallTree(x,y,'drought');continue}}
+          else{t.p.g-=.001*WX.dry*TICK_K/CAL;if(t.p.g<=.05){t.p={id:'weeds',g:.2};continue}}}
       }
       const g=t.p.g;
       // the work of each stage on the soil
@@ -5089,13 +5093,14 @@ function webFocus(stay){
 
 /* ---------- nature keeps growing while the page is closed or in the background ---------- */
 let QUIET=false,offLog=null,catching=false;
-const OFFLINE_SIM=8*3600,OFFLINE_MAX=24*3600;
+// nature grows in full for the first 12 hours away (six years of seasons), then seeds trickle in at a quarter of the rate up to two days
+const OFFLINE_SIM=12*3600,OFFLINE_MAX=48*3600,OFFLINE_STEPS=1200;
 function summary(){const fl={};for(const k of WILD_FLORA)fl[k]=D.fl[k]||0;return {seeds:S.seeds,fl,fell:S.natFell||0,cracked:S.natCracked||0,carried:S.carried||0,stage:S.stage}}
 function dur(s){s=Math.round(s);if(s<90)return `${s} seconds`;if(s<5400)return `${Math.round(s/60)} minutes`;return `${(s/3600).toFixed(1)} hours`}
 function catchUp(sec,show){
   if(catching||sec<2)return;catching=true;
   const simS=Math.floor(Math.min(sec,OFFLINE_SIM)),extra=Math.max(0,Math.min(sec,OFFLINE_MAX)-simS),before=summary();
-  const K=Math.max(1,Math.ceil(simS/1200)),simT=Math.ceil(simS/K);
+  const K=Math.max(1,Math.ceil(simS/OFFLINE_STEPS)),simT=Math.ceil(simS/K);
   QUIET=true;offLog=[];let done=0;
   if(show){$('away').hidden=false;$('awayBody').innerHTML='<p>Nature has been busy. Catching up…</p>';$('awayBar').style.width='0';$('awayTitle').textContent=`You were away for ${dur(sec)}`;$('awayGo').hidden=true}
   const step=()=>{
@@ -5119,7 +5124,7 @@ function showAway(a,b,extra){
   if(b.fell>a.fell||b.cracked>a.cracked)rows.push(`<li>Nature brought down <b>${b.fell-a.fell}</b> buildings and broke up <b>${b.cracked-a.cracked}</b> tiles of paving</li>`);
   if(b.carried>a.carried)rows.push(`<li>Animals carried seed to <b>${b.carried-a.carried}</b> new spots</li>`);
   for(const m of offLog.filter(m=>m.k==='unlock').slice(-7))rows.push(`<li>${m.t==='Milestone reached'?`Milestone: ${m.b}`:m.t}</li>`);
-  if(extra>60)rows.push(`<li class="dim">Nature grew for the first 8 hours. After that, seeds trickled in at a quarter of the rate, up to 24 hours.</li>`);
+  if(extra>60)rows.push(`<li class="dim">Nature grew for the first ${OFFLINE_SIM/3600} hours. After that, seeds trickled in at a quarter of the rate, up to ${OFFLINE_MAX/3600} hours.</li>`);
   $('awayBody').innerHTML=`<ul>${rows.join('')}</ul>`;$('awayGo').hidden=false;$('awayGo').focus();
 }
 function prestige(){
@@ -5605,7 +5610,7 @@ function updateInfo(){
   if(!t.b&&HUM[i]>=.4)notes+=`<p class="note">Human pressure ${pct(HUM[i])} from the buildings and roads nearby: ${HUM[i]>=.6?'deer, herons and wolves':'wolves'} won’t settle here.</p>`;
   if(t.p&&WX.dry>.2&&dryMin(t.p.id)&&WET[i]<dryMin(t.p.id))notes+=`<p class="note" style="color:#e2b86c">Drought: the ground here holds ${pct(WET[i])} water and ${FLORA[t.p.id].name.toLowerCase()} needs ${pct(dryMin(t.p.id))}. It is drying out.</p>`;
   else if(WX.wet>.2&&!t.b&&t.gd!=='water'&&MO[i]>=.3)notes+=`<p class="note" style="color:#7fb0e6">Wet year: the water is high and floods the ground near its banks.</p>`;
-  if(!t.b&&(t.ds||0)>.1)notes+=`<p class="note">Freshly disturbed ground (${pct(t.ds)}): pioneers and acorns sprout faster here. It heals over a season.</p>`;
+  if(!t.b&&(t.ds||0)>.1)notes+=`<p class="note">Freshly disturbed ground (${pct(t.ds)}): pioneers and acorns sprout faster here. It heals within about half a day.</p>`;
   if(t.p&&FLORA[t.p.id].sps&&t.p.g>.05)notes+=kv([['Earns',`${(FLORA[t.p.id].sps*t.p.g*(FS[i]?1.5:1)).toFixed(3)} seeds/s now`],['Effects',fxText(t.p.id)||'none']]);
   if(t.b&&t.b.rp)notes+=`<p class="note" style="color:var(--lichen)">${REP[t.b.k].desc}</p>`;
   else if(t.b&&t.b.k==='flyover')notes+=`<p class="note">${has('reclaim')?`Nature will repurpose this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down${t.b.ivy?` (${Math.round(t.b.ivy*100)}% overgrown)`:''}. Demolishing it by hand still works.`:`Grow Reclamation in the Wood Wide Web and nature will turn this into a ${REP[t.b.k].name.toLowerCase()} instead of bringing it down.`}</p>`;
@@ -5916,7 +5921,10 @@ function boot(state){
     for(let i=0;i<N*N&&S.fall[0]<0;i++){if(!st(i))continue;const x=i%N,y=(i/N)|0;
       for(const[dx,dy]of N4){const j=(y+dy)*N+x+dx;if(inb(x+dx,y+dy)&&st(j)&&S.lv[i]-S.lv[j]>=2){S.fall=[i,j];break}}}}
   levelWater();buildTerrain();
-  HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;updateTime();cars=[];parts=[];
+  HILL=[...S.vh0].sort((a,b)=>a-b)[Math.floor(S.vh0.length*.78)];if(S.clock==null)S.clock=DAY*.3;
+  // saves from before the slower calendar: keep the same day of the same year
+  if(S.cal!==CAL){S.clock*=CAL/(S.cal||1);S.cal=CAL}
+  updateTime();cars=[];parts=[];
   S.rec=S.rec||{};S.ach=S.ach||{};S.fx=S.fx||{};S.fxc=S.fxc||{};
   // effects announced by older versions count as seen
   for(const[f,k]of [['shaded','shade'],['drowned','drown'],['overgrazed','overgraze'],['browse','browse'],['glade','glade'],['heronreed','reed:heron'],['dam','dam:beaver'],['fled_rabbit','fear:fox'],['fled_deer','fear:wolf'],['fled_boar','fear:wolf'],['fall_age','fall:age'],['fall_storm','fall:storm'],['fall_beaver','fell:beaver'],['fall_drought','fall:drought'],['parched','parch']])if(S.flags&&S.flags[f])S.fx[k]=1;
