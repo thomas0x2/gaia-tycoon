@@ -80,7 +80,8 @@ const BOT = `(()=>{
     // sow: random open soil with a random plant that may go there
     const sowable=Object.keys(FLORA).filter(k=>!VBASE[k]&&has(k)&&!FLORA[k].pre&&!FLORA[k].managed&&!FLORA[k].crop);
     let sown=0;for(let k=0;k<300&&sown<20&&sowable.length;k++){const i=U[B.rnd(U.length)],x=i%N,y=(i/N)|0,t=S.tiles[i];if(t.gd!=='soil'||t.p)continue;
-      const id=sowable[B.rnd(sowable.length)];if(sowRule(id,x,y))continue;tool={type:'sow',id};if(apply(x,y,true))sown++}
+      const id=sowable[B.rnd(sowable.length)];if(sowRule(id,x,y))continue;if(B.poor&&sowCost(id)>.01*S.seeds)continue; // nobody sows a tile for more than a sliver of their savings
+      tool={type:'sow',id};if(apply(x,y,true))sown++}
     // a pond now and then
     if(Math.random()<.3){for(let k=0;k<50;k++){const i=U[B.rnd(U.length)],x=i%N,y=(i/N)|0,t=S.tiles[i];if(t.gd==='soil'&&!t.b&&!t.p){tool={type:'dig',id:'dig'};apply(x,y,true);break}}}
     // release: every species that can be released by hand, where it has habitat, up to what the land can carry
@@ -103,7 +104,8 @@ const BOT = `(()=>{
         n=nests}
       B.maxCount[sp]=Math.max(B.maxCount[sp]||0,n);
       const o=B.ov=B.ov||{};
-      if(n>cap&&n>1){o[sp]=o[sp]||{since:S.clock,max:0};o[sp].max=Math.max(o[sp].max,n/Math.max(cap,1));
+      // a spring litter may sit one or two over the line until the autumn losses: only a clear overshoot counts
+      if(n>cap+1&&n>cap*1.1){o[sp]=o[sp]||{since:S.clock,max:0};o[sp].max=Math.max(o[sp].max,n/Math.max(cap,1));
         if(S.clock-o[sp].since>YEAR/4)B.flagIt('over-cap',sp,sp+': '+n+' living on land that carries '+cap+(sp==='bee'?' colonies':''),{ratio:+o[sp].max.toFixed(2)})}
       else delete o[sp]}
     // numbers that went bad
@@ -166,7 +168,7 @@ if (IDLE) {
     await page.evaluate(d => window.__G(`(__B.day=${d},__B.play(),__B.hour(),__B.play())`), v / VISITS);
     await page.evaluate(g => window.__G(`(catchUp(${g},false),0)`), gap);
     await page.waitForFunction(() => window.__G('!catching'), null, { timeout: 600000, polling: 200 });
-    const s = await page.evaluate(() => window.__G(`(QUIET=true,__B.check(),(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),bio:r.bio,inc:r.inc,own:r.owned,wild:r.wild,seeds:r.seeds,stage:r.stage,an:Object.values(r.an).reduce((a,b)=>a+b,0),flags:Object.keys(__B.flag).length}})())`));
+    const s = await page.evaluate(() => window.__G(`(QUIET=true,__B.wt=null,__B.check(),(()=>{const r=__B.hist[__B.hist.length-1];return {when:__B.when(),bio:r.bio,inc:r.inc,own:r.owned,wild:r.wild,seeds:r.seeds,stage:r.stage,an:Object.values(r.an).reduce((a,b)=>a+b,0),flags:Object.keys(__B.flag).length}})())`));
     if (v % VISITS === 0) console.log(`${s.when}  blocks ${String(s.own).padStart(2)} (${s.wild} wild)  bio ${String(s.bio).padStart(4)}  stage ${s.stage}  income ${s.inc}/s  seeds ${s.seeds}  animals ${s.an}  flags ${s.flags}`);
   }
 }
