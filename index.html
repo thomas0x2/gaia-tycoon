@@ -936,6 +936,9 @@ const FLORA = {
   reed:{name:'Common Reed',latin:'Phragmites australis',stage:2,kind:'herb',grow:.02,yield:.04,absorb:.02,
     desc:'A living filter. Its root zone strips runoff of nutrients and poisons and keeps the water clear.',
     arrive:'Colonises bare soil beside water, spreading along the banks from other reed beds. Once researched, stray seed also arrives slowly on its own.'},
+  lily:{name:'White Water-lily',latin:'Nymphaea alba',stage:2,kind:'aquatic',place:'water',grow:.012,yield:.04,absorb:.012,flower:true,
+    desc:'Floating pads and white flowers on still water. Frogs shelter under the pads. Its dead leaves sink and build up mud, so a pond full of lilies slowly fills in from its edges.',
+    arrive:'Spreads across still water from lilies already growing there. It never takes on the flowing river: it needs a pond, a beaver pond, a boar wallow or a backwater.'},
   hawthorn:{name:'Hawthorn',latin:'Crataegus monogyna',stage:3,kind:'shrub',grow:.008,yield:.06,absorb:.06,flower:true,
     desc:'A thorny thicket, white with blossom in May and red with haws in autumn. Its thorns shelter tree seedlings from browsing animals, so woodland often starts inside scrub.',
     arrive:'Spreads into grown grassland from neighbouring scrub, or is sown further off by berry-eating birds such as thrushes. Grazing rabbits and deer hold it back. Needs soil richness over 35%.'},
@@ -974,7 +977,7 @@ const FLORA = {
   pasture:{name:'Improved Pasture',latin:'Lolium perenne ley',pre:true,managed:'graze',stage:2,kind:'ground',grow:0,yield:.008,absorb:.006,graze:true,clear:3,
     desc:'Reseeded ryegrass, heavily fertilised and grazed short by sheep. Few wildflowers survive.',arrive:''},
 };
-const WILD_FLORA=['weeds','meadow','heath','reed','hawthorn','broom','birch','willow','pine','oak','beech'];
+const WILD_FLORA=['weeds','meadow','heath','reed','lily','hawthorn','broom','birch','willow','pine','oak','beech'];
 const SOWABLE=WILD_FLORA;
 // seeds a second from one fully grown tile, and what else the plant does for the land
 const PLANT_ECON={
@@ -1259,6 +1262,18 @@ const FX={
     text:'An animal you have not reintroduced can find its own way in from the countryside once the Wood Wide Web has opened the way to it and a home is waiting for it. Wolves did just that in Germany: they walked back in from Poland in 2000.'},
   'home:ruin':{sp:['owl'],cause:'home',name:'Ruins become homes',hint:'Watch a ruin nature left standing.',
     text:'A building that nature brings down sometimes leaves its walls standing. An owl pair nests in a ruin as in a tree hole. Buildings pulled down by hand leave only rubble.'},
+  'slug:frog':{sp:['frog','meadow'],cause:'leaf',name:'Froglets eat the slugs',hint:'Watch the grass around a frog pond in summer.',
+    text:'In spring and summer the young frogs walk out of the pond into the grass and eat slugs and snails. Young plants within 2 tiles of a frog’s home grow 40% faster.'},
+  'fish:frog':{sp:['frog','salmon'],cause:'water',name:'Fish eat the spawn',hint:'Watch frogs when salmon share their water.',
+    text:'Salmon eat frog spawn and tadpoles, so frogs only live beside water no salmon swim in. A river full of fish or a pond full of frogs: keep a pond cut off from the river for the frogs.'},
+  'hunt:heron':{sp:['heron','frog'],cause:'water',name:'Herons take frogs',hint:'Watch a frog pond when a heron is about.',
+    text:'Herons stalk the shallows for frogs as well as fish, so a pond never fills up with them. A heron can live on a frog pond alone, with no salmon anywhere near.'},
+  'fill:lily':{sp:['lily','reed'],cause:'water',name:'A pond fills in',hint:'Watch the edges of a pond covered in water-lilies.',
+    text:'Water-lily leaves die back every autumn and sink. The mud builds up along the pond’s edges until reeds take them, ring by ring, and a pond left alone turns to reed bed, fen and willow. Floods scour the mud out again; beavers and wallowing boar make new ponds.'},
+  'wallow:boar':{sp:['boar'],cause:'dig',name:'Boar wallows',hint:'Watch wet ground where wild boar live.',
+    text:'Wild boar roll in mud to cool off and shed ticks. On wet ground their wallow fills with rain and becomes a small pond with no fish in it: a new home for frogs and water-lilies.'},
+  'bank:kingfisher':{sp:['kingfisher','salmon'],cause:'home',name:'A kingfisher’s bank',hint:'Watch the steep, bare banks above clean river water.',
+    text:'Kingfishers dig their nest tunnels into bare, steep earth banks over clean water with fish in it: a step above the river, or a bank a flood has cut. Walled, paved or wooded banks are no use to them.'},
   parch:{sp:['meadow','reed','beech','willow'],cause:'water',name:'The land dries out',hint:'Watch lush meadows and beech in a drought.',
     text:'In a drought, beech, willow, reeds away from the water and lush meadows wither: wet and herb-rich meadow slip back, and on poor soil they turn to dry grassland. Heather, broom, pine and dry grassland hold on. Fen and wet meadow keep the ground around them damp.'},
 };
@@ -1332,6 +1347,15 @@ const STAGE_NAMES=['Bare soil','Pioneer weeds','Grassland','Scrub','Young woodla
 const isWater=t=>t.gd==='water';
 const isFlower=t=>t.p&&FLORA[t.p.id].flower&&t.p.g>=.4;
 const isTree=t=>t.p&&FLORA[t.p.id].kind==='tree'&&t.p.g>=.4;
+// still water: a pond, a beaver pond, a boar wallow or a backwater cut by a flood, not the flowing river
+const stillW=i=>{const t=S.tiles[i];return t.gd==='water'&&(!WCONN[WCOMP[i]]||!!t.bv||!!t.bw||!!t.wal)};
+// the bodies of water salmon live in: their fish eat frog spawn
+let FISHC=new Set();
+const fishFree=(x,y)=>!near(x,y,1,(n,j)=>isWater(n)&&FISHC.has(WCOMP[j]));
+// a steep earth bank over clean fish water: a step above it, or cut by a flood, bare of trees
+const kfBank=(x,y)=>{const t=T(x,y),i=y*N+x;if(!t.u||t.b||t.gd!=='soil'||t.p&&FLORA[t.p.id].kind==='tree')return false;
+  return near(x,y,1,(n,j)=>isWater(n)&&FISHC.has(WCOMP[j])&&n.tox<.2&&(!!t.cb||S.lv[i]>S.lv[j]))>0};
+const FILL_RATE=1/(2.5*YEAR);
 const isGraze=t=>t.p&&FLORA[t.p.id].graze&&t.p.g>=.4;
 const isCrop=t=>t.p&&FLORA[t.p.id].crop;
 /* ---------- standing dead wood and tree holes (homes) ----------
@@ -1371,8 +1395,8 @@ const FAUNA = {
     need:'Water beside it and 2+ reed beds within 2 tiles.',desc:'Breeds in reed-fringed water. The insect boom it signals feeds the songbirds.',
     ok:(x,y)=>near(x,y,1,isWater)>=1&&near(x,y,2,isP('reed'))>=2,cap:()=>1+Math.floor(D.gw.reed/3)},
   frog:{name:'Common Frog',pl:'frogs',latin:'Rana temporaria',mv:'amph',spd:.7,range:2,yield:.18,
-    need:'Water beside it and reeds or grassland within 2 tiles.',desc:'Eats midges and slugs. Spawns in still, shallow water.',
-    ok:(x,y)=>near(x,y,1,isWater)>=1&&near(x,y,2,t=>isP('reed')(t)||isP('meadow')(t))>=1,cap:()=>1+Math.floor((D.gw.reed+D.water)/4)},
+    need:'Fish-free water beside it (no salmon in that pond or stream), and reeds or grassland within 2 tiles.',desc:'Spawns in still, shallow water in early spring. In summer the froglets walk out into the grass around the pond and eat the slugs and snails.',
+    ok:(x,y)=>near(x,y,1,isWater)>=1&&fishFree(x,y)&&near(x,y,2,t=>isP('reed')(t)||isP('meadow')(t))>=1},
   rabbit:{name:'European Rabbit',pl:'rabbits',latin:'Oryctolagus cuniculus',mv:'land',spd:1.3,range:3,yield:.18,
     need:'4+ tiles of grassland, lawn or pasture within 2 tiles.',desc:'Lives in warrens under short turf and grazes at dawn and dusk. Famous for breeding fast.',
     ok:(x,y)=>near(x,y,2,isGraze)>=4,cap:()=>Math.max(1,Math.floor((1+D.grazing/6)*Math.max(.35,1-.12*D.fa.fox)))},
@@ -1389,8 +1413,8 @@ const FAUNA = {
     need:'4+ trees within 3 tiles.',desc:'A noisy, pink-brown crow with blue wing flashes. Each autumn it carries acorns off and buries them for the winter.',
     ok:(x,y)=>near(x,y,3,isTree)>=4,cap:()=>1+Math.floor(D.trees/10)},
   kingfisher:{name:'Kingfisher',pl:'kingfishers',latin:'Alcedo atthis',mv:'fly',reach:8,spd:2.3,range:4,yield:.5,
-    need:'Water beside it, scrub or a tree within 2 tiles, and 2+ trout in the city.',desc:'An indicator species. It only stays where the fish are healthy.',
-    ok:(x,y)=>near(x,y,1,isWater)>=1&&near(x,y,2,isScrubby)>=1&&D.fa.trout>=2,cap:()=>Math.floor(D.fa.trout/2)},
+    need:'A bare, steep earth bank over clean water where salmon live: a step above the water, or a bank cut by a flood, with no tree on it.',desc:'A flash of blue over clean water. It digs its nest tunnel into a bare, steep earth bank and fishes from a perch: walled or paved banks are no use to it.',
+    ok:(x,y)=>kfBank(x,y)},
   fox:{name:'Red Fox',pl:'foxes',latin:'Vulpes vulpes',mv:'land',spd:1.1,range:4,yield:.6,
     need:'3+ scrub or trees within 3 tiles, and 2+ rabbits living within 5.',desc:'A clever hunter of rabbits and voles that dens under scrub. Copes well with people.',
     ok:(x,y)=>near(x,y,3,isScrubby)>=3&&preyNear('rabbit',x,y,5)>=2,cap:()=>Math.floor(D.fa.rabbit/3)},
@@ -1452,8 +1476,8 @@ const FAUNA = {
     need:'3+ trees within 2 tiles, and dead or soft wood within 2: a standing dead tree, a birch, a willow or an old tree.',desc:'Drums on dead branches in spring to claim its wood and digs beetle larvae out of rotten timber with its chisel bill.',
     ok:(x,y)=>near(x,y,2,isTree)>=3&&near(x,y,2,holeWood)>=1,cap:()=>1+Math.floor(D.trees/12)},
   heron:{cls:'bird',name:'Grey Heron',pl:'herons',latin:'Ardea cinerea',mv:'fly',reach:12,spd:1.2,range:4,yield:.5,
-    need:'6+ water tiles within 2, salmon living within 8, and calm banks (human pressure under 60%).',desc:'Stands motionless in the shallows, then strikes. It flies between ponds and rivers, often far from its nest.',
-    ok:(x,y)=>near(x,y,2,isWater)>=6&&preyNear('salmon',x,y,8)>0&&HUM[y*N+x]<.6,cap:()=>1+Math.floor(D.water/12)},
+    need:'6+ water tiles within 2, salmon or frogs living within 8, and calm banks (human pressure under 60%).',desc:'Stands motionless in the shallows, then strikes. It flies between ponds and rivers, often far from its nest.',
+    ok:(x,y)=>near(x,y,2,isWater)>=6&&(preyNear('salmon',x,y,8)>0||preyNear('frog',x,y,8)>0)&&HUM[y*N+x]<.6,cap:()=>1+Math.floor(D.water/12)},
   kestrel:{cls:'bird',name:'Common Kestrel',pl:'kestrels',latin:'Falco tinnunculus',mv:'fly',reach:12,spd:1.8,range:5,yield:.55,
     need:'8+ grassland tiles within 3, and 2+ field voles in the city.',desc:'Hovers into the wind above rough grass, watching for voles. A familiar sight over motorway verges.',
     ok:(x,y)=>near(x,y,3,isGraze)>=8&&D.fa.vole>=2,cap:()=>Math.floor(D.fa.vole/3)},
@@ -1506,8 +1530,8 @@ const FAUNA = {
 for(const[k,c]of Object.entries({bee:'insect',dragonfly:'insect',frog:'water',rabbit:'mammal',hedgehog:'mammal',trout:'water',thrush:'bird',jay:'bird',kingfisher:'bird',fox:'mammal',owl:'bird',deer:'mammal',beaver:'water',wolf:'mammal',bison:'mammal',bat:'mammal',falcon:'bird',barnowl:'bird'}))FAUNA[k].cls=c;
 // parked for now: these return in later waves, each bringing a mechanic of its own (homes, pests and their controllers, fire, invaders)
 const PARKED_FAUNA={};
-for(const k of ['butterfly','moth','beetle','hoverfly','dragonfly','mayfly','stagbeetle','glowworm','skylark','swallow','swift','kingfisher','kestrel','barnowl','falcon','stork',
-  'hedgehog','badger','squirrel','dormouse','marten','lynx','bison','otter','trout','frog','newt','watervole','bat']){PARKED_FAUNA[k]=FAUNA[k];delete FAUNA[k]}
+for(const k of ['butterfly','moth','beetle','hoverfly','dragonfly','mayfly','stagbeetle','glowworm','skylark','swallow','swift','kestrel','barnowl','falcon','stork',
+  'hedgehog','badger','squirrel','dormouse','marten','lynx','bison','otter','trout','newt','watervole','bat']){PARKED_FAUNA[k]=FAUNA[k];delete FAUNA[k]}
 // field voles are a wild arrival: they move into long, ungrazed grass by themselves
 ARRIVE.vole={bio:30};
 const TOOLS = {
@@ -2039,7 +2063,7 @@ function computeNetworks(){TCONN=label(passable,TCOMP);WCONN=label(isWater,WCOMP
 const DIST={birch:new Int16Array(N*N),pine:new Int16Array(N*N),willow:new Int16Array(N*N),oak:new Int16Array(N*N),beech:new Int16Array(N*N),broom:new Int16Array(N*N),heath:new Int16Array(N*N)};
 const BIRD=new Float32Array(N*N),JAY=new Float32Array(N*N),BROWSE=new Float32Array(N*N);
 // fear: prey keep clear of foxes (3 tiles) and wolves (5) · SHEL: how much browsing thorns let through · ACORN: acorns and beechnuts on the ground · BOARF: boar about
-const FOXF=new Uint8Array(N*N),WOLFF=new Uint8Array(N*N),SHEL=new Float32Array(N*N),ACORN=new Float32Array(N*N),BOARF=new Uint8Array(N*N);
+const FROGF=new Uint8Array(N*N),FOXF=new Uint8Array(N*N),WOLFF=new Uint8Array(N*N),SHEL=new Float32Array(N*N),ACORN=new Float32Array(N*N),BOARF=new Uint8Array(N*N);
 const FEAR_OF={rabbit:()=>FOXF,deer:()=>WOLFF,boar:()=>WOLFF};
 const preyNear=(sp,x,y,r)=>{let n=0;for(const b of S.an)if(b.sp===sp&&Math.max(Math.abs(b.hx-x),Math.abs(b.hy-y))<=r)n++;return n};
 const isBerry=t=>!!t.p&&(t.p.id==='hawthorn3'||t.p.id==='hawthorn4')&&t.p.g>=.6;
@@ -2110,7 +2134,7 @@ const CAPS={
   dragonfly:['reed tiles',tilesOf('reed'),15],stagbeetle:['oak tiles',tilesOf('oak'),10],glowworm:['grassland tiles',tilesOf('meadow'),25],
   earthworm:['grown plants',Object.assign(()=>D.grown,{ids:['grown']}),15],salmon:['water tiles',tilesOf('water'),12],
   thrush:['scrub and tree tiles',tilesOf('hawthorn','trees'),30],skylark:['grassland, lawn and pasture tiles',tilesOf('graze'),40],swallow:['water tiles',tilesOf('water'),20],
-  jay:['tree tiles',tilesOf('trees'),50],kingfisher:['brown trout',animals('trout'),4],heron:['water tiles',tilesOf('water'),30],
+  jay:['tree tiles',tilesOf('trees'),50],kingfisher:['salmon',animals('salmon'),3],heron:['water tiles',tilesOf('water'),30],
   woodpecker:['tree tiles',tilesOf('trees'),25],kestrel:['field voles',animals('vole'),4],owl:{what:'tree hole with hunting ground around it (up to a pair for every 15 grassland tiles)',n:()=>Math.min(D.holes||0,Math.floor((D.grazing||0)/15)),each:2},
   falcon:{what:'falcon mast or tower',n:()=>D.rp.nestmast,each:2},barnowl:{what:'owl barn',n:()=>D.rp.owlbarn,each:2},bat:{what:'bat roost',n:()=>D.rp.batroost,each:4},
   swift:{what:'reclaimed structure',n:()=>D.rpN,each:2},stork:['frogs',animals('frog'),4],
@@ -2119,7 +2143,7 @@ const CAPS={
   badger:['forest tiles',tilesOf('forest'),50],deer:['forest tiles',tilesOf('forest'),40,['wolf','each wolf hunting them']],
   squirrel:['pine tiles',tilesOf('pine'),15],dormouse:['hazel tiles',tilesOf('hazel'),6],marten:['forest tiles',tilesOf('forest'),60],
   boar:['forest tiles',tilesOf('forest'),45],wolf:['red deer',animals('deer'),6],lynx:['red deer',animals('deer'),8],bison:['grassland tiles',tilesOf('meadow'),60],
-  beaver:['willow tiles',tilesOf('willow'),15],otter:['brown trout',animals('trout'),6],frog:['reed and water tiles',tilesOf('reed','water'),20],
+  beaver:['willow tiles',tilesOf('willow'),15],otter:['brown trout',animals('trout'),6],frog:['fish-free water and reed tiles (lily pads count double)',Object.assign(()=>{let n=D.gw.reed||0;for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.u&&t.gd==='water'&&!FISHC.has(WCOMP[i]))n+=t.p&&bid(t.p.id)==='lily'?2:1}return n},{ids:['water','reed']}),6],
   trout:['water tiles',tilesOf('water'),40],newt:['water tiles',tilesOf('water'),25],watervole:['reed tiles',tilesOf('reed'),12],
 };
 function capInfo(sp){
@@ -2134,7 +2158,7 @@ const capOf=sp=>capInfo(sp).cap;
 /* ---------- food: a good season feeds more animals, a lean one fewer ----------
    What the land can carry is food, and food moves with the season, the weather and mast years. The cap moves with it:
    animals over it starve, and under it they breed faster the more food each one has. That makes the booms and crashes. */
-const DIET={rabbit:'grass',vole:'grass',deer:'browse',boar:'nuts',jay:'nuts',thrush:'berry',earthworm:'soil',bee:'nectar',
+const DIET={frog:'soil',rabbit:'grass',vole:'grass',deer:'browse',boar:'nuts',jay:'nuts',thrush:'berry',earthworm:'soil',bee:'nectar',
   bison:'grass',skylark:'grass',squirrel:'nuts',dormouse:'nuts',badger:'soil',hedgehog:'soil',butterfly:'nectar',hoverfly:'nectar',moth:'nectar'};
 // how much a mast year feeds each nut eater: boar and jays live on it, deer and voles take a share
 const MAST_EAT={boar:1.8,jay:1.6,squirrel:1.6,dormouse:1.5,vole:1.5,deer:1.3,badger:1.2};
@@ -2161,9 +2185,10 @@ function stamp(arr,cx,cy,r,v){for(let y=Math.max(0,cy-r);y<=Math.min(N-1,cy+r);y
 function addStamp(arr,cx,cy,r,v){for(let y=Math.max(0,cy-r);y<=Math.min(N-1,cy+r);y++)for(let x=Math.max(0,cx-r);x<=Math.min(N-1,cx+r);x++){const i=y*N+x;arr[i]=Math.min(3,arr[i]+v)}}
 function computeFields(){
   for(const k in DIST)distField(DIST[k],k);computeRain();computeConditions();
-  BIRD.fill(0);JAY.fill(0);BROWSE.fill(0);POL.fill(0);HERB.fill(0);INS.fill(0);FOXF.fill(0);WOLFF.fill(0);SHEL.fill(1);ACORN.fill(0);BOARF.fill(0);
+  BIRD.fill(0);JAY.fill(0);BROWSE.fill(0);POL.fill(0);HERB.fill(0);INS.fill(0);FOXF.fill(0);FROGF.fill(0);WOLFF.fill(0);SHEL.fill(1);ACORN.fill(0);BOARF.fill(0);
   for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.p&&FLORA[t.p.id].crop){const x=i%N,y=(i/N)|0;stamp(HERB,x,y,2,1);stamp(INS,x,y,3,1)}}
-  for(const a of S.an){const x=Math.round(a.hx),y=Math.round(a.hy);if(a.sp==='fox')stamp(FOXF,x,y,3,1);else if(a.sp==='wolf')stamp(WOLFF,x,y,5,1);else if(a.sp==='boar')stamp(BOARF,x,y,2,1)}
+  FISHC=new Set(S.an.filter(a=>a.sp==='salmon').map(a=>WCOMP[Math.round(a.hy)*N+Math.round(a.hx)]));
+  for(const a of S.an){const x=Math.round(a.hx),y=Math.round(a.hy);if(a.sp==='frog')stamp(FROGF,x,y,2,1);else if(a.sp==='fox')stamp(FOXF,x,y,3,1);else if(a.sp==='wolf')stamp(WOLFF,x,y,5,1);else if(a.sp==='boar')stamp(BOARF,x,y,2,1)}
   // berry bushes draw in birds, which drop scrub seed nearby; willow catkins feed bees in spring
   BOOST.fill(0);for(const sp of GEN_POLL)POLS[sp].fill(0);
   for(const a of S.an)if(POLS[a.sp]&&a.st!=='hib')stamp(POLS[a.sp],Math.round(a.hx),Math.round(a.hy),4,1);
@@ -2449,7 +2474,9 @@ function tick0(){
       const f=FLORA[t.p.id],x=i%N,y=(i/N)|0;
       if(t.p.g<1&&f.grow){
         let m=f.grow*(1-t.tox*.5)*(.6+t.fert)*(.75+.5*MO[i])*smogF*SEA.grow;
-        if(f.flower&&POL[i])m*=1.3;m*=TGROW[i];if(BOOST[i]&&f.stage===2&&f.kind==='ground'){m*=1.4;fxAdd('boost:meadow',1,150,x,y,.004)}if(HERB[i]&&!f.pre)m*=.4;
+        if(f.flower&&POL[i])m*=1.3;m*=TGROW[i];if(BOOST[i]&&f.stage===2&&f.kind==='ground'){m*=1.4;fxAdd('boost:meadow',1,150,x,y,.004)}
+        // froglets eat the slugs around their pond in spring and summer, so young plants there grow on
+        if(FROGF[i]&&SEA.idx<=1&&t.gd==='soil'&&(f.kind!=='tree'||t.p.g<.4)){m*=1.4;fxAdd('slug:frog',1,150,x,y,.004)}if(HERB[i]&&!f.pre)m*=.4;
         if(SUN_NEED[bid(t.p.id)]&&LIGHT[i]<SUN_NEED[bid(t.p.id)]||WATERLOG[bid(t.p.id)]&&WET[i]>WATERLOG[bid(t.p.id)])m=0;
         if(f.kind==='tree'){if(t.p.g<.4)m*=1-.5*Math.min(1,BROWSE[i]);if(FS[i])m*=1.25}
         if(WX.dry>.05&&!HARDY.has(t.p.id)&&!HARDY.has(bid(t.p.id)))m*=1-.4*WX.dry;
@@ -2510,6 +2537,13 @@ function tick0(){
     else if((a.sp==='boar'&&Math.random()<.05*K)||(a.sp==='rabbit'&&Math.random()<.02*K)){const x=cx+((Math.random()*3)|0)-1,y=cy+((Math.random()*3)|0)-1;
       if(inb(x,y)){const t=T(x,y);if(t.u&&t.gd==='soil'&&!t.b&&(!t.p||FLORA[t.p.id].kind!=='tree')){t.ds=Math.max(t.ds||0,a.sp==='boar'?.7:.35);fxAdd(a.sp==='boar'?'root:boar':'scrape:rabbit',1,a.sp==='boar'?15:25,x,y,.3);
         if(a.sp==='boar'&&t.p&&t.p.g>.3&&FLORA[t.p.id].stage===2)t.p.g=Math.max(.3,t.p.g-.2)}}}
+    if(a.sp==='kingfisher')fxAdd('bank:kingfisher',1,40,cx,cy,.004);
+    // herons take frogs from the shallows, so a pond never fills with them
+    if(a.sp==='heron'&&(D.fa.frog||0)>2&&Math.random()<.0015*K){const f=S.an.find(b=>b.sp==='frog'&&!eaten.includes(b)&&Math.max(Math.abs(b.hx-cx),Math.abs(b.hy-cy))<=6);if(f){eaten.push(f);fxAdd('hunt:heron',1,2,f.hx,f.hy)}}
+    // boar wallow in wet ground; the wallow fills with rain into a little pond with no fish in it
+    if(a.sp==='boar'&&Math.random()<.0004*K/CAL){const x=cx+((Math.random()*3)|0)-1,y=cy+((Math.random()*3)|0)-1;
+      if(inb(x,y)){const t=T(x,y);if(t.u&&t.gd==='soil'&&!t.b&&WET[y*N+x]>.6&&(!t.p||FLORA[t.p.id].kind!=='tree')&&!near(x,y,1,isWater)&&S.tiles.filter(q=>q.wal).length<8){
+        makeWater(x,y);t.wal=1;computeMoist();seeFx('wallow:boar',x,y);if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy,'splash',8)}}}}
     if(a.sp==='rabbit'||a.sp==='deer'||a.sp==='boar'){const t=T(cx,cy);if(t.gd==='soil'){const cap=soilCap(t,cx,cy);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.0004*K)}}
     if(a.sp==='salmon'&&SEA.idx===2){fxAdd('feed:salmon',1,40,cx,cy,.05);for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const x=cx+dx,y=cy+dy;if(!inb(x,y))continue;const t=T(x,y);if(t.gd!=='soil')continue;
       const cap=soilCap(t,x,y);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.0005*(Math.max(Math.abs(dx),Math.abs(dy))<=1?1:.5)*K)}}
@@ -2602,6 +2636,15 @@ function tick0(){
       delete w.bv;delete w.snag;delete w.ho;w.gd='soil';w.fert=Math.max(w.fert,.6);w.tox=Math.min(w.tox,.1);w.p={id:has('meadow')?'meadow':'weeds',g:.3};k++}
     buildTerrain();computeMoist();markDirty();if(k)seeFx('meadow:beaver',x,y)}
   if(flooded){computeMoist();seeFx('dam:beaver',flooded[0],flooded[1])}
+  // water-lilies spread across still water, and their dead leaves build up mud along the pond's edges until reeds take the bank:
+  // a pond fills in ring by ring, and only beavers, boar and floods make new ones
+  if(S.t%5===0){let filled=null;const K5=5*TICK_K;
+    for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.gd!=='water'||!t.u||!t.p||bid(t.p.id)!=='lily')continue;const x=i%N,y=(i/N)|0;
+      if(t.p.g>=.6&&Math.random()<.0008*K5){const[dx,dy]=N4[(Math.random()*4)|0],nx=x+dx,ny=y+dy;if(inb(nx,ny)){const j=ny*N+nx,n=S.tiles[j];if(n.u&&stillW(j)&&!n.p){n.p={id:'lily',g:.1};markDirty()}}}
+      if(!stillW(i)||!near(x,y,1,n=>n.gd!=='water'))continue;
+      t.fill=(t.fill||0)+FILL_RATE*K5*(.4+.6*t.p.g);
+      if(t.fill>=1){unWater(x,y);t.p={id:has('reed')?'reed':'weeds',g:.5};t.fert=Math.max(t.fert||0,.7);delete t.fill;delete t.wal;delete t.bw;t.ds=.2;filled=[x,y];markDirty()}}
+    if(filled){computeMoist();seeFx('fill:lily',filled[0],filled[1])}}
   naturalForces();
   computeDerived();
   if(S.t%3===0){habitatCheck();colonise()}
@@ -2691,7 +2734,8 @@ function habitatCheck(){
   for(const a of S.an)if(a.sp==='beaver'&&!a.lodge){for(let r=0;r<=2&&!a.lodge;r++)for(let dy=-r;dy<=r&&!a.lodge;dy++)for(let dx=-r;dx<=r;dx++){const x=a.hx+dx,y=a.hy+dy;if(inb(x,y)&&T(x,y).gd==='water'){T(x,y).lodge=1;a.lodge=1;markDirty();break}}}
   const fled=[],roamed=[];
   for(const a of S.an){a.hx=Math.round(a.hx);a.hy=Math.round(a.hy);if(!homeOk(a.sp,a.hx,a.hy)){const h=nearHome(a);if(h){a.hx=h[0];a.hy=h[1]}}}
-  for(const a of S.an){const F=FAUNA[a.sp];if(a.st==='hib'||a.sp==='bee'&&SEA.p<1&&earlyNectar(a.hx,a.hy))continue; // a queen founding her nest lives on early nectar
+  for(const a of S.an){const F=FAUNA[a.sp];if(a.st==='hib'||a.sp==='bee'&&SEA.p<1&&earlyNectar(a.hx,a.hy))continue;
+    if(a.sp==='frog'&&!fishFree(a.hx,a.hy))seeFx('fish:frog',a.hx,a.hy); // a queen founding her nest lives on early nectar
     // a rabbit with a fox den close by, or deer and boar with a wolf pack, move their home out of its reach
     const fear=FEAR_OF[a.sp];if(fear&&fear()[a.hy*N+a.hx]&&Math.random()<.2){const h=pickHome(a,F,F.range+2);if(h&&!fear()[h[1]*N+h[0]]){a.hx=h[0];a.hy=h[1];a.bad=0;fled.push(a);continue}}
     if(habOk(a.sp,a.hx,a.hy)&&canStand(F.mv,T(a.hx,a.hy))&&(a.sp!=='owl'||holeUsers(a.hx,a.hy)<=2*holesAt(T(a.hx,a.hy)))){a.bad=0;a.rel=0;
@@ -2989,10 +3033,14 @@ function floodAfter(f){
     if(Math.random()<.35){t.p=null;t.ds=1;t.stony=Math.max(t.stony||0,.45);t.fb=1;bars++}
     else if(Math.random()<.15)cand.push([x,y])}
   for(const[x,y]of cand){if(chan>=3)break;const t=T(x,y),lw=near(x,y,1,(n,j)=>isWater(n)&&S.lv[j]===S.lv[y*N+x]);if(!lw||t.gd!=='soil')continue;
-    makeWater(x,y);chan++}
+    makeWater(x,y);t.bw=1;chan++}
+  // the flood scours the mud out of the ponds and cuts steep earth banks into the river's outer edges
+  let cut=0;for(const t of S.tiles)if(t.gd==='water'&&t.fill)t.fill*=.2;
+  for(const[i]of f.t){const t=S.tiles[i],x=i%N,y=(i/N)|0;if(cut>=4||!t.u||t.gd!=='soil'||t.b||t.fb||t.p&&FLORA[t.p.id].kind==='tree')continue;
+    if(near(x,y,1,(n,j)=>isWater(n)&&WCONN[WCOMP[j]])&&Math.random()<.15){t.cb=1;t.p=null;t.ds=1;cut++}}
   if(chan||bars){buildTerrain();computeMoist()}
   computeDerived();markDirty();
-  toast('The flood has gone down',`The water left rich silt on the valley floor${drowned?`, and ${plural(drowned,'tree')} that could not stand the flood died`:''}${bars?`. It scoured ${plural(bars,'bank')} down to bare gravel`:''}${chan?`, and cut ${chan>1?'new backwaters':'a new backwater'} into the bank`:''}.`,'unlock')}
+  toast('The flood has gone down',`The water left rich silt on the valley floor${drowned?`, and ${plural(drowned,'tree')} that could not stand the flood died`:''}${bars?`. It scoured ${plural(bars,'bank')} down to bare gravel`:''}${chan?`, and cut ${chan>1?'new backwaters':'a new backwater'} into the bank`:''}${cut?`. It undercut ${plural(cut,'stretch','stretches')} of the river bank into steep earth`:''}.`,'unlock')}
 // wildlife coming back by itself: a species you have not reintroduced walks or flies in from the countryside once its home
 // is ready and the city has opened the way to it, the way wolves came back to Germany in 2000
 function returning(){
@@ -3162,6 +3210,10 @@ function comingSoon(){
   if(fuel.length>=6){const thisYear=WX.type==='drought'&&SEA.p<2.6,nextYear=yearType(Math.floor(WX.n/4)+1)==='drought';
     if(thisYear||nextYear){const i=fuel[(fuel.length/2)|0];out.push({key:'fire',x:i%N,y:(i/N)|0,cause:'fire',title:'Fire weather ahead',pri:3,
       dt:thisYear?Math.max(0,.8-SEA.p)*SLEN:(4-SEA.p+.8)*SLEN,text:`A drought summer is coming. The city has ${fuel.length} tiles of dry heather, broom and pine that could catch fire.`})}}
+  // a pond edge about to turn to reeds
+  for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.gd!=='water'||!t.fill||t.fill<.85||!t.u)continue;const x=i%N,y=(i/N)|0;
+    keep({key:'fill',x,y,cause:'water',title:S.fx['fill:lily']?'A pond is filling in':'Mud under the lilies',pri:1,dt:(1-t.fill)/FILL_RATE,
+      text:S.fx['fill:lily']?'Mud under the water-lilies has nearly filled this edge of the pond. Reeds will take it next.':'Something is building up under the water-lilies here.'})}
   // a great storm or flood on its way
   {const ds=eventAhead('storm',SLEN*.5);if(ds!=null){const y=Math.floor((S.clock+ds)/YEAR),d=stormTrack(y);let best=null,bd=1e9;
       for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u||!isTree(t))continue;const v=d(i%N,(i/N)|0);if(v<bd){bd=v;best=i}}
@@ -4291,6 +4343,7 @@ function drawRuin(t,x,y){const z=Math.min(...corners(x,y)),H=ruinH(t),ivy=.45+.5
     for(let i=0;i<9;i++){const u=-.4+.8*hash(x+w,y,i+130),h=H*hash(y,x+w,i+130)*ivy,[px,py]=P(u,h);ell(px,py,2.6,1.9,i%3?'#3f6e34':'#55883e')}}}
 function drawGroundExtras(t,x,y){
   if(FLD[y*N+x]>.02&&t.gd!=='water')drawFlood(x,y,FLD[y*N+x]);
+  if(t.gd==='water'&&t.fill>.3){X.globalAlpha=Math.min(.55,(t.fill-.3)*.8);poly(quad(x,y,.5),'#7d8550');X.globalAlpha=1}
   if(t.ash&&!t.b&&t.gd==='soil')drawAsh(t,x,y);
   if(t.ru&&!t.b)drawRuin(t,x,y);
   if(t.dw&&!t.b&&t.gd==='soil')drawDeadwood(t,x,y);
@@ -4558,7 +4611,7 @@ const markDirty=()=>{if(IN_TICK)softDirty=true;else worldDirty=true};
    where they live. Like plants and animals, homes draw from sheets in sprites/homes/ when there is one:
    a row for each season, a column for each look (the heron's nest in a tree or in the reeds). */
 // when each species rests: 'day' for the night and dusk animals, 'night' for the day animals
-const SLEEP={earthworm:'day',bee:'night',rabbit:'day',thrush:'night',jay:'night',fox:'day',heron:'night',deer:'day',beaver:'day',boar:'day',wolf:'day',owl:'day',woodpecker:'night'};
+const SLEEP={earthworm:'day',bee:'night',rabbit:'day',thrush:'night',jay:'night',fox:'day',heron:'night',deer:'day',beaver:'day',boar:'day',wolf:'day',owl:'day',woodpecker:'night',frog:'day',kingfisher:'night'};
 const sleepy=a=>{const k=SLEEP[a.sp];if(!k)return false;const p=((S.clock||0)/DAY+hash(a.id,3,9)*.05)%1;return k==='day'?p>.3&&p<.7:p>.86||p<.16};
 // how high a nest sits: where the trunk meets the crown, or on top of the crown for the herons
 const TREE_H={birch:[10,24],willow:[6,13],oak:[6,12],pine:[10,26],beech:[8,12]};
@@ -4604,6 +4657,14 @@ const HOME_ART={
     ell(sx+.5,sy+.5,2,2.4,'#e8d2a4');ell(sx+.5,sy,1.4,1.7,'#140e08');circ(sx-.6,sy+3.2,.5,'#e8d2a4');circ(sx+1.4,sy+4,.45,'#d8bf8c')}},
   owl:{name:'Owl hole',nest:1,hole:1,draw(sx,sy,x,y,v){ // a wide, dark hollow with a grey rim worn smooth
     ell(sx,sy+.3,3.4,3.8,'#5d554a');ell(sx,sy,2.4,2.9,'#0e0a06')}},
+  frog:{name:'Frog spawn',season:()=>SEA.idx===0||SEA.idx===1&&SEA.p<1.4,draw(sx,sy,x,y,v){ // clumps of spawn in the shallows in early spring, tadpoles after
+    let w=null;for(const[dx,dy]of[[0,0],...N4])if(inb(x+dx,y+dy)&&T(x+dx,y+dy).gd==='water'){w=[dx,dy];break}if(!w)return;
+    const[px,py]=isoG(x+w[0]*.55,y+w[1]*.55);
+    if(SEA.idx===0)for(let k=0;k<2;k++){const ox=(k-.5)*7,oy=k*2;ell(px+ox,py+oy,4.2,2,'rgba(226,236,224,.8)');for(let j=0;j<7;j++)circ(px+ox+(hash(x,j,k)-.5)*6,py+oy+(hash(j,y,k)-.5)*2.6,.45,'#1a1a14')}
+    else for(let j=0;j<9;j++){const ex=px+(hash(x,j,7)-.5)*12,ey=py+(hash(j,y,7)-.5)*5;ell(ex,ey,.9,.6,'#20201a');seg(ex+.8,ey,ex+2.2,ey+.4*Math.sin(time*6+j),'#20201a',.5)}}},
+  kingfisher:{name:'Kingfisher tunnel',draw(sx,sy,x,y,v){ // a round tunnel mouth in the bank face over the water, a white splash of droppings below it
+    let w=null;for(const[dx,dy]of N4)if(inb(x+dx,y+dy)&&T(x+dx,y+dy).gd==='water'){w=[dx,dy];break}if(!w)return;
+    const[px,py]=iso(x+w[0]*.46,y+w[1]*.46,hAt(x,y)-3);ell(px,py+2.4,1.6,2.4,'rgba(240,238,228,.8)');ell(px,py,2.4,2.1,'#6e5236');ell(px,py,1.6,1.5,'#120c08')}},
   salmon:{name:'Salmon redds',season:()=>SEA.idx>=2,draw(sx,sy,x,y,v){ // gravel nests cut in the stream bed, from autumn until the fry hatch
     for(const[dx,dy]of[[-5,-1],[5,1.6]]){ell(sx+dx,sy+dy,6,2.4,'rgba(214,196,150,.7)');for(let k=0;k<6;k++)circ(sx+dx+(hash(x,k,dx)-.5)*9,sy+dy+(hash(k,y,dx)-.5)*3,.6,'rgba(150,132,100,.8)')}}},
 };
@@ -4980,6 +5041,9 @@ const RES={
   weeds:{g:'plant',cost:0},
   meadow:{g:'plant',req:['weeds'],cost:30},
   reed:{g:'plant',req:['weeds'],cost:60,bio:20},
+  lily:{g:'plant',req:['reed'],cost:180,bio:50},
+  frog:{g:'animal',req:['reed'],cost:400,bio:80},
+  kingfisher:{g:'animal',req:['salmon'],cost:1300,bio:220},
   heath:{g:'plant',req:['meadow'],cost:150,bio:40},
   hawthorn:{g:'plant',req:['meadow'],cost:120,bio:45},
   broom:{g:'plant',req:['heath'],cost:250,bio:70},
@@ -5128,6 +5192,11 @@ function animalMechanics(sp){const F=FAUNA[sp],out=[];
   if(sp==='woodpecker')out.push(fxLine('hole:woodpecker','<b>Home maker.</b> Each spring it carves a nest hole into a standing dead tree, a birch, a willow or an old tree within 2 tiles, and nests in it. Holes stay after it moves on (2 to a living tree, 3 to a dead one) until the tree comes down.'));
   if(sp==='owl'){out.push(fxLine('home:owl','<b>Needs a hole.</b> It can only live in a free tree hole: an old woodpecker hole, or the hollow of an old oak or beech. One pair to each hole.'));
     out.push(fxLine('hunt:owl','<b>Vole hunter.</b> Hunts the voles within 3 tiles of its hole at night.'))}
+  if(sp==='frog'){out.push(fxLine('slug:frog','<b>Slug eater.</b> In spring and summer its froglets eat the slugs in the grass within 2 tiles of its home, so young plants there grow 40% faster.'));
+    out.push(fxLine('fish:frog','<b>No fish.</b> Salmon eat its spawn: it only lives beside water no salmon swim in.'))}
+  if(sp==='heron')out.push(fxLine('hunt:heron','<b>Frog hunter.</b> Takes frogs within 6 tiles of its nest, and can live on a frog pond with no salmon about.'));
+  if(sp==='boar')out.push(fxLine('wallow:boar','<b>Wallows.</b> On wet ground its wallow fills with rain and becomes a small fish-free pond.'));
+  if(sp==='kingfisher')out.push(fxLine('bank:kingfisher','<b>Bank nester.</b> Digs its tunnel into a bare, steep earth bank over clean water where salmon live. Floods cut new banks.'));
   if(sp==='vole')out.push(fxLine('gnaw:vole','<b>Bark gnawer.</b> In winter it gnaws young trees and scrub within 1 tile of its runs.'));
   if(DIET[sp]){const w={grass:'grass',browse:'leaves, shoots and grass',nuts:'acorns, beechnuts and seeds',berry:'berries and worms',soil:'worms and soil life',nectar:'nectar'}[DIET[sp]];
     out.push(fxLine('lean',`<b>Eats ${w}.</b> How many the land can carry moves with that food: ${DIET[sp]==='soil'||DIET[sp]==='nectar'?'fewer':'fewer in winter and'} in a drought${DIET[sp]==='grass'||DIET[sp]==='soil'?', more in a wet year':''}${DIET[sp]==='nuts'||DIET[sp]==='berry'?', more in autumn':''}. Under that they breed faster the more food each one has.`))}
@@ -5262,8 +5331,8 @@ function naturalForces(){
 }
 
 /* ---------- sowing by hand ---------- */
-const SOW_COST={weeds:5,meadow:15,heath:30,reed:20,hawthorn:35,broom:35,birch:60,willow:70,pine:90,oak:160,beech:260};
-const SOW_NEED={weeds:'any bare soil.',meadow:'soil under 55% toxicity with 22%+ richness.',heath:'poor, acid soil (richness under 45%, pH 6 or lower), under 60% toxicity. It roots in stony ground too.',reed:'soil beside water, under 80% toxicity.',hawthorn:'soil under 45% toxicity with 35%+ richness.',
+const SOW_COST={weeds:5,meadow:15,heath:30,reed:20,lily:40,hawthorn:35,broom:35,birch:60,willow:70,pine:90,oak:160,beech:260};
+const SOW_NEED={lily:'still open water: a pond, a beaver pond or a backwater, not the flowing river.',weeds:'any bare soil.',meadow:'soil under 55% toxicity with 22%+ richness.',heath:'poor, acid soil (richness under 45%, pH 6 or lower), under 60% toxicity. It roots in stony ground too.',reed:'soil beside water, under 80% toxicity.',hawthorn:'soil under 45% toxicity with 35%+ richness.',
   broom:'acid soil (pH 6.8 or lower) under 60% toxicity with richness under 55%. It roots in stony ground too.',birch:'soil under 60% toxicity with 40%+ richness. It roots in stony ground too.',willow:'soil within 2 tiles of water with 40%+ richness.',pine:'soil under 50% toxicity. It roots in stony ground too.',oak:'clean soil (under 30% toxicity) with 50%+ richness.',beech:'clean soil (under 30% toxicity) with 55%+ richness and pH 5 or more that never waterlogs.'};
 // [most toxicity it stands, least soil richness it needs, most richness it stands]
 // [lowest pH it stands, highest]: heather and broom need acid soil, beech fails on the sourest sand
@@ -5281,7 +5350,9 @@ function sowRule(id,x,y){
   if(!has(id))return `Grow ${f.name} in the Wood Wide Web first.`;
   if(!t.u)return 'Locked city block.';
   if(t.b)return 'A building stands here. Demolish it first.';
-  if(t.gd!=='soil')return t.gd==='water'?'Open water: nothing can be sown here.':`Break up the ${GNAME[t.gd]} first.`;
+  if(bid(id)==='lily'){if(t.gd!=='water')return `${f.name} grows on open water: sow it on a pond.`;if(!stillW(y*N+x))return `${f.name} needs still water: a pond, a beaver pond or a backwater, not the flowing river.`;
+    return t.p?`${FLORA[t.p.id].name} already grows here.`:''}
+  if(t.gd!=='soil')return t.gd==='water'?'Open water: only water-lilies can be sown here, on still water.':`Break up the ${GNAME[t.gd]} first.`;
   if(t.p){const g=FLORA[t.p.id];if(g.managed||g.pre)return `${g.name} grows here. Unbuild it first.`;if(bid(t.p.id)===id)return `${g.name} already grows here${VBASE[t.p.id]?`, a higher level of ${f.name.toLowerCase()}`:''}.`}
   const b0=bid(id);
   if(b0==='reed'&&!near(x,y,1,isWater))return `${f.name} must stand beside water.`;
@@ -5712,6 +5783,12 @@ const CASCADES=[
   {id:'c_flood',name:'The River Remakes Its Valley',sp:['willow','reed'],steps:['flood:great','bar:flood'],r:1500,bio:20,
     hint:'A wet spring, a river with room to spread, and the banks after it.',
     about:'The river burst its banks and spread over the valley floor. When it went down it left silt on the fields and scoured bare gravel along the banks, and willow and reeds seeded into it first. A river that may flood keeps remaking its own floodplain: fresh ground for pioneers, rich soil for meadows.'},
+  {id:'c_pond',name:'Pond or River',sp:['frog','salmon','heron'],steps:['slug:frog','fish:frog'],r:1200,bio:18,
+    hint:'Two kinds of water, and the animals that cannot share one.',
+    about:'Frogs greened the grass around their pond by eating its slugs, but where salmon swam in, the fish ate the spawn and the frogs were gone. A river for fish and a pond for frogs: each needs its own water.'},
+  {id:'c_ponds',name:'Ponds Grow Old',sp:['lily','reed','boar','beaver'],steps:['fill:lily',['wallow:boar','dam:beaver','flood:great']],r:1500,bio:20,
+    hint:'Lilies on still water, and the animals and floods that dig new ponds.',
+    about:'Water-lilies filled a pond with mud until reeds took its edges. No pond lasts: new ones come from beavers damming a creek, boar wallowing in wet ground and floods cutting backwaters. A wetland is ponds of every age.'},
   {id:'c_holes',name:'Holes in the Wood',sp:['woodpecker','owl','vole'],steps:['hole:woodpecker','home:owl','hunt:owl'],r:1500,bio:20,
     hint:'A bird that carves, a bird that cannot, and what it hunts in the long grass.',
     about:'A woodpecker carved nest holes in dead and soft wood. An owl moved into one, and at night it hunted the voles that gnaw young trees in the long grass. Dead and old trees are homes: a tidy wood has no owls.'},
@@ -6132,6 +6209,10 @@ function updateInfo(){
   if(t.ru)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89c86;font-weight:600">Ivy ruin.</b> The walls of an old ${t.ruk&&['house','terrace','shop','farm','factory','warehouse','office','block'].includes(t.ruk)?{house:'house',terrace:'terrace',shop:'shop',farm:'farmhouse',factory:'factory',warehouse:'warehouse',office:'office block',block:'block of flats'}[t.ruk]:'building'}, roofless and wrapped in ivy.${S.fx['home:ruin']?' An owl pair can nest in it.':''}</p>`;
   if(t.rt)notes+=`<p class="note">A storm threw the tree here and tore up its root plate: a pit of bare earth${S.fx['pit:storm']?' where birch and willowherb sprout first':''}.</p>`;
   if(t.fb)notes+=`<p class="note">The flood scoured this bank down to bare gravel.</p>`;
+  if(t.cb)notes+=`<p class="note">A flood undercut this bank into a steep earth face.${S.fx['bank:kingfisher']?' Kingfishers dig their tunnels into banks like this over clean fish water.':''}</p>`;
+  if(t.gd==='water'&&t.fill>.05)notes+=`<p class="note" style="color:#a8b070">Mud is building up under the lilies: this edge of the pond is ${pct(Math.min(1,t.fill))} filled in.</p>`;
+  if(t.gd==='water'&&!stillW(i)&&has('lily'))notes+=`<p class="note">Flowing river: water-lilies only grow on still water.</p>`;
+  else if(t.gd==='water'&&FISHC.has(WCOMP[i])&&has('frog'))notes+=`<p class="note">Salmon swim here, so frogs cannot spawn in this water.</p>`;
   if(MAST.fall&&t.p&&t.p.g>=.8&&(bid(t.p.id)==='oak'||bid(t.p.id)==='beech'))notes+=`<p class="note" style="color:#c8a060">A mast year: the ground is thick with ${bid(t.p.id)==='oak'?'acorns':'beechnuts'}.</p>`;
   if(t.sn)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89c86;font-weight:600">Standing dead tree.</b> It died where it stood and will come down in time (${Math.round(t.sn*100)}% left), then lie rotting here.</p>`;
   {const h=holesAt(t);if(h){const o=holeUsers(x,y),w=S.an.filter(a=>a.sp==='woodpecker'&&a.hx===x&&a.hy===y).length,used=Math.min(h,Math.ceil(o/2)+w);
