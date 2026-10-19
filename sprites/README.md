@@ -9,6 +9,7 @@ sprites/
   sprites.js        the list of sheets the game loads, with each sheet's frame size and anchor
   plants/<id>.png   one sheet per plant and plant level (oak.png, oak2.png, meadow3.png …)
   animals/<id>.png  one sheet per animal (fox.png, heron.png …)
+  homes/<id>.png    one sheet per animal home, named for its animal (fox.png is the fox earth)
   buildings/<look>.png  one sheet per building look (house-2-1-r3.png, tower-0-12.png …)
   textures/<surface>.png  optional ground and water textures you draw yourself (soil.png, water.png …)
 ```
@@ -43,6 +44,15 @@ Keep each frame the size given in `sprites.js`, or change `w` and `h` there to m
 - Frames run left to right through one loop of the animal's stride or wingbeat. The game plays the loop at a speed set by
   `omega` in `sprites.js` (radians per second: one loop takes 2π/omega seconds), whatever the number of frames.
 - Animals face **right**; the game mirrors them when they walk left.
+
+## Home sheets
+
+The warrens, dens, nests and wallows drawn on an animal's home tile.
+
+- **Rows are the seasons**: spring, summer, autumn, winter (the thrush nest has eggs in spring). One row is used all year.
+- **Columns are looks**: the heron's nest has two, high in a tree and out in the reeds. The others have one.
+- The anchor is the spot on the ground (or the branch, for nests) where the home sits. Re-bake one with
+  `npm run sprites -- home-fox`.
 
 ## Building sheets
 

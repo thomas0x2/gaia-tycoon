@@ -1,9 +1,10 @@
-// Bakes the code-drawn plants, animals and buildings of index.html into PNG sprite sheets in sprites/,
+// Bakes the code-drawn plants, animals, animal homes and buildings of index.html into PNG sprite sheets in sprites/,
 // lists any ground and water textures found in sprites/textures/, and writes sprites/sprites.js,
 // the list the game loads them from.
 //
 //   npm run sprites                  bake every species that has no sheet yet
 //   npm run sprites -- oak fox       bake (or re-bake) just these, replacing their sheets
+//   npm run sprites -- home-fox      the same for an animal's home (the fox earth)
 //   npm run sprites -- house         a building kind re-bakes every look of it (house-2-1-r3 …)
 //   npm run sprites -- --force       re-bake everything, replacing every sheet
 //   npm run sprites -- --scale=4     pixels per game unit (default 3)
@@ -37,16 +38,16 @@ await page.waitForFunction(() => window.bakeSprites, null, { timeout: 30000 });
 const baked = await page.evaluate(o => window.bakeSprites(o), { scale, only: only.length ? only : null });
 await browser.close();
 
-const KINDS = ['plants', 'animals', 'buildings'];
+const KINDS = ['plants', 'animals', 'homes', 'buildings'];
 const list = { v: old.v, textures: {} };
 for (const kind of KINDS) list[kind] = { ...old[kind] };
 const counts = { written: 0, kept: 0 };
-const named = id => only.includes(id) || only.includes(id.split('-')[0]);
+const named = (kind, id) => kind === 'homes' ? only.includes('home-' + id) : only.includes(id) || (kind === 'buildings' && only.includes(id.split('-')[0]));
 for (const kind of KINDS) {
   mkdirSync(`${DIR}/${kind}`, { recursive: true });
   for (const [id, { png, meta }] of Object.entries(baked[kind])) {
     const file = `${kind}/${id}.png`;
-    if (existsSync(`${DIR}/${file}`) && !force && !named(id) && list[kind][id]) { counts.kept++; continue }
+    if (existsSync(`${DIR}/${file}`) && !force && !named(kind, id) && list[kind][id]) { counts.kept++; continue }
     writeFileSync(`${DIR}/${file}`, Buffer.from(png.split(',')[1], 'base64'));
     list[kind][id] = { file, ...meta };
     counts.written++;
@@ -66,6 +67,6 @@ if (counts.written || !list.v) list.v = Date.now().toString(36); // a new versio
 // one line per sheet keeps diffs readable
 const body = kind => Object.entries(list[kind]).sort(([a], [b]) => a.localeCompare(b))
   .map(([id, m]) => `    ${JSON.stringify(id)}: ${JSON.stringify(m)}`).join(',\n');
-const groups = ['plants', 'animals', 'buildings', 'textures'];
+const groups = ['plants', 'animals', 'homes', 'buildings', 'textures'];
 writeFileSync(LIST, `${HEAD}{\n  "v": ${JSON.stringify(list.v)},\n${groups.map(g => `  "${g}": {\n${body(g)}\n  }`).join(',\n')}\n};\n`);
 console.log(`Wrote ${counts.written} sheets, kept ${counts.kept} existing ones. ${LIST} lists ${groups.map(g => `${Object.keys(list[g]).length} ${g}`).join(', ')}.`);
