@@ -407,6 +407,9 @@ li.fresh,span.fresh{border-radius:6px}
 .aw-list b,.tr-txt b{display:block;font-weight:600;font-size:14px;line-height:1.25;color:var(--ink)}
 .aw-list p{margin:2px 0 0;font-size:12px;line-height:1.35;color:var(--ink-dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .aw-go{font-size:22px;color:var(--ink-dim);padding:0 2px}
+.cblood{margin:10px 0;padding:10px;border-radius:10px;background:rgba(255,255,255,.05)}.cbh{display:flex;justify-content:space-between;font-size:13px}.cbh .bad,.crow .bad{color:#f09080}
+.cbar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin:6px 0}.cbar i{display:block;height:100%;border-radius:3px;background:var(--lichen)}
+.cblood p{margin:0 0 8px;font-size:12px;color:var(--ink-dim)}.cblood .btn{width:100%}
 .wi-home{margin:8px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(207,220,132,.08);border-left:3px solid var(--lichen)}
 .wi-home>b{display:block;font-size:13px;margin-bottom:4px}.wi-home ul{list-style:none;margin:0 0 6px;padding:0}
 .wi-home li{display:flex;gap:8px;margin:4px 0;font-size:13px}.wi-home li i{font-style:normal;font-weight:700;width:14px}.wi-home li.ok i{color:#9fd36a}.wi-home li.no i{color:#f09080}
@@ -1311,6 +1314,10 @@ const FX={
     text:'A felled willow sprouts again from its stump, so beavers never run out of food.'},
   'fall:age':{sp:['birch','willow','pine','oak','beech'],cause:'light',name:'Old trees fall',hint:'Watch an old wood.',
     text:'Trees grow old and die. The dead tree stands for a year or so as a bare snag, then falls and rots back into the soil, and the gap fills with willowherb and woodland flowers, then scrub and young trees.'},
+  'blood:weak':{sp:['rabbit','konik','fox','deer','boar','wolf','beaver','owl','heron','jay','thrush','woodpecker','frog','salmon','kingfisher'],cause:'graze',name:'A small population weakens',hint:'Watch a species that started from a single pair.',
+    text:'Animals that all descend from a few founders slowly lose their genetic variety: each year they stay few, their young are fewer and frailer. A population of 40 or more keeps its variety. Animals walking in from the countryside, or fresh blood bought from another population, renew it.'},
+  'blood:fresh':{sp:['rabbit','konik','fox','deer','boar','wolf','beaver','owl','heron','jay','thrush','woodpecker','frog','salmon','kingfisher'],cause:'graze',name:'Fresh blood',hint:'Renew a weakening population.',
+    text:'A pair from another population brings new genes. The Florida panther was down to about 20 animals, sick and inbred, until eight pumas from Texas joined them in 1995; within years there were more than 100.'},
   vet:{sp:['oak','beech','pine'],cause:'leaf',name:'Veteran trees',hint:'Watch the oldest oak, beech or pine in the city.',
     text:'An oak, beech or pine that lives long enough becomes a veteran with a name of its own. Hollow and full of holes, it holds one more nest than a younger tree, drops twice the nuts and stands through fire. Storms take old trees first.'},
   'fall:storm':{sp:['oak','beech','pine'],cause:'light',name:'A storm opens the wood',hint:'Watch a big wood.',
@@ -2271,7 +2278,7 @@ const CAPS={
   swift:{what:'reclaimed structure',n:()=>D.rpN,each:2},stork:['frogs',animals('frog'),4],
   rabbit:['grassland, lawn and pasture tiles',tilesOf('graze'),8,['fox','each fox hunting them']],vole:['grassland tiles',tilesOf('meadow'),8,['kestrel','owl','barnowl','each owl or kestrel hunting them']],
   hedgehog:['grassland and scrub tiles',tilesOf('meadow','hawthorn'),40],fox:['rabbits',animals('rabbit'),6],
-  badger:['forest tiles',tilesOf('forest'),50],deer:['forest tiles',tilesOf('forest'),40,['wolf','each wolf hunting them']],konik:['grassland, lawn and pasture tiles',tilesOf('graze'),20],
+  badger:['forest tiles',tilesOf('forest'),50],deer:['forest and scrub tiles',tilesOf('forest','hawthorn'),40,['wolf','each wolf hunting them']],konik:['grassland, pasture and scrub tiles',tilesOf('graze','hawthorn'),20],
   squirrel:['pine tiles',tilesOf('pine'),15],dormouse:['hazel tiles',tilesOf('hazel'),6],marten:['forest tiles',tilesOf('forest'),60],
   boar:['forest tiles',tilesOf('forest'),45],wolf:['red deer',animals('deer'),6],lynx:['red deer',animals('deer'),8],bison:['grassland tiles',tilesOf('meadow'),60],
   beaver:['willow tiles',tilesOf('willow'),15],otter:['brown trout',animals('trout'),6],frog:['fish-free water and reed tiles (lily pads count double)',Object.assign(()=>{let n=D.gw.reed||0;for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.u&&t.gd==='water'&&!FISHC.has(WCOMP[i]))n+=t.p&&bid(t.p.id)==='lily'?2:1}return n},{ids:['water','reed']}),6],
@@ -2416,7 +2423,8 @@ function succRaw(x,y){
     let ch=.00025*adj+.0002*bird;const stray=!adj&&!bird;if(stray)ch=.00006+.00018*rainOf('hawthorn');
     // dense turf keeps scrub seedlings out: light grazing or disturbed ground opens gaps for them
     const gap=.35+.65*Math.min(1,ds+Math.min(.6,b));ch*=gap/rs;
-    if(b>.05)return {next:'hawthorn',chance:ch*Math.max(.05,1-.7*b),need:`Grazing animals are nibbling the scrub seedlings back ${brNote(b)}.${rich}`};
+    // thorns shelter the seedlings next to them from grazers, so scrub creeps out from its edges while open grazed lawn stays open
+    if(b>.05){const be=b*(1-.25*adj);return {next:'hawthorn',chance:ch*Math.max(.03,(1-be)*(1-be)),need:`Grazing animals are nibbling the scrub seedlings back ${brNote(b)}.${adj?' Thorny scrub next door shelters a few, so the thicket creeps outward.':''}${rich}`}}
     return {next:'hawthorn',chance:ch,need:(stray?rainNote('hawthorn'):'')+rich+(gap<.6?' Dense turf keeps most scrub seedlings out; light grazing or disturbed ground lets them in.':'')};
   }
   if(st===3){
@@ -2435,12 +2443,15 @@ function succRaw(x,y){
     // acorns that fall next to an oak are eaten where boar root; the ones jays bury far off survive. Oak seedlings need light
     const eat=BOARF[i]?.35:1,mb=MAST.on?2.5:1,l0=Math.min(1,mb*(JAY[i]+near(x,y,1,isP('oak'))*.5*eat)),s=FIRST==='oak'?1:Math.max(strayOf('oak',.05)+.5*rainOf('oak'),l0),lf=clamp((LIGHT[i]-.15)/.45,0,1);
     if(lf<.05)return {next:'oak',chance:0,need:`Too shady for oak seedlings (light ${pct(LIGHT[i])}): oak needs light to grow up, so it can't follow beech or a closed oak wood.`};
-    return {next:'oak',chance:.0002*s*(1+ds)*lf,need:[l0<=.05&&rainOf('oak')>=.05?rainNote('oak'):l0<=.05?'Only the odd acorn dropped by a passing bird arrives. Jays living nearby plant oaks far faster.':'',eat<1?'Wild boar eat the acorns that fall here.':'',mb>1&&S.fx.mast?'A mast year: so many acorns fell that far more of them sprout.':'',ds>.1?'Disturbed ground helps the acorns sprout.':'',lf<1?`Shade from the trees around slows the oak seedlings (light ${pct(LIGHT[i])}).`:''].filter(Boolean).join(' ')};
+    return {next:'oak',chance:.0005*s*(1+ds)*lf,need:[l0<=.05&&rainOf('oak')>=.05?rainNote('oak'):l0<=.05?'Only the odd acorn dropped by a passing bird arrives. Jays living nearby plant oaks far faster.':'',eat<1?'Wild boar eat the acorns that fall here.':'',mb>1&&S.fx.mast?'A mast year: so many acorns fell that far more of them sprout.':'',ds>.1?'Disturbed ground helps the acorns sprout.':'',lf<1?`Shade from the trees around slows the oak seedlings (light ${pct(LIGHT[i])}).`:''].filter(Boolean).join(' ')};
   }
   if(bid(p.id)==='pine')return {next:null,chance:0,need:`Pine holds poor ground (richness ${pct(t.fert)}). Over 55%, oaks planted by jays can take over.`};
   if(bid(p.id)==='oak'){
     // beech seedlings grow up in the shade of an oak wood; browsing and rooting boar keep it open for the oaks
     if(t.fert<.55||WET[i]>=.6)return {next:'beech',chance:0,need:`Beech needs soil richness over 55% and ground that never waterlogs (now ${pct(t.fert)}, water ${pct(WET[i])}). Here the oak holds on.`};
+    // beech shuns sour sand and dry, windy hilltops: there the oak keeps its ground
+    if(phOf(t)<4.5)return {next:'beech',chance:0,need:`The soil is too acid for beech (pH ${phOf(t).toFixed(1)}, it needs 4.5 or more). Here the oak holds on.`};
+    if(hAt(x,y)>=HILL)return {next:'beech',chance:0,need:'Beech does not take dry, windswept hilltops. Here the oak holds on.'};
     const l0=Math.min(1,(MAST.on?2.5:1)*(JAY[i]*.5+near(x,y,1,isP('beech'))*.5)),s=FIRST==='beech'?1:Math.max(strayOf('beech',.04)+.5*rainOf('beech'),l0),k=Math.max(.15,1-.5*b)*(1-.6*ds)*(1.3-LIGHT[i]);
     return {next:'beech',chance:.00012*s*k,need:[l0<=.05?(rainOf('beech')>=.05?rainNote('beech'):'Only the odd beechnut arrives. Beeches and jays nearby bring them far faster.'):'',k<.9?'Browsing and rooting animals keep beech seedlings down here, so the oak holds on longer.':''].filter(Boolean).join(' ')};
   }
@@ -2512,7 +2523,7 @@ function apply(x,y,quiet){
       const F=FAUNA[tool.id];
       S.an.push({id:S.nid++,sp:tool.id,x,y,hx:x,hy:y,tx:x,ty:y,w:.5,f:1,bad:0,m:0,rel:1,...(tool.id==='bee'?{st:SEA.p>=1.5&&SEA.p<3.9?'hib':'nest',col:0}:{})});
       if(e.warn&&!quiet)say(`Released, but: ${e.warn}`,'bad');
-      hlog(x,y,'R',tool.id);burst(sx,sy-6,'ring',1);sfx('release',F.cls);discover('fauna',tool.id,`${F.name} reintroduced`);
+      if(bloodSp(tool.id))freshBlood(tool.id,.1);hlog(x,y,'R',tool.id);burst(sx,sy-6,'ring',1);sfx('release',F.cls);discover('fauna',tool.id,`${F.name} reintroduced`);
       break;
     }
   }
@@ -2528,6 +2539,16 @@ function discover(kind,id,title){
 /* ---------- simulation ---------- */
 // how rich the soil on a tile can ever get: crushed rubble, the sand under old downtown and the thin soils of the high ground stay poor
 const PIONEER_SOIL=.5;
+/* the ground's own character: the sand, loam and clay under the city, set by what lies beneath, not by what grows on it.
+   Plants move richness only a little around it (PM_BAND), and what dung, fire, floods or fallen wood add above it washes
+   out again over a few years. So poor sandy patches stay heath and pine, rich loam goes to oak and beech, and the city keeps
+   a patchwork of both, the way real soils keep the character of their bedrock for centuries. */
+const PM=new Float32Array(N*N).fill(-1),PM_BAND=.15;
+function pmOf(i){if(PM[i]>=0)return PM[i];const x=i%N,y=(i/N)|0,c=9,gx=x/c,gy=y/c,x0=Math.floor(gx),y0=Math.floor(gy),sd=(S.seed|0)+311,
+    h=(a,b)=>hash(a,b,sd),sm=v=>v*v*(3-2*v),u=sm(gx-x0),w=sm(gy-y0);
+  let v=.18+.64*lerp(lerp(h(x0,y0),h(x0+1,y0),u),lerp(h(x0,y0+1),h(x0+1,y0+1),u),w);
+  if(hAt(x,y)>=HILL)v-=.15;v-=.25*(S.tiles[i].poor||0);if(near(x,y,2,isWater))v+=.1;
+  return PM[i]=clamp(v,.12,.85)}
 const soilCap=(t,x,y)=>Math.min(1-.75*(t.stony||0),1-.5*(t.poor||0),hAt(x,y)>=HILL?.55:1);
 // trees grow old: pioneer trees live short lives, oaks long ones; each tile has its own span
 // in game years: birch and willow are short-lived pioneers, pine, beech and oak can stand for decades
@@ -2674,11 +2695,13 @@ function tick0(){
       const K=TICK_K;if(t.stony)t.stony=Math.max(0,t.stony-(f.stage===1?.00025*g:.0001)*K*(1+.3*lvl('roots')));
       // crushed rubble holds few nutrients: stony ground stays poor until the stones break down.
       // pioneers rot down into a thin humus of middling richness; anything richer has to be brought in (dung, wood, salmon, broom, silt)
-      if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K);const cap=Math.min(PIONEER_SOIL,soilCap(t,x,y));if(t.fert<cap)t.fert=Math.min(cap,t.fert+.004*g*K)}
+      if(f.stage===1){t.tox=Math.max(0,t.tox-.004*g*K);const cap=Math.min(PIONEER_SOIL,soilCap(t,x,y),pmOf(i)+PM_BAND);if(t.fert<cap)t.fert=Math.min(cap,t.fert+.004*g*K)}
       // heather and pine lock nutrients away in their litter: their own ground grows poorer, not richer
       else if(f.lean){t.tox=Math.max(0,t.tox-.002*g*K);if(t.fert>.12)t.fert=Math.max(.12,t.fert-.0008*g*K)}
       // grassland holds its soil as it is: what makes a meadow rank or poor is dung, grazing and the plants around it
-      else if(!f.crop){t.tox=Math.max(0,t.tox-.002*g*K);const cap=soilCap(t,x,y);if(t.fert<cap&&bid(t.p.id)!=='meadow')t.fert=Math.min(cap,t.fert+(f.kind==='tree'?.002*(FS[i]?2:1):f.kind==='shrub'?.003:.0015)*g*K)}
+      else if(!f.crop){t.tox=Math.max(0,t.tox-.002*g*K);const cap=Math.min(soilCap(t,x,y),pmOf(i)+PM_BAND);if(t.fert<cap&&bid(t.p.id)!=='meadow')t.fert=Math.min(cap,t.fert+(f.kind==='tree'?.002*(FS[i]?2:1):f.kind==='shrub'?.003:.0015)*g*K)}
+      // what was brought in above the ground's own character washes out over a few years
+      {const hi=pmOf(i)+PM_BAND+.1;if(t.fert>hi)t.fert=Math.max(hi,t.fert-.00003*K)}
       if(t.gd==='soil')t.gr=Math.min(1,t.gr+.006*g*K);
       if(f.kind==='tree'&&!f.pre&&g>=1){if(t.p.age==null){t.p.age=0;t.p.vq=Math.random()}t.p.age+=K;const life=treeLife(t.p.id,i);if(t.p.age>life&&Math.random()<.0006*K){fallTree(x,y,'age');continue}
         if(!t.p.vet&&t.p.age>VET_AT*life&&(t.p.vq??(t.p.vq=Math.random()))<VET_P&&VET_SP.has(bid(t.p.id))&&(S.vets||[]).length<VET_MAX)becomeVet(x,y,i)}
@@ -2943,6 +2966,25 @@ function habitatCheck(){
     toast(g.rel?`The ${F.pl} could not survive here`:`${F.name} moved on`,`${g.rel?'The seeds spent releasing it were wasted. ':'Its habitat disappeared. '}${F.name} needs ${F.need.charAt(0).toLowerCase()+F.need.slice(1)}`,'warn')}
 }
 function removeAnimal(a){const i=S.an.indexOf(a);if(i>=0){S.an.splice(i,1);const[sx,sy]=isoG(a.x,a.y);burst(sx,sy-4,'dust',4)}}
+/* bloodlines: a population founded by a few animals slowly loses its genetic variety. Its vigour (S.blood[sp], 0..1)
+   falls each year while it stays small, and with it the young it raises; a big population keeps its variety.
+   Fresh animals renew it: a pair walking in from the countryside, a hand release, or fresh blood bought from outside,
+   the way the Florida panther and Scandinavian wolves were saved. Insects and wild arrivals breed in numbers and are left out. */
+const BLOOD_N=40,BLOOD_LOSS=.07/YEAR,BLOOD_MIN=.2;
+const bloodSp=sp=>!!FAUNA[sp]&&FAUNA[sp].cls!=='insect'&&!ARRIVE[sp];
+const vigour=sp=>{const B=S.blood||(S.blood={});return B[sp]??(B[sp]=.8)};
+function freshBlood(sp,v){const B=S.blood||(S.blood={});B[sp]=B[sp]==null?.7:Math.min(1,Math.max(B[sp],.0)+v)}
+function bloodTick(n,sp){
+  if(!n||!bloodSp(sp))return;const v0=vigour(sp),v=Math.max(BLOOD_MIN,v0-BLOOD_LOSS*TICK_K*Math.max(0,1-n/BLOOD_N));S.blood[sp]=v;
+  if(v0>=.5&&v<.5){const a=S.an.find(q=>q.sp===sp);if(a){seeFx('blood:weak',a.hx,a.hy);if(offLog)offLog.push({k:'weak',sp,x:a.hx,y:a.hy});histEvent('weak',sp,a.hx,a.hy);
+    toast(`The ${FAUNA[sp].pl} are weakening`,`All of them descend from a few animals, and their young are fewer and frailer each year. Fresh blood from outside would renew them: see the census.`,'warn')}}}
+const bloodCost=sp=>{const c=Math.max(relCost(sp)*6,(D.income||0)*1200*(1+.5*((S.bloodN||{})[sp]||0)));return c<1000?Math.round(c/5)*5:Math.round(c/Math.pow(10,Math.floor(Math.log10(c))-2))*Math.pow(10,Math.floor(Math.log10(c))-2)};
+// buy fresh blood: a pair from another population joins the animals here and the bloodline is renewed
+function buyBlood(sp){
+  const c=bloodCost(sp),list=S.an.filter(a=>a.sp===sp);if(!list.length||S.seeds<c)return false;S.seeds-=c;const F=FAUNA[sp];
+  for(let j=0;j<2;j++){const p=list[(Math.random()*list.length)|0],h=pickHome(p,F,F.range+1)||[p.hx,p.hy];S.an.push({id:S.nid++,sp,x:h[0],y:h[1],hx:h[0],hy:h[1],tx:h[0],ty:h[1],w:1,f:1,bad:0,m:0,rel:1})}
+  (S.blood||(S.blood={}))[sp]=1;(S.bloodN||(S.bloodN={}))[sp]=((S.bloodN||{})[sp]||0)+1;seeFx('blood:fresh',list[0].hx,list[0].hy);histEvent('blood',sp,list[0].hx,list[0].hy);
+  toast(`Fresh blood for the ${F.pl}`,`A pair from another population joined them. Their young will be many and strong again.`,'unlock');computeDerived();updateHUD();return true}
 function populations(){
   colonies();returning();
   // young are born in spring and summer only, and slowly
@@ -2955,7 +2997,8 @@ function populations(){
       if(PREY[sp])seeFx('starve:'+sp,a.hx,a.hy);else if(lean&&MAST_EAT[sp])seeFx('crash:mast',a.hx,a.hy);else if(ci.k<1)fxAdd('lean',1,3,a.hx,a.hy);
       if(!QUIET&&onScreen(a.hx,a.hy)){const[sx,sy]=isoG(a.hx,a.hy);burst(sx,sy-6,'dust',3)}removeAnimal(a)}continue}
     // the more food each animal has, the faster they breed: a feast speeds it up, a crowded range slows it down
-    const room=Math.min(1.5,.25+2*(1-list.length/cap)),rate=(F.cls==='insect'?.02:F.fast?.04:.008)*Math.min(2,ci.k)*room;
+    bloodTick(list.length,sp);
+    const room=Math.min(1.5,.25+2*(1-list.length/cap)),rate=(F.cls==='insect'?.02:F.fast?.04:.008)*Math.min(2,ci.k)*room*(bloodSp(sp)?.25+.75*vigour(sp):1);
     if(season&&list.length>=(F.cls==='insect'?1:2)&&list.length<cap&&Math.random()<Math.min(.9,rate*TICK_K)){
       const p=list[(Math.random()*list.length)|0],h=pickHome(p,F,F.range+1);
       if(h){S.an.push({id:S.nid++,sp,x:h[0],y:h[1],hx:h[0],hy:h[1],tx:h[0],ty:h[1],w:1,f:1,bad:0,m:0});
@@ -3258,7 +3301,7 @@ function walkIn(sp,home,called){
   // they come in from the edge of the map nearest their new home
   for(let j=0;j<2;j++){const a={id:S.nid++,sp,x:e[0],y:e[1],hx,hy,tx:e[0],ty:e[1],w:j,f:1,bad:0,m:0};
     const mv=F.mv==='fly'?{path:[]}:relocate(a,F,home);if(mv)a.path=mv.path;else{a.x=a.tx=hx;a.y=a.ty=hy}S.an.push(a)}
-  if(!called){(S.wild||(S.wild={}))[sp]=1;S.retAt=S.clock}
+  if(!called){(S.wild||(S.wild={}))[sp]=1;S.retAt=S.clock}if(bloodSp(sp))freshBlood(sp,.3);
   if(offLog)offLog.push({k:'return',sp,x:hx,y:hy,called});seeFx('return',hx,hy);discover('fauna',sp,'Came back by itself');
   toast(`${F.name} came back by itself`,called?`Nobody released them: the home you made was waiting, and a pair found their way in from the countryside.`
     :`Nobody released them: a pair found their way in from the countryside. As a thank-you, ${F.name} grows at half price in the Wood Wide Web.`,'unlock');
@@ -5567,21 +5610,6 @@ function reclaim(x,y){
 }
 const isGreen=t=>(t.p&&!FLORA[t.p.id].pre&&FLORA[t.p.id].stage>=1&&t.p.g>=.4)||t.gd==='water';
 const isWild=t=>t.p&&!FLORA[t.p.id].pre&&FLORA[t.p.id].stage>=2&&t.p.g>=.4;
-// what a seed-carrying animal could bring to this tile: the next stage of succession
-function nextStage(x,y){
-  const t=T(x,y);if(t.b||t.gd!=='soil'||!t.u)return null;const p=t.p,f=p&&FLORA[p.id];
-  if(f&&(f.pre||f.managed))return null;if(p&&p.g<.6)return null;
-  const st=f?f.stage:0;
-  if(st===0)return near(x,y,1,isWater)?'reed':'weeds';
-  if(st===1)return t.fert<.3&&WET[y*N+x]<.6&&phOf(t)<=6?'heath':'meadow';
-  if(bid(p.id)==='reed')return 'willow';
-  if(bid(p.id)==='heath')return has('broom')?'broom':'pine';
-  if(st===2)return t.fert<.35&&phOf(t)<=6.8?'broom':'hawthorn';
-  if(st===3)return MO[y*N+x]>=.4?'willow':hAt(x,y)>=HILL||t.fert<.4||(t.poor||0)>.2&&t.fert<.5?'pine':'birch';
-  if(bid(p.id)==='birch')return 'oak';
-  if(bid(p.id)==='oak'&&t.fert>=.55)return 'beech';
-  return null;
-}
 // managed land let go: by the council next to wild land, or across the city with Wilder Parks
 function letGo(x,y,why){
   const t=T(x,y),f=FLORA[t.p.id],m=f.managed;
@@ -5605,11 +5633,16 @@ function naturalForces(){
   }
   if(CA)for(const a of S.an){
     if(Math.random()>.008*CA*K)continue;
-    const x=clamp(Math.round(a.x)+((Math.random()*5)|0)-2,0,N-1),y=clamp(Math.round(a.y)+((Math.random()*5)|0)-2,0,N-1),nx=nextStage(x,y);
+    const x=clamp(Math.round(a.x)+((Math.random()*5)|0)-2,0,N-1),y=clamp(Math.round(a.y)+((Math.random()*5)|0)-2,0,N-1),t=T(x,y);
+    if(!t.u||t.b||t.gd!=='soil'||(t.p&&(t.p.ud||t.p.g<.6||FLORA[t.p.id].pre||FLORA[t.p.id].managed)))continue;
+    // the animal only carries seed to where it could take hold anyway: the same light, grazing and soil checks as succession,
+    // made more likely, never forced. Grazers carry grass and heather seed in their coats, not scrub
+    const r=succ(x,y),nx=r&&r.next;if(!nx||!(r.chance>0)||Math.random()>Math.min(1,r.chance*400))continue;
+    if(DIET[a.sp]==='grass'&&!['weeds','meadow','heath'].includes(bid(nx)))continue;
     // tree seed has to come from somewhere: a seed-bearing tree within 2 tiles of the spot, or a jay fetching acorns and beechnuts from within 8 tiles of it
-    const tb=nx&&TREE_LINE.includes(bid(nx))?bid(nx):null;
+    const tb=TREE_LINE.includes(bid(nx))?bid(nx):null;
     if(tb&&!(seedField(tb,y*N+x)>.5||a.sp==='jay'&&(tb==='oak'||tb==='beech')&&DIST[tb][Math.round(a.y)*N+Math.round(a.x)]<=8))continue;
-    if(nx&&has(nx)&&!sowRule(nx,x,y)){const v=nx;T(x,y).p={id:v,g:.05};S.carried=(S.carried||0)+1;discover('flora',v);
+    if(has(nx)&&!sowRule(nx,x,y)){const f=t.p&&FLORA[t.p.id];if(f&&f.kind==='tree'&&FLORA[nx].kind==='tree')t.p.ud=nx;else t.p={id:nx,g:.05};S.carried=(S.carried||0)+1;discover('flora',nx);
       if(!S.flags.carried){S.flags.carried=1;toast('Animals are sowing the land',`A ${FAUNA[a.sp].name.toLowerCase()} carried ${FLORA[nx].name.toLowerCase()} seed to a new spot. The more animals, the faster the land moves on.`,'unlock')}}
   }
 }
@@ -5921,6 +5954,7 @@ function awayStory(a,log){
   for(const why in falls){const L=falls[why],P=uniq(L.map(m=>[m.x,m.y])),n=P.length,tx=AWAY_FALL[why]||['{n} fell',''],cnt={};for(const m of L)cnt[bid(m.id)]=(cnt[bid(m.id)]||0)+1;
     const top=Object.keys(cnt).sort((p,q)=>cnt[q]-cnt[p])[0],w=FLORA[top].name.toLowerCase(),nm=Object.keys(cnt).length===1?plural(n,w,/(ch|sh|s|x)$/.test(w)?w+'es':undefined):plural(n,'tree');
     ev.push({pri:55+Math.min(25,n*3),tag:'Trees down',pic:top,title:tx[0].replace('{n}',nm),line:tx[1],pts:P,c:'#c49a5c',key:'fall:'+why})}
+  for(const m of log)if(m.k==='weak'&&FAUNA[m.sp])ev.push({pri:72,tag:'Weakening',pic:m.sp,title:`The ${FAUNA[m.sp].pl} are weakening`,line:'They all descend from a few animals, and raise fewer young each year. Fresh blood from the census renews them.',pts:[],an:m.sp,c:'#f09080',key:'weak:'+m.sp});
   for(const m of log)if(m.k==='vet')ev.push({pri:92,tag:'Veteran',pic:m.id,title:`${m.name} is a veteran now`,line:`It has stood for ${m.age} years: hollow, full of holes and home to owls and woodpeckers. Storms take old trees first.`,pts:[[m.x,m.y]],c:'#e8c87a',key:'vet:'+m.name});
   for(const m of log)if(m.k==='vetlost')ev.push({pri:m.why==='age'?82:96,tag:'Veteran lost',pic:m.id,title:`${m.name} has fallen`,line:VET_WHY[m.why]||VET_WHY.gone,pts:[[m.x,m.y]],c:'#f09080',key:'vetlost:'+m.name});
   for(const m of log)if(m.k==='return')ev.push({pri:97,tag:'Came back',pic:m.sp,title:`${FAUNA[m.sp].name} came back by itself`,line:m.called?'The home you made was waiting: a pair found their own way in from the countryside.':`Nobody released them: a pair found their own way in from the countryside. ${FAUNA[m.sp].name} now grows at half price in the Wood Wide Web.`,pts:[[m.x,m.y]],an:m.sp,c:'#f6eca0'});
@@ -6981,7 +7015,7 @@ function migrateSoil(){
 function boot(state){
   S=state;migrateRoster();migrateSoil();migrateTrees();dropForces();if(!S.gread)S.gread={...(S.fx||{})};if(S.tiles[0].ph==null)startPh(true);worldDirty=true;SEEN_STAGE.clear();ROT=S.rot||0;
   // ecosystems belong to the city they grew in: forget the last city's before this one is judged
-  RACT={};CENSUS_H=[];HL=null;if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
+  RACT={};CENSUS_H=[];HL=null;PM.fill(-1);if(S.dayNight==null)S.dayNight=true;$('dnBtn').setAttribute('aria-pressed',String(S.dayNight));
   // saves from before stepped terrain kept smooth corner heights: turn them into levels
   if(!Array.isArray(S.lv)||S.lv.length!==N*N){const v=S.vh0||S.vh;S.lv=[];
     for(let y=0;y<N;y++)for(let x=0;x<N;x++){const k=y*M+x;S.lv.push(Math.round((v[k]+v[k+1]+v[k+M]+v[k+M+1])/4/HS))}
@@ -7221,7 +7255,7 @@ function renderCensus(){
     if(isF){const g=c.grown[k]||0;bar=`<i style="width:${Math.max(3,n/maxFl*100)}%"></i><i class="g" style="width:${Math.max(0,g/maxFl*100)}%"></i>`;
       sub=`${g} grown${n-g?`, ${n-g} young`:''} · ${c.earn[k]>=.1?c.earn[k].toFixed(1):c.earn[k].toFixed(2)} seeds/s${VBASE[k]?` · level ${levelOf(k)}`:''}`}
     else{const cap=capOf(k),pct2=cap?Math.min(1,n/cap):1;bar=`<i class="${n>cap?'over':''}" style="width:${Math.max(3,pct2*100)}%"></i>`;
-      sub=`${n} of room for ${cap}${k==='bee'?` colon${cap===1?'y':'ies'}${beeColonies().nests&&beeColonies().queens?`, ${beeColonies().queens} young queens`:''}`:''}${n>cap?' · over capacity: some will leave':n>=cap?' · the land is full':''}`}
+      sub=`${bloodSp(k)&&vigour(k)<.5?'<span class="bad">weakening</span> · ':''}${n} of room for ${cap}${k==='bee'?` colon${cap===1?'y':'ies'}${beeColonies().nests&&beeColonies().queens?`, ${beeColonies().queens} young queens`:''}`:''}${n>cap?' · over capacity: some will leave':n>=cap?' · the land is full':''}`}
     return `<li><button class="crow" data-sp="${k}" title="${d.name} over the years"><img src="${speciesPic(k,64)}" alt=""><span class="cn"><b>${d.name} ${rarTag(k)}</b><small>${sub}</small></span>${sparkline(histSeries(isF?'fl':'fa',k))}<span class="cq"><b>${fmt(n)}</b>${trendOf(isF?'fl':'fa',k,n)}</span><span class="cbar">${bar}</span></button><button class="cloc" data-loc="${k}" title="Show on the map" aria-label="Show ${d.name} on the map">◎</button></li>`};
   let h='';
   if(censusTab!=='animals'){h+=`<section><h3>Plants</h3>`;
@@ -7266,6 +7300,7 @@ $('censusBtn').addEventListener('click',openCensus);
 $('wx').addEventListener('click',showWx);$('wxBtn').addEventListener('click',showWx);
 $('cClose').addEventListener('click',()=>{$('census').hidden=true});
 $('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').hidden=true;return}const l=e.target.closest('[data-loc]');if(l){locateSpecies(l.dataset.loc);return}
+  const bb=e.target.closest('[data-blood]');if(bb){if(buyBlood(bb.dataset.blood)){sfx('release');renderCensus()}return}
   const vb=e.target.closest('[data-vet]');if(vb){const v=(S.vets||[])[+vb.dataset.vet];if(v){const x=v.i%N,y=(v.i/N)|0;$('census').hidden=true;flyTo(x,y,2);HL={k:v.sp,isF:true,pts:[[x,y]],until:time+5};say(v.n,'good')}return}
   const sp=e.target.closest('[data-sp]');if(sp){censusSp=sp.dataset.sp;renderCensus();$('cBody').scrollTop=0;return}
   if(e.target.closest('[data-back]')){censusSp=null;renderCensus();return}
@@ -7418,8 +7453,14 @@ function renderSpecies(k){
     <div class="csum">${facts.map(([v,l])=>`<div><b>${v}</b><span>${l}</span></div>`).join('')}</div>
     ${pts.length>1?'<div class="hzwrap"></div>'+chartBox([{pts,c:isF?GROUP_C[bid(k)]||'#cfdc84':'#cfdc84'}],{label:`${d.name} over the years`})+'<div class="chkeywrap"></div>':`<p class="cempty">The census counts every species once a season. Come back after a few seasons to see a chart.</p>`}
     ${ev.length?`<ul class="chron">${ev.map(e=>`<li>${chronText(e)}</li>`).join('')}</ul>`:''}
+    ${!isF&&bloodSp(k)&&now?bloodHtml(k,now):''}
     <div class="wi-links"><button class="glink" data-enc="${k}">Field guide ›</button><button class="glink" data-loc="${k}">Show on the map ◎</button></div></section>`;chartRedraw()}
 
+// the bloodline of an animal species: how much variety it has left, and fresh blood to buy
+function bloodHtml(k,n){const v=vigour(k),c=bloodCost(k),F=FAUNA[k],word=v>=.85?'Strong':v>=.6?'Healthy':v>=.4?'Weakening':'Frail';
+  return `<div class="cblood"><div class="cbh"><b>Bloodline</b><span class="${v<.5?'bad':''}">${word} · ${Math.round(v*100)}%</span></div><div class="cbar"><i style="width:${Math.round(v*100)}%"></i></div>
+    <p>${n>=BLOOD_N?`${fmt(n)} animals keep their variety on their own.`:`Only ${fmt(n)} here: each year they stay under ${BLOOD_N}, their variety thins and they raise fewer young.`} Animals walking in from the countryside renew it.</p>
+    <button class="btn${v<.6?' primary':''}" data-blood="${k}" ${S.seeds<c||v>=.99?'disabled':''}>${v>=.99?'Bloodline renewed':`Bring fresh blood · ${fmt(c)} seeds`}</button></div>`}
 /* the whole ecosystem: plants by stage over the years, the map then and now, and a chronicle */
 let snapAt=-1;
 function chronText(e){const[n,k,a]=e,nm=q=>FLORA[q]?FLORA[q].name:FAUNA[q]?FAUNA[q].name:q,when=SEASONS[n%4];
@@ -7428,6 +7469,8 @@ function chronText(e){const[n,k,a]=e,nm=q=>FLORA[q]?FLORA[q].name:FAUNA[q]?FAUNA
     case 'fx':return `<span>🔍</span>Discovered: ${FX[a]?fxName(a):a} <em>${when}</em>`;
     case 'arr':return `<span>🏡</span>${FAUNA[a]?FAUNA[a].name:a} moved in by itself <em>${when}</em>`;
     case 'cas':{const r=CASCADES.find(q=>q.id===a);return `<span>🔗</span>Cascade: ${r?r.name:a} <em>${when}</em>`}
+    case 'weak':return `<span>🧬</span>The ${FAUNA[a]?FAUNA[a].pl:a} began to weaken <em>${when}</em>`;
+    case 'blood':return `<span>🧬</span>Fresh blood for the ${FAUNA[a]?FAUNA[a].pl:a} <em>${when}</em>`;
     case 'vet':return `<span>🌳</span>${a} became a veteran <em>${when}</em>`;
     case 'vetlost':return `<span>🪦</span>${a} fell <em>${when}</em>`;
     case 'mast':return `<span>🌰</span>A mast year: oaks and beeches dropped a huge crop <em>${when}</em>`;}
