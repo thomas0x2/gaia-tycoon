@@ -407,6 +407,12 @@ li.fresh,span.fresh{border-radius:6px}
 .aw-list b,.tr-txt b{display:block;font-weight:600;font-size:14px;line-height:1.25;color:var(--ink)}
 .aw-list p{margin:2px 0 0;font-size:12px;line-height:1.35;color:var(--ink-dim);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .aw-go{font-size:22px;color:var(--ink-dim);padding:0 2px}
+.wi-home{margin:8px 0 10px;padding:8px 10px;border-radius:10px;background:rgba(207,220,132,.08);border-left:3px solid var(--lichen)}
+.wi-home>b{display:block;font-size:13px;margin-bottom:4px}.wi-home ul{list-style:none;margin:0 0 6px;padding:0}
+.wi-home li{display:flex;gap:8px;margin:4px 0;font-size:13px}.wi-home li i{font-style:normal;font-weight:700;width:14px}.wi-home li.ok i{color:#9fd36a}.wi-home li.no i{color:#f09080}
+.wi-home small{display:block;color:var(--ink-dim);font-size:12px}.wi-home p{margin:0 0 6px;font-size:12px;color:var(--ink-dim)}
+.aw-list li.hero button{padding:10px 8px 10px 8px;background:rgba(255,255,255,.11)}.aw-list li.hero img,.aw-list li.hero .aw-emo{width:84px;height:68px;font-size:42px}
+.aw-list li.hero b{font-size:17px}.aw-list li.hero p{-webkit-line-clamp:3;font-size:13px}
 @keyframes awin{from{opacity:0;transform:translateY(10px) scale(.97)}}
 #tour{position:absolute;left:50%;transform:translateX(-50%);bottom:max(14px, env(safe-area-inset-bottom, 0px));width:min(440px, calc(100% - 24px));display:flex;align-items:center;gap:10px;padding:10px 12px;border-left:3px solid var(--c);background:var(--panel-hi);animation:tin .35s ease-out}
 /* the whole lesson is shown; a very long one scrolls inside the card instead of being cut off */
@@ -1305,6 +1311,8 @@ const FX={
     text:'A felled willow sprouts again from its stump, so beavers never run out of food.'},
   'fall:age':{sp:['birch','willow','pine','oak','beech'],cause:'light',name:'Old trees fall',hint:'Watch an old wood.',
     text:'Trees grow old and die. The dead tree stands for a year or so as a bare snag, then falls and rots back into the soil, and the gap fills with willowherb and woodland flowers, then scrub and young trees.'},
+  vet:{sp:['oak','beech','pine'],cause:'leaf',name:'Veteran trees',hint:'Watch the oldest oak, beech or pine in the city.',
+    text:'An oak, beech or pine that lives long enough becomes a veteran with a name of its own. Hollow and full of holes, it holds one more nest than a younger tree, drops twice the nuts and stands through fire. Storms take old trees first.'},
   'fall:storm':{sp:['oak','beech','pine'],cause:'light',name:'A storm opens the wood',hint:'Watch a big wood.',
     text:'Wind tears gaps in big woods. Gaps like these are how a forest renews itself: light reaches the floor and pioneers move in.'},
   'fall:drought':{sp:['beech','willow'],cause:'water',name:'Drought kills trees',hint:'Watch beech and willow in a dry year.',
@@ -1336,7 +1344,7 @@ const FX={
   'bar:flood':{sp:['willow','reed','weeds'],cause:'water',name:'Gravel bars',hint:'Watch the bare banks after a flood.',
     text:'A flood scours stretches of bank down to bare gravel. Willow, reeds and willowherb seed into it first: the river renews its own pioneer ground.'},
   return:{sp:['wolf','deer','boar','beaver','heron','jay'],cause:'leaf',name:'Wildlife comes back on its own',hint:'Keep a home ready for an animal you have not released yet.',
-    text:'An animal you have not reintroduced can find its own way in from the countryside once the Wood Wide Web has opened the way to it and a home is waiting for it. Wolves did just that in Germany: they walked back in from Poland in 2000.'},
+    text:'Grow an animal in the Wood Wide Web and you open the way to it: once a home is waiting for it, a pair finds its own way in from the countryside, no release needed. Now and then one comes before you have even grown it. Wolves did just that in Germany: they walked back in from Poland in 2000.'},
   'home:ruin':{sp:['owl'],cause:'home',name:'Ruins become homes',hint:'Watch a ruin nature left standing.',
     text:'A building that nature brings down sometimes leaves its walls standing. An owl pair nests in a ruin as in a tree hole. Buildings pulled down by hand leave only rubble.'},
   'slug:frog':{sp:['frog','meadow'],cause:'leaf',name:'Froglets eat the slugs',hint:'Watch the grass around a frog pond in summer.',
@@ -1460,7 +1468,7 @@ const holeWood=(t,i)=>{if(isSnag(t))return 3;if(!holeTree(t)||t.p.g<.8)return 0;
   return SOFT_WOOD.has(bid(t.p.id))||hollowOf(t)||(t.p.age!=null&&t.p.age>.6*treeLife(t.p.id,i))?2:0};
 // a nature-felled building may leave an ivy ruin, whose walls hold one nest site
 const holesAt=t=>(isSnag(t)||holeTree(t)?(t.ho||0)+hollowOf(t):0)+(t.ru?1:0);
-const HOLE_MAX=t=>isSnag(t)?3:2;
+const HOLE_MAX=t=>isSnag(t)||(t.p&&t.p.vet)?3:2;
 // a snag stands about a game year before it falls
 const SNAG_RATE=.0004/(CAL/2);
 // a hole holds one pair (two owls): how many owls already live in the holes of (x,y)
@@ -2322,7 +2330,7 @@ function computeFields(){
     // thorns: browsers can hardly reach seedlings in and beside hawthorn (an old hedge shelters 2 tiles out)
     if(b0==='hawthorn'){const r=t.p.id==='hawthorn4'?2:1;for(let yy=Math.max(0,y-r);yy<=Math.min(N-1,y+r);yy++)for(let xx=Math.max(0,x-r);xx<=Math.min(N-1,x+r);xx++){const j=yy*N+xx,v=xx===x&&yy===y?.3:.5;if(SHEL[j]>v)SHEL[j]=v}}
     // acorns and beechnuts fall within 2 tiles; a veteran pasture oak drops twice as many
-    if(b0==='oak'||b0==='beech'){const v=b0==='beech'?.7:t.p.id==='oak3'?2:1;for(let yy=Math.max(0,y-2);yy<=Math.min(N-1,y+2);yy++)for(let xx=Math.max(0,x-2);xx<=Math.min(N-1,x+2);xx++){const j=yy*N+xx;if(ACORN[j]<v)ACORN[j]=v}}
+    if(b0==='oak'||b0==='beech'){const v=(b0==='beech'?.7:t.p.id==='oak3'?2:1)*(t.p.vet&&t.p.id!=='oak3'?2:1);for(let yy=Math.max(0,y-2);yy<=Math.min(N-1,y+2);yy++)for(let xx=Math.max(0,x-2);xx<=Math.min(N-1,x+2);xx++){const j=yy*N+xx;if(ACORN[j]<v)ACORN[j]=v}}
     const E=EFF[t.p.id];if(!E)continue;
     if(E.berry)stamp(BIRD,x,y,2,.5);if(E.pol||(E.cat&&SEA.idx===0))stamp(POL,x,y,1,1);if(E.boost)stamp(BOOST,x,y,1,1);
     if(POLS.bee&&POLS.bee[i]){if(E.pol)fxAdd('pol:'+b0,1,300,x,y,.002);if(E.cat&&SEA.idx===0)fxAdd('cat:'+b0,1,150,x,y,.004)}}
@@ -2522,13 +2530,40 @@ function discover(kind,id,title){
 const PIONEER_SOIL=.5;
 const soilCap=(t,x,y)=>Math.min(1-.75*(t.stony||0),1-.5*(t.poor||0),hAt(x,y)>=HILL?.55:1);
 // trees grow old: pioneer trees live short lives, oaks long ones; each tile has its own span
-const LIFE={birch:7200,willow:7200,pine:10800,oak:18000,beech:18000};
-const treeLife=(k,i)=>(LIFE[bid(k)]||7200)*(.75+.5*hash(i,7,3));
+// in game years: birch and willow are short-lived pioneers, pine, beech and oak can stand for decades
+// (these were once in sim seconds, which left a birch one game year and an oak two and a half once the calendar slowed)
+const LIFE={birch:8*YEAR,willow:8*YEAR,pine:20*YEAR,oak:40*YEAR,beech:30*YEAR};
+const treeLife=(k,i)=>(LIFE[bid(k)]||8*YEAR)*(.75+.5*hash(i,7,3));
+/* veteran trees: an oak, beech or pine that lives past 60% of its span becomes a veteran with a name of its own.
+   It is hollow (oak, beech), holds an extra hole, drops twice the nuts, stands through fire, and storms take it first.
+   S.vets lists the living veterans [{n:name,i:tile,sp,y:year it became one}] so the city can miss one when it is gone. */
+// only a few trees make it that far (t.p.vq, drawn when the tree is grown), and the city holds at most VET_MAX at once
+const VET_AT=.6,VET_P=.12,VET_MAX=8,VET_SP=new Set(['oak','beech','pine']);
+const VET_WORD={oak:'Oak',beech:'Beech',pine:'Pine'},VET_PRE=['The Old','The Great','The Hollow','The Lone','The Grey','The Elder','The Crooked','The Broad'];
+function vetName(x,y,i,b){
+  const near2=fn=>near(x,y,2,fn)>0,where=[near2(n=>!!n.ru)&&'by the Ruin',near2(n=>n.gd==='water')&&'by the Water',hAt(x,y)>=HILL&&'on the Hill',
+    OPEN[i]>=.55&&'in the Meadow',FS[i]&&'in the Deep Wood',near2(n=>!!n.b||n.gd==='road')&&'by the Old Road','at the Wood’s Edge'].filter(Boolean);
+  const used=new Set((S.vets||[]).map(v=>v.n));
+  for(const p of VET_PRE)for(const w of where){const n=`${p} ${VET_WORD[b]} ${w}`;if(!used.has(n))return n}
+  return `${VET_PRE[0]} ${VET_WORD[b]} No. ${used.size+1}`}
+const vetAge=t=>Math.max(1,Math.round((t.p.age||0)/YEAR));
+function becomeVet(x,y,i){
+  const t=S.tiles[i],b=bid(t.p.id),n=vetName(x,y,i,b);t.p.vet=n;if(b!=='pine')t.p.hol=1;(S.vets||(S.vets=[])).push({n,i,sp:t.p.id,y:Math.floor(S.clock/YEAR)});
+  if(offLog)offLog.push({k:'vet',x,y,id:t.p.id,name:n,age:vetAge(t)});histEvent('vet',n,x,y);seeFx('vet',x,y);
+  toast(`A new veteran: ${n}`,`This ${lc(FLORA[t.p.id].name)} has stood for ${vetAge(t)} years. Old, hollow and full of holes, it is home to owls and woodpeckers${b==='pine'?'':' and drops twice the nuts'}. Storms take old trees first.`,'unlock');markDirty()}
+const VET_WHY={age:'It died of old age and stands on as a snag, full of holes, until it falls.',storm:'The storm tore it out by the roots.',drought:'The drought was too much for it.',
+  flood:'The flood drowned its roots.',beaver:'Beavers felled it.',browse:'Browsers stripped its bark until it died.',gone:'It is gone from the city.'};
+function vetGone(v,why,x,y){
+  S.vets=(S.vets||[]).filter(q=>q!==v);x=x??v.i%N;y=y??((v.i/N)|0);const age=Math.floor(S.clock/YEAR)-v.y;
+  if(offLog)offLog.push({k:'vetlost',x,y,id:v.sp,name:v.n,why});histEvent('vetlost',v.n,x,y);
+  toast(`${v.n} has fallen`,VET_WHY[why]||VET_WHY.gone,'warn')}
+// a veteran can also go without falling (drowned in a beaver pond, cleared): check now and then that each one still stands
+function vetCheck(){if(!S.vets||!S.vets.length)return;for(const v of S.vets.slice()){const t=S.tiles[v.i];if(!t.p||t.p.vet!==v.n)vetGone(v,'gone')}}
 function fallTree(x,y,why){
-  const t=T(x,y);if(!t.p)return false;if(offLog)offLog.push({k:'fall',why,id:t.p.id,x,y});hlog(x,y,'L',t.p.id,why);const name=FLORA[t.p.id].name,stump=bid(t.p.id)==='willow'&&why!=='age';
+  const t=T(x,y);if(!t.p)return false;if(t.p.vet){const v=(S.vets||[]).find(q=>q.n===t.p.vet);if(v)vetGone(v,why,x,y)}if(offLog)offLog.push({k:'fall',why,id:t.p.id,x,y});hlog(x,y,'L',t.p.id,why);const name=FLORA[t.p.id].name,stump=bid(t.p.id)==='willow'&&why!=='age';
   // a tree that dies on its feet (old age, drought) stands on as a snag, its holes and hollow with it; one blown or felled down is lying wood at once
   const stand=(why==='age'||why==='drought'||why==='flood')&&!stump&&t.p.g>=.6,hollow=hollowOf(t);
-  t.p=stump?{id:'willow',g:.3}:{id:'weeds',g:.35};t.ds=Math.max(t.ds||0,.8);t.fert=Math.min(1,t.fert+.1);
+  const ud=t.p.ud;t.p=stump?{id:'willow',g:.3}:ud&&has(ud)?{id:ud,g:.3}:{id:'weeds',g:.35};t.ds=Math.max(t.ds||0,.8);t.fert=Math.min(1,t.fert+.1);
   if(stand){t.sn=1;if(hollow)t.ho=Math.max(t.ho||0,1)}else{t.dw=1;delete t.ho}
   if(!QUIET&&onScreen(x,y)){const[sx,sy]=isoG(x,y);burst(sx,sy-10,'leaf',8);burst(sx,sy,'dust',4)}markDirty();
   if(why!=='browse')seeFx(why==='beaver'?'fell:beaver':'fall:'+why,x,y);if(stump)seeFx('stump',x,y);
@@ -2576,7 +2611,7 @@ function fireTick(){
 function burnOut(x,y){
   const t=T(x,y),i=y*N+x;if(offLog)offLog.push({k:'burn',x,y});hlog(x,y,'F',t.p?t.p.id:null);delete t.fire;t.ash=1;S.fireLast=[x,y];t.ds=Math.max(t.ds||0,.9);t.fert=Math.min(1,t.fert+.08);t.tox=Math.max(0,t.tox-.05);t.ph=Math.min(8,phOf(t)+.3);
   if(t.p){const k=t.p.id,b=bid(k),f=FLORA[k];
-    if(k==='oak3'||k==='pine3'){seeFx('bark:fire',x,y)}
+    if(k==='oak3'||k==='pine3'||t.p.vet){seeFx('bark:fire',x,y)}
     else if(b==='heath'||b==='broom'){t.p={id:b,g:.12};seeFx('renew:fire',x,y)}
     else{if(f.kind==='tree'&&t.p.g>=.6){t.sn=1;if(hollowOf(t))t.ho=Math.max(t.ho||0,1)}else delete t.ho;t.p=null}}
   // bare ash: fireweed first, or birch where its seed can blow in
@@ -2588,7 +2623,7 @@ function tick(){
   IN_TICK=true;try{tick0()}finally{IN_TICK=false}
 }
 function tick0(){
-  S.t++;fireTick();if(!QUIET&&S.t%30===0)updateSoon();if(S.t%5===0)evalRecipes();if(S.t%30===0)censusSample();histTick();
+  S.t++;fireTick();if(!QUIET&&S.t%30===0)updateSoon();if(S.t%5===0)evalRecipes();if(S.t%30===0){censusSample();vetCheck()}histTick();
   const smogF=1-.3*S.smog;
   let shaded=0,drowned=0,parched=0,parchedAt=0;
   for(let i=0;i<N*N;i++){
@@ -2645,8 +2680,8 @@ function tick0(){
       // grassland holds its soil as it is: what makes a meadow rank or poor is dung, grazing and the plants around it
       else if(!f.crop){t.tox=Math.max(0,t.tox-.002*g*K);const cap=soilCap(t,x,y);if(t.fert<cap&&bid(t.p.id)!=='meadow')t.fert=Math.min(cap,t.fert+(f.kind==='tree'?.002*(FS[i]?2:1):f.kind==='shrub'?.003:.0015)*g*K)}
       if(t.gd==='soil')t.gr=Math.min(1,t.gr+.006*g*K);
-      if(f.kind==='tree'&&!f.pre&&g>=1){if(t.p.age==null)t.p.age=Math.random()*treeLife(t.p.id,i)*.9;t.p.age+=K;const life=treeLife(t.p.id,i);if(t.p.age>life&&Math.random()<.0006*K){fallTree(x,y,'age');continue}
-        if(!t.p.hol&&t.p.age>.7*life&&(bid(t.p.id)==='oak'||bid(t.p.id)==='beech')){t.p.hol=1;markDirty()}}
+      if(f.kind==='tree'&&!f.pre&&g>=1){if(t.p.age==null){t.p.age=0;t.p.vq=Math.random()}t.p.age+=K;const life=treeLife(t.p.id,i);if(t.p.age>life&&Math.random()<.0006*K){fallTree(x,y,'age');continue}
+        if(!t.p.vet&&t.p.age>VET_AT*life&&(t.p.vq??(t.p.vq=Math.random()))<VET_P&&VET_SP.has(bid(t.p.id))&&(S.vets||[]).length<VET_MAX)becomeVet(x,y,i)}
     }else if(t.gd==='soil'&&!t.b){t.gr=Math.min(1,t.gr+.003*(1-t.tox)*(.3+t.fert)*TICK_K);if(t.stony)t.stony=Math.max(0,t.stony-.00005*TICK_K*(1+.3*lvl('roots')))}
   }
   if(shaded)seeFx('shade',(shaded-1)%N,((shaded-1)/N)|0);if(drowned)seeFx('drown',(drowned-1)%N,((drowned-1)/N)|0);
@@ -2707,17 +2742,21 @@ function tick0(){
     if(f.stage>=4&&t.p.g<.4){const cover=near(x,y,1,isP('hawthorn'))>=3;
       if(Math.random()<.012*b*(cover?.2:1)*TICK_K){t.p=cover?{id:'hawthorn',g:.7}:{id:'meadow',g:.8};eaten++;mark(x,y,'graze')}}
     else if(f.kind==='shrub'&&t.p.g<.4){if(Math.random()<.006*b*TICK_K){t.p={id:'meadow',g:.8};eaten++}}
-    else if(f.kind==='tree'&&t.p.g>=1&&b>=1&&Math.random()<.0005*b*TICK_K){if(!fallTree(x,y,'browse'))t.p={id:'meadow',g:.5};glades++}
+    // browsers strip the bark of young and middle-aged trees; a veteran's thick bark sees them off
+    else if(f.kind==='tree'&&t.p.g>=1&&b>=1&&!t.p.vet&&Math.random()<.0005*b*TICK_K){if(!fallTree(x,y,'browse'))t.p={id:'meadow',g:.5};glades++}
   }
   if(overgrazed>=4)seeFx('overgraze');if(eaten)seeFx('browse');if(glades)seeFx('glade');
   // succession: every tile rolls for its next stage
   const born=[];
   for(let i=0;i<N*N;i++){
     const t=S.tiles[i],x=i%N,y=(i/N)|0;if(!t.u)continue;
-    if(t.gd==='water')continue;
+    if(t.gd==='water'||t.p&&t.p.ud)continue;
     const r=succ(x,y);if(r&&r.next&&r.chance>0&&Math.random()<Math.min(.9,r.chance*SUCC()*TGROW[i]*TICK_K))born.push([i,r.next]);
   }
-  for(const[i,id]of born){S.tiles[i].p={id,g:.05};discover('flora',id);bornFx(i,id)}
+  // a tree is not pushed aside by the next one: the young oak or beech grows up in its shade (t.p.ud) and takes the tile
+  // only once the old tree falls, so each wood lasts as long as its trees live
+  for(const[i,id]of born){const t=S.tiles[i],f=t.p&&FLORA[t.p.id];
+    if(f&&f.kind==='tree'&&!f.pre&&t.p.g>=.6&&FLORA[id].kind==='tree')t.p.ud=id;else t.p={id,g:.05};discover('flora',id);bornFx(i,id)}
   seedFirstTrees();
   // grown patches level up into the next level that suits the spot, switch branch, or slip back when the ground no longer suits them
   const ck=LV_RATE*4*SUCC()*TICK_K;
@@ -3199,20 +3238,36 @@ function floodAfter(f){
 // wildlife coming back by itself: a species you have not reintroduced walks or flies in from the countryside once its home
 // is ready and the city has opened the way to it, the way wolves came back to Germany in 2000
 function returning(){
-  if(Math.random()>.0003*TICK_K||S.clock<3*YEAR||S.clock-(S.retAt??-1e9)<2*YEAR)return;
+  if(S.clock<YEAR/2)return;
+  // a researched animal that is not living here comes by itself once its home is ready: research opens the way,
+  // the player makes the home, and the pair walks in. Each species looks again a quarter of a year after its last try.
+  if(Math.random()<.001*TICK_K){const at=S.callAt||(S.callAt={});
+    const c=Object.keys(FAUNA).filter(k=>RES[k]&&RES[k].g==='animal'&&lvl(k)>0&&!D.fa[k]&&!ARRIVE[k]&&FAUNA[k].cls!=='insect'&&S.clock-(at[k]??-1e9)>=YEAR/4&&capOf(k)>=2);
+    if(c.length){const sp=c[(Math.random()*c.length)|0];at[sp]=S.clock;const home=homeFor(sp);if(home){walkIn(sp,home,true);return}}}
+  // now and then one the city has not researched yet finds its own way in; its node then grows at half price
+  if(Math.random()>.0001*TICK_K||S.clock<3*YEAR||S.clock-(S.retAt??-1e9)<3*YEAR)return;
   const c=Object.keys(FAUNA).filter(k=>RES[k]&&RES[k].g==='animal'&&!has(k)&&!D.fa[k]&&resOpen(k)&&FAUNA[k].cls!=='insect'&&capOf(k)>=2);
   if(!c.length)return;
-  const sp=c[(Math.random()*c.length)|0],F=FAUNA[sp];let home=null;
-  for(let k=0;k<120&&UT.length;k++){const i=UT[(Math.random()*UT.length)|0],x=i%N,y=(i/N)|0;
-    if(canStand(F.mv,T(x,y))&&homeOk(sp,x,y)&&habOk(sp,x,y)&&holeFree(sp,x,y)){home=[x,y];break}}
-  if(!home)return;
+  const sp=c[(Math.random()*c.length)|0],home=homeFor(sp);if(home)walkIn(sp,home,false)}
+// every tile where a pair of sp could make its home right now
+let HSPOT={};
+function homeSpots(sp){if(HSPOT.t===S.t&&HSPOT[sp])return HSPOT[sp];if(HSPOT.t!==S.t)HSPOT={t:S.t};const F=FAUNA[sp],out=HSPOT[sp]=[];for(const i of UT){const x=i%N,y=(i/N)|0;if(canStand(F.mv,T(x,y))&&homeOk(sp,x,y)&&habOk(sp,x,y)&&holeFree(sp,x,y))out.push(i)}return out}
+function homeFor(sp){const L=homeSpots(sp);if(!L.length)return null;const i=L[(Math.random()*L.length)|0];return [i%N,(i/N)|0]}
+function walkIn(sp,home,called){
+  const F=FAUNA[sp],[hx,hy]=home,e=[[0,hy],[N-1,hy],[hx,0],[hx,N-1]].sort((p,q)=>Math.abs(p[0]-hx)+Math.abs(p[1]-hy)-Math.abs(q[0]-hx)-Math.abs(q[1]-hy))[0];
   // they come in from the edge of the map nearest their new home
-  const[hx,hy]=home,e=[[0,hy],[N-1,hy],[hx,0],[hx,N-1]].sort((p,q)=>Math.abs(p[0]-hx)+Math.abs(p[1]-hy)-Math.abs(q[0]-hx)-Math.abs(q[1]-hy))[0];
   for(let j=0;j<2;j++){const a={id:S.nid++,sp,x:e[0],y:e[1],hx,hy,tx:e[0],ty:e[1],w:j,f:1,bad:0,m:0};
     const mv=F.mv==='fly'?{path:[]}:relocate(a,F,home);if(mv)a.path=mv.path;else{a.x=a.tx=hx;a.y=a.ty=hy}S.an.push(a)}
-  S.res[sp]=1;S.retAt=S.clock;if(offLog)offLog.push({k:'return',sp,x:hx,y:hy});seeFx('return',hx,hy);discover('fauna',sp,'Came back by itself');
-  toast(`${F.name} came back by itself`,`Nobody released them: a pair found their way in from the countryside to a home that was waiting for them. ${F.name} is now open in the Wood Wide Web.`,'unlock');
+  if(!called){(S.wild||(S.wild={}))[sp]=1;S.retAt=S.clock}
+  if(offLog)offLog.push({k:'return',sp,x:hx,y:hy,called});seeFx('return',hx,hy);discover('fauna',sp,'Came back by itself');
+  toast(`${F.name} came back by itself`,called?`Nobody released them: the home you made was waiting, and a pair found their way in from the countryside.`
+    :`Nobody released them: a pair found their way in from the countryside. As a thank-you, ${F.name} grows at half price in the Wood Wide Web.`,'unlock');
   computeDerived()}
+// a researched animal that lives nowhere in the city yet: what its home needs, each line ticked off when the city has it
+function homeList(sp){
+  const F=FAUNA[sp],ci=capInfo(sp),spots=homeSpots(sp).length;
+  return [{ok:ci.cap>=2,t:'Food and room for a pair',d:ci.text?`The land can feed ${ci.cap}: ${ci.text}.`:''},
+    {ok:spots>0,t:'A place for its home',d:spots?`${plural(spots,'spot')} would do.`:`Its home needs: ${F.need}`}]}
 const SLEN=DAY*SDAYS;
 // what a season's rain will be called in the forecast
 const wxKind=R=>R<.45?'drought':R<.8?'dry':R>1.45?'wet':'fair';
@@ -3372,8 +3427,10 @@ function comingSoon(){
   // a great storm or flood on its way
   {const ds=eventAhead('storm',SLEN*.5);if(ds!=null){const y=Math.floor((S.clock+ds)/YEAR),d=stormTrack(y);let best=null,bd=1e9;
       for(let i=0;i<N*N;i++){const t=S.tiles[i];if(!t.u||!isTree(t))continue;const v=d(i%N,(i/N)|0);if(v<bd){bd=v;best=i}}
+      const vets=(S.vets||[]).filter(v=>d(v.i%N,(v.i/N)|0)<=5);if(vets.length)best=vets[0].i;
       if(best!=null)out.push({key:'storm',x:best%N,y:(best/N)|0,cause:'light',title:S.fx['storm:great']?'Storm warning':'The wind is rising',pri:3,dt:ds,
-        text:S.fx['storm:great']?'A great storm is coming, and its track runs through here. Old, tall trees on the edge of a wood, on hilltops and on wet ground are most at risk.':'Something big is building in the west. Watch the woods here.'})}
+        text:(S.fx['storm:great']?'A great storm is coming, and its track runs through here. Old, tall trees on the edge of a wood, on hilltops and on wet ground are most at risk.':'Something big is building in the west. Watch the woods here.')+
+          (vets.length?` ${vets.slice(0,3).map(v=>v.n).join(', ')} ${vets.length>1?'stand':'stands'} on its path.`:'')})}
     const df=eventAhead('flood',SLEN);if(df!=null){const i=S.tiles.findIndex((t,j)=>t.u&&t.gd==='water'&&WCONN[WCOMP[j]]);
       if(i>=0)out.push({key:'flood',x:i%N,y:(i/N)|0,cause:'water',title:'The river is rising',pri:3,dt:df,
         text:S.fx['flood:great']?'A hundred-year flood is coming: the flat valley floor up to 4 tiles from the banks will go under. Animals there will flee, and beech, oak and pine there may drown.':'After all this rain the river is higher than it has been in a lifetime. Watch the valley floor.'})}}
@@ -5313,7 +5370,7 @@ const PACE=[80,200,400,800,2000,6000,20000,50000,100000,150000,200000,250000,300
 const RES_BASE=3,resDone=()=>{let n=0;for(const k in S.res||{})if(RES[k]&&RES[k].g!=='force'&&k!=='weeds'&&S.res[k])n++;return n};
 const paceCost=n=>PACE[Math.min(n,PACE.length-1)]*Math.pow(1.1,Math.max(0,n-PACE.length+1));
 const forceInfl=()=>Math.pow(1.3,resDone()),spMult=k=>Math.min(1.6,Math.max(.6,Math.pow(RES[k].cost/400,.2)));
-const resCost=k=>{const c=RES[k].grow?RES[k].cost*Math.pow(RES[k].grow,lvl(k))*RES_BASE*forceInfl():paceCost(resDone())*spMult(k);return c<1000?Math.round(c/5)*5:Math.round(c/Math.pow(10,Math.floor(Math.log10(c))-2))*Math.pow(10,Math.floor(Math.log10(c))-2)};
+const resCost=k=>{const c=(RES[k].grow?RES[k].cost*Math.pow(RES[k].grow,lvl(k))*RES_BASE*forceInfl():paceCost(resDone())*spMult(k))*(S.wild&&S.wild[k]&&!lvl(k)?.5:1);return c<1000?Math.round(c/5)*5:Math.round(c/Math.pow(10,Math.floor(Math.log10(c))-2))*Math.pow(10,Math.floor(Math.log10(c))-2)};
 // seeds come slowly; milestones pay a quarter of their face value
 const INCOME_K=.7,GOAL_K=.25;
 // new plants and animals also need the city to be alive enough to hold them: a biodiversity threshold (the highest reached counts)
@@ -5761,7 +5818,7 @@ function webDetail(k){
     what=`<b>An upgrade of ${b.name}</b>, not a new stage: when ${b.name.toLowerCase()} takes hold ${v.where}, about ${Math.round(v.p*100)}% of new patches grow as ${f.name.toLowerCase()} instead (fewer if none grows nearby and its seed rain is weak). Once established it also moves into nearby ${b.name.toLowerCase()} patches. Sowing it by hand works anywhere ${b.name.toLowerCase()} could grow.`;
     rows=[['Earns',`${f.sps} seeds/s per tile, against ${b.sps} for ${b.name.toLowerCase()} (${K.up>0?'+'+K.up+'%':'the same'})`],['Bonus',f.fx],['Same as',`everything ${b.name.toLowerCase()} does in succession: it moves on to the same next stage`],['Seed travels',seedTravel(k)]]}
   else if(isA){const F=FAUNA[k];what=`<b>A new animal.</b> ${F.desc}`;
-    rows=[['What it adds',mechList(animalMechanics(k))],['Needs',F.need],['Room for',capInfo(k).text],['Release',`${relCost(k)} seeds each by hand; ${k==='bee'?'you release a queen, who founds a colony':F.cls==='insect'?'one is enough to breed':'release two so they can breed'}`],['Eats',webChips((ENC[k]&&ENC[k].eats)||[])]]}
+    rows=[['What it adds',mechList(animalMechanics(k))],['Needs',F.need],['Room for',capInfo(k).text],['Release',`${relCost(k)} seeds each by hand; ${k==='bee'?'you release a queen, who founds a colony':F.cls==='insect'?'one is enough to breed':'release two so they can breed'}${F.cls!=='insect'&&!ARRIVE[k]?'. Or make it a home: once grown here, a pair comes by itself when everything it needs is ready':''}`],['Eats',webChips((ENC[k]&&ENC[k].eats)||[])]]}
   else{what=`<b>A force of nature</b>, upgraded level by level (now ${st.l} of ${R0.max}). ${R0.desc}`;rows=[['Per level',R0.sub]]}
   if(isF&&POLLINATED.has(k))rows.push(['Pollinators',`spreads on its own only where ${pollNames(k)} live within 4 tiles`]);
   if(isF&&PARTNER[k])rows.push(['Partner',`${FAUNA[PARTNER[k][0]].name}: ${PARTNER[k][1]}`]);
@@ -5772,13 +5829,17 @@ function webDetail(k){
     :miss?`Needs ${resName(miss)}`:!st.bio?`Needs ${bioNeed(k)} BIO`:!st.open?'Needs a discovered ecosystem'
     :S.seeds<st.c?`${fmt(st.c)} seeds · ${fmt(st.c-S.seeds)} to go`:`${R0.g==='force'&&st.l?'Upgrade':'Grow'} for ${fmt(st.c)} seeds`;
   const head=`<div class="wi-head"><img src="${iconURL(k)}" alt=""><div><span class="wb k-${K.cls}">${K.tag}${R0.max?` · Lv ${st.l}/${R0.max}`:''}</span><h3>${name}</h3>${isF||isA?`<em>${(FLORA[k]||FAUNA[k]).latin}</em>`:''}</div></div>`;
-  const html=`${head}<p class="wi-what">${what}</p><div class="wi-links"><button class="glink wi-more" data-more>Details</button>${isF||isA?`<button class="glink" data-enc="${k}">Field guide ›</button>`:''}</div>${kv(rows)}`;
+  // grown but not living here: the home it is waiting for, ticked off line by line
+  const home=isA&&lvl(k)>0&&!D.fa[k]&&!ARRIVE[k]&&FAUNA[k].cls!=='insect'?`<div class="wi-home"><b>Make a home</b><ul>${homeList(k).map(r=>`<li class="${r.ok?'ok':'no'}"><i>${r.ok?'✓':'✗'}</i><span>${r.t}<small>${r.d}</small></span></li>`).join('')}</ul>
+    <p>When both are ticked, a pair finds its own way in within a season or so. You can also release them by hand.</p>${homeSpots(k).length?`<button class="glink" data-homes="${k}">Show me where ◎</button>`:''}</div>`:'';
+  const html=`${head}<p class="wi-what">${what}</p>${home}<div class="wi-links"><button class="glink wi-more" data-more>Details</button>${isF||isA?`<button class="glink" data-enc="${k}">Field guide ›</button>`:''}</div>${kv(rows)}`;
   // the web re-renders every tick; only touch the sheet when it changed, or a tap can land on a button that was just replaced
   el.dataset.k=k;webSet(el,html);
   webSet(act,`<button class="btn${st.maxed?'':' primary'}" id="webGrow" ${st.maxed||!st.open||S.seeds<st.c?'disabled':''}>${label}</button>`);
 }
 $('webAct').addEventListener('click',e=>{if(e.target.closest('#webGrow')&&webSel)buyRes(webSel)});
 $('webInfo').addEventListener('click',e=>{
+  const hb=e.target.closest('[data-homes]');if(hb){const k=hb.dataset.homes,pts=homeSpots(k).map(i=>[i%N,(i/N)|0]);if(pts.length){$('web').hidden=true;const h=hotspot(pts);flyTo(h.x,h.y,1.6);HL={k,isF:true,pts,until:time+6};say(`${FAUNA[k].name}: ${plural(pts.length,'spot')} where a pair could make its home.`,'good')}return}
   if(e.target.closest('[data-more]')){$('webSide').classList.toggle('more');webPick(webSel);return}
   const b=e.target.closest('[data-web]');if(!b)return;const k=b.dataset.web;
   if(tabOf(k)!==webTab){webTab=tabOf(k);WEBL=null}webPick(k,true)});
@@ -5857,12 +5918,14 @@ function awayStory(a,log){
   const burnt=uniq(log.filter(m=>m.k==='burn').map(m=>[m.x,m.y])),burnSet=new Set(burnt.map(p=>p[1]*N+p[0]));
   if(burnt.length)ev.push({pri:95,tag:'Wildfire',emo:'🔥',title:`Fire burned ${plural(burnt.length,'tile')}`,line:'A drought summer dried the fuel. Heather and broom sprout again from the ash, and fireweed and birch move in first.',pts:burnt,c:'#f08a2c'});
   const falls={};for(const m of log)if(m.k==='fall')(falls[m.why]=falls[m.why]||[]).push(m);
-  for(const why in falls){const L=falls[why],n=L.length,tx=AWAY_FALL[why]||['{n} fell',''],cnt={};for(const m of L)cnt[bid(m.id)]=(cnt[bid(m.id)]||0)+1;
-    const top=Object.keys(cnt).sort((p,q)=>cnt[q]-cnt[p])[0],nm=Object.keys(cnt).length===1?plural(n,lc(FLORA[top].name),lc(FLORA[top].name)==='birch'?'birches':undefined):plural(n,'tree');
-    ev.push({pri:55+Math.min(25,n*3),tag:'Trees down',pic:top,title:tx[0].replace('{n}',nm),line:tx[1],pts:uniq(L.map(m=>[m.x,m.y])),c:'#c49a5c'})}
-  for(const m of log)if(m.k==='return')ev.push({pri:97,tag:'Came back',pic:m.sp,title:`${FAUNA[m.sp].name} came back by itself`,line:'Nobody released them: a pair found their own way in from the countryside.',pts:[[m.x,m.y]],an:m.sp,c:'#f6eca0'});
+  for(const why in falls){const L=falls[why],P=uniq(L.map(m=>[m.x,m.y])),n=P.length,tx=AWAY_FALL[why]||['{n} fell',''],cnt={};for(const m of L)cnt[bid(m.id)]=(cnt[bid(m.id)]||0)+1;
+    const top=Object.keys(cnt).sort((p,q)=>cnt[q]-cnt[p])[0],w=FLORA[top].name.toLowerCase(),nm=Object.keys(cnt).length===1?plural(n,w,/(ch|sh|s|x)$/.test(w)?w+'es':undefined):plural(n,'tree');
+    ev.push({pri:55+Math.min(25,n*3),tag:'Trees down',pic:top,title:tx[0].replace('{n}',nm),line:tx[1],pts:P,c:'#c49a5c',key:'fall:'+why})}
+  for(const m of log)if(m.k==='vet')ev.push({pri:92,tag:'Veteran',pic:m.id,title:`${m.name} is a veteran now`,line:`It has stood for ${m.age} years: hollow, full of holes and home to owls and woodpeckers. Storms take old trees first.`,pts:[[m.x,m.y]],c:'#e8c87a',key:'vet:'+m.name});
+  for(const m of log)if(m.k==='vetlost')ev.push({pri:m.why==='age'?82:96,tag:'Veteran lost',pic:m.id,title:`${m.name} has fallen`,line:VET_WHY[m.why]||VET_WHY.gone,pts:[[m.x,m.y]],c:'#f09080',key:'vetlost:'+m.name});
+  for(const m of log)if(m.k==='return')ev.push({pri:97,tag:'Came back',pic:m.sp,title:`${FAUNA[m.sp].name} came back by itself`,line:m.called?'The home you made was waiting: a pair found their own way in from the countryside.':`Nobody released them: a pair found their own way in from the countryside. ${FAUNA[m.sp].name} now grows at half price in the Wood Wide Web.`,pts:[[m.x,m.y]],an:m.sp,c:'#f6eca0'});
   const down=uniq(log.filter(m=>m.k==='down').map(m=>[m.x,m.y]));
-  if(down.length)ev.push({pri:80+Math.min(10,down.length),tag:'Reclaimed',emo:'🏚️',title:`Nature brought down ${plural(down.length,'building')}`,line:'Ivy, roots and damp did the work. Their rubble is open ground for the pioneers.',pts:down,c:'#d9c3a0'});
+  if(down.length)ev.push({pri:80+Math.min(4,down.length),tag:'Reclaimed',emo:'🏚️',title:`Nature brought down ${plural(down.length,'building')}`,line:'Ivy, roots and damp did the work. Their rubble is open ground for the pioneers.',pts:down,c:'#d9c3a0'});
   const crack=uniq(log.filter(m=>m.k==='crack').map(m=>[m.x,m.y]));
   if(crack.length)ev.push({pri:40+Math.min(20,crack.length*2),tag:'Reclaimed',emo:'🧱',title:`Roots broke up ${plural(crack.length,'tile')} of paving`,line:'Frost and roots split the hard ground open, and weeds root in the cracks.',pts:crack,c:'#d9c3a0'});
   // the difference: water, plants spreading, maturing or slipping back
@@ -5888,12 +5951,26 @@ function awayStory(a,log){
     if(!n){ev.push({pri:70,tag:'Gone',pic:sp,title:`The last ${lc(F.name)} left`,line:'Its habitat ran out. Check what it needs in the field guide.',pts:[],c:'#f09080'});continue}
     const d=n-w;if(Math.abs(d)<2&&Math.abs(d)<w*.5)continue;
     ev.push({pri:22+Math.min(30,Math.abs(d)*3),tag:d>0?'Thriving':'Declining',pic:sp,title:`${F.name}: ${w} → ${n}`,line:d>0?'There was food and room for more.':'Food or shelter is running short for them.',pts:[],an:sp,c:d>0?'#9fd36a':'#f09080'})}
+  // rare events are news every time, not only the first time they are seen: a storm or a flood takes its fallen trees with it
+  for(const[t0,fx,tag,emo,title,why]of AWAY_RARE){if(!log.some(m=>m.t===t0)||log.some(m=>m.k==='fx'&&m.id===fx))continue;
+    const L=why?ev.find(e=>e.key==='fall:'+why):null;if(L)ev.splice(ev.indexOf(L),1);
+    ev.push({pri:99,rare:1,tag,emo,title:L?(why==='storm'?L.title.replace(/^A storm/,'A great storm'):`${title}: ${lc(L.title)}`):title,line:FX[fx]?firstSent(FX[fx].text):'',pts:L?L.pts:[],c:'#f0c060',key:'rare:'+fx})}
   ev.sort((p,q)=>q.pri-p.pri);
+  // what the last two reports already told: the same kind of change again is routine, folded into one quiet line at the end,
+  // so a first sighting or a returning wolf is not buried under buildings falling and woods renewing themselves every visit
+  const prev=new Set((S.awayKeys||[]).flat());
+  for(const e of ev){e.key=e.key||e.tag+':'+(e.pic||e.emo||e.title);e.routine=!e.rare&&prev.has(e.key)}
+  S.awayKeys=[...(S.awayKeys||[]).slice(-1),[...new Set(ev.map(e=>e.key))]];
+  const fresh=ev.filter(e=>!e.routine),usual=ev.filter(e=>e.routine);
   // the story: the biggest changes, at most a couple of each kind, so a long absence still reads in one breath
   const CAP={Discovered:3,Spread:2,'Trees down':2,'New in the city':2,'First sighting':1},cnt={},story=[];
-  for(const e of ev){if(story.length>=6)break;if((cnt[e.tag]=(cnt[e.tag]||0)+1)<=(CAP[e.tag]||1))story.push(e)}
-  return {story,more:ev.length-story.length};
+  for(const e of fresh){if(story.length>=(usual.length?5:6))break;if((cnt[e.tag]=(cnt[e.tag]||0)+1)<=(CAP[e.tag]||1))story.push(e)}
+  const more=fresh.length-story.length;
+  if(usual.length)story.push({pri:0,tag:'As usual',emo:'🌿',title:usual.length>1?'Life went on as before':usual[0].title,line:usual.length>1?usual.slice(0,4).map(e=>e.title).join(' · ')+'.':usual[0].line,pts:[],c:'#8fa38a'});
+  return {story,more,big:fresh.some(e=>e.pri>=85)};
 }
+const AWAY_RARE=[['A great storm','storm:great','Storm','🌪️','A great storm swept through','storm'],['A hundred-year flood','flood:great','Flood','🌊','The river burst its banks','flood'],
+  ['A mast year','mast','Mast year','🌰','The oaks and beeches dropped a feast of nuts','']];
 // the seasons that passed, as a ribbon of icons, with the year's weather where it was unusual
 const SEA_IC=['🌸','☀️','🍂','❄️'];
 function awaySeasons(n0,n1){
@@ -5904,11 +5981,11 @@ function awaySeasons(n0,n1){
 const awayPic=e=>e.pic?`<img src="${speciesPic(e.pic,96)}" alt="">`:`<span class="aw-emo">${e.emo||'🌿'}</span>`;
 let AWAY=null;
 function showAway(a,b,extra){
-  const {story:ev,more:rest}=awayStory(a.snap,offLog),show=ev,gain=b.seeds-a.seeds;
+  const {story:ev,more:rest,big}=awayStory(a.snap,offLog),show=ev,gain=b.seeds-a.seeds;
   AWAY={ev,i:0};
-  $('awayTitle').textContent=ev.length?(ev[0].pri>=85?'Something happened!':'Nature has been busy'):'A quiet spell';
+  $('awayTitle').textContent=big?'Something happened!':ev.some(e=>e.pri)?'Nature has been busy':'A quiet spell';
   let h=`<div class="aw-top"><div class="aw-seeds"><b>+${fmt(gain)}</b><span>seeds</span></div><div class="aw-sea">${awaySeasons(a.snap.n,WX.n)}</div></div>`;
-  if(show.length)h+=`<ol class="aw-list">${show.map((e,i)=>`<li><button data-aw="${i}" style="--c:${e.c}">${awayPic(e)}<div><em>${e.tag}</em><b>${e.title}</b><p>${e.line}</p></div>${e.pts.length||e.an?'<span class="aw-go" aria-hidden="true">›</span>':''}</button></li>`).join('')}</ol>`;
+  if(show.length)h+=`<ol class="aw-list">${show.map((e,i)=>`<li${big&&!i?' class="hero"':''}><button data-aw="${i}" style="--c:${e.c}">${awayPic(e)}<div><em>${e.tag}</em><b>${e.title}</b><p>${e.line}</p></div>${e.pts.length||e.an?'<span class="aw-go" aria-hidden="true">›</span>':''}</button></li>`).join('')}</ol>`;
   else h+=`<p class="dim">Nothing big changed. Plants grow slowly: give them a season or two.</p>`;
   if(rest>0)h+=`<p class="dim">…and ${plural(rest,'smaller change')} around the city.</p>`;
   if(extra>60)h+=`<p class="dim">Nature grew for the first ${OFFLINE_SIM/3600} hours. After that, seeds trickled in at a quarter of the rate, up to ${OFFLINE_MAX/3600} hours.</p>`;
@@ -6475,6 +6552,8 @@ function updateInfo(){
   if(t.fire)notes+=`<p class="note" style="color:#f0a060"><b style="font-weight:600">On fire.</b> It will spread to dry fuel next door; water, roads and wet ground stop it.</p>`;
   else if(t.ash)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89a8a;font-weight:600">Burnt ground.</b> The ash makes the soil richer, and the bare ground is open to fireweed and birch.</p>`;
   if(FLD[i]>.02&&t.gd!=='water')notes+=`<p class="note" style="color:#7fb0e6">Under flood water. When it goes down it will leave silt behind.</p>`;
+  if(t.p&&t.p.ud&&FLORA[t.p.ud])notes+=`<p class="note">A young ${lc(FLORA[t.p.ud].name)} grows in its shade, waiting for a gap. When this tree falls, it takes its place.</p>`;
+  if(t.p&&t.p.vet)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#e8c87a;font-weight:600">${t.p.vet}.</b> A veteran, about ${vetAge(t)} years old: hollow and full of holes, it drops twice the nuts and stands through fire. Storms take old trees first.</p>`;
   if(t.ru)notes+=`<p class="note" style="color:var(--ink)"><b style="color:#a89c86;font-weight:600">Ivy ruin.</b> The walls of an old ${t.ruk&&['house','terrace','shop','farm','factory','warehouse','office','block'].includes(t.ruk)?{house:'house',terrace:'terrace',shop:'shop',farm:'farmhouse',factory:'factory',warehouse:'warehouse',office:'office block',block:'block of flats'}[t.ruk]:'building'}, roofless and wrapped in ivy.${S.fx['home:ruin']?' An owl pair can nest in it.':''}</p>`;
   if(t.rt)notes+=`<p class="note">A storm threw the tree here and tore up its root plate: a pit of bare earth${S.fx['pit:storm']?' where birch and willowherb sprout first':''}.</p>`;
   if(t.fb)notes+=`<p class="note">The flood scoured this bank down to bare gravel.</p>`;
@@ -7149,6 +7228,7 @@ function renderCensus(){
     if(!pl.length)h+=`<p class="cempty">No wild plants yet. Sow pioneer weeds on bare soil to begin.</p>`;
     for(const[g,label]of CSTAGE){const ks=pl.filter(k=>cGroup(k)===g).sort((a,b)=>c.fl[b]-c.fl[a]);if(!ks.length)continue;
       h+=`<h4>${label} <em>${ks.reduce((n,k)=>n+c.fl[k],0)} tiles</em></h4><ol class="clist">${ks.map(k=>row(k,true)).join('')}</ol>`}
+    if(S.vets&&S.vets.length)h+=`<h4>Veteran trees <em>${S.vets.length}</em></h4><ol class="clist">${S.vets.map((v,j)=>{const t=S.tiles[v.i];return `<li><button class="crow" data-vet="${j}" title="Show ${v.n} on the map"><img src="${speciesPic(v.sp,64)}" alt=""><span class="cn"><b>${v.n}</b><small>${t.p?`${vetAge(t)} years old · a veteran since year ${v.y+1}`:''}</small></span><span class="cq">◎</span></button></li>`}).join('')}</ol>`;
     {let dw=0;for(const q of S.tiles)if(q.u&&q.dw)dw++;if(dw)h+=`<p class="cnote">Dead wood: ${dw} fallen tree${dw>1?'s':''} rotting back into the soil, each a gap where the forest starts again.</p>`}
     const cu=c.cult;if(cu.lawn+cu.crop+cu.street)h+=`<p class="cnote">Also on your land, still managed by people: ${[cu.lawn&&`${cu.lawn} mown lawn or grazed tiles`,cu.crop&&`${cu.crop} farmed fields`,cu.street&&`${cu.street} planted street trees`].filter(Boolean).join(', ')}. Unbuild lets a tile go now; lawns next to wild land and the Wilder Parks force let them go over time.</p>`;
     h+=`</section>`}
@@ -7186,6 +7266,7 @@ $('censusBtn').addEventListener('click',openCensus);
 $('wx').addEventListener('click',showWx);$('wxBtn').addEventListener('click',showWx);
 $('cClose').addEventListener('click',()=>{$('census').hidden=true});
 $('census').addEventListener('click',e=>{if(e.target.id==='census'){$('census').hidden=true;return}const l=e.target.closest('[data-loc]');if(l){locateSpecies(l.dataset.loc);return}
+  const vb=e.target.closest('[data-vet]');if(vb){const v=(S.vets||[])[+vb.dataset.vet];if(v){const x=v.i%N,y=(v.i/N)|0;$('census').hidden=true;flyTo(x,y,2);HL={k:v.sp,isF:true,pts:[[x,y]],until:time+5};say(v.n,'good')}return}
   const sp=e.target.closest('[data-sp]');if(sp){censusSp=sp.dataset.sp;renderCensus();$('cBody').scrollTop=0;return}
   if(e.target.closest('[data-back]')){censusSp=null;renderCensus();return}
   const hz=e.target.closest('[data-hz]');if(hz){hzLen=+hz.dataset.hz;hzPan=0;chartRedraw();return}
@@ -7347,6 +7428,8 @@ function chronText(e){const[n,k,a]=e,nm=q=>FLORA[q]?FLORA[q].name:FAUNA[q]?FAUNA
     case 'fx':return `<span>🔍</span>Discovered: ${FX[a]?fxName(a):a} <em>${when}</em>`;
     case 'arr':return `<span>🏡</span>${FAUNA[a]?FAUNA[a].name:a} moved in by itself <em>${when}</em>`;
     case 'cas':{const r=CASCADES.find(q=>q.id===a);return `<span>🔗</span>Cascade: ${r?r.name:a} <em>${when}</em>`}
+    case 'vet':return `<span>🌳</span>${a} became a veteran <em>${when}</em>`;
+    case 'vetlost':return `<span>🪦</span>${a} fell <em>${when}</em>`;
     case 'mast':return `<span>🌰</span>A mast year: oaks and beeches dropped a huge crop <em>${when}</em>`;}
   return `<span>·</span>${k} <em>${when}</em>`}
 function renderHistory(){
