@@ -51,6 +51,7 @@ const setup = (seed, poor) => `(()=>{
   boot(newGame(${seed}));S.slot=0;S.speed=0;QUIET=true;
   for(const id of ['intro','menu'])if($(id))$(id).hidden=true;
   // keep the page's own frame loop from rendering or ticking: the bot drives the clock
+  frame=()=>{};
   window.__B={poor:${poor},noTrees:${NOTREES},from:${!!process.env.FROM},flag:{},seen:{},ah:{},hist:[],log:[],t0:performance.now(),ticks:0,tickMs:0,maxCount:{}};
 
   return S.name})()`;
