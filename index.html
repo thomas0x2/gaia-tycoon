@@ -1796,6 +1796,11 @@ function slope(x,y){const[a,b,c,d]=corners(x,y),sx=((b+c)-(a+d))/2,sy=((c+d)-(a+
 function cornerH(x,y,ox,oy){const c=corners(x,y);return ox<0?(oy<0?c[0]:c[3]):(oy<0?c[1]:c[2])}
 function makeWater(x,y){
   const t=T(x,y);t.gd='water';t.p=t.p&&FLORA[t.p.id].place==='water'?t.p:null;levelWater();buildTerrain();
+  // anything that cannot swim steps out onto the bank, and finds a new home if this one is now under water
+  if(S.an)for(const a of S.an){const mv=FAUNA[a.sp].mv;if(mv==='fly'||canStand(mv,t))continue;
+    if(Math.round(a.tx)===x&&Math.round(a.ty)===y){a.tx=a.x;a.ty=a.y}
+    if(Math.round(a.x)===x&&Math.round(a.y)===y)for(const[dx,dy]of N8){const nx=x+dx,ny=y+dy;if(inb(nx,ny)&&canStand(mv,T(nx,ny))){a.x=a.tx=nx;a.y=a.ty=ny;a.path=null;break}}
+    if(a.hx===x&&a.hy===y&&!homeOk(a.sp,x,y)){const h=nearHome(a);if(h){a.hx=h[0];a.hy=h[1]}}}
 }
 // Water finds its level: every body of open water lies flat at the height of its lowest tile, so digging into
 // a slope next to a pond excavates the new tile down to the pond. The ground around is then eased back into
@@ -2287,7 +2292,7 @@ const CAPS={
   swift:{what:'reclaimed structure',n:()=>D.rpN,each:2},stork:['frogs',animals('frog'),4],
   rabbit:['grassland, lawn and pasture tiles',tilesOf('graze'),8,['fox','each fox hunting them']],vole:['grassland tiles',tilesOf('meadow'),8,['kestrel','owl','barnowl','each owl or kestrel hunting them']],
   hedgehog:['grassland and scrub tiles',tilesOf('meadow','hawthorn'),40],fox:['rabbits',animals('rabbit'),6],
-  badger:['forest tiles',tilesOf('forest'),50],deer:['scrub and tree tiles',tilesOf('hawthorn','trees'),30,['wolf','each wolf hunting them']],konik:['grassland, lawn and pasture tiles',tilesOf('graze'),20],
+  badger:['forest tiles',tilesOf('forest'),50],deer:['scrub and tree tiles',tilesOf('hawthorn','trees'),50,['wolf','each wolf hunting them']],konik:['grassland, lawn and pasture tiles',tilesOf('graze'),20],
   squirrel:['pine tiles',tilesOf('pine'),15],dormouse:['hazel tiles',tilesOf('hazel'),6],marten:['forest tiles',tilesOf('forest'),60],
   boar:['forest tiles',tilesOf('forest'),45],wolf:{what:'wolf for every 3 red deer or wild boar (a pack of up to 6)',n:()=>{const p=(D.fa.deer||0)+(D.fa.boar||0);return p<2?0:Math.min(6,Math.max(2,Math.floor(p/3)))},each:1},lynx:['red deer',animals('deer'),8],bison:['grassland tiles',tilesOf('meadow'),60],
   beaver:['willow tiles',tilesOf('willow'),15],otter:['brown trout',animals('trout'),6],frog:['fish-free water and reed tiles (lily pads count double)',Object.assign(()=>{let n=D.gw.reed||0;for(let i=0;i<N*N;i++){const t=S.tiles[i];if(t.u&&t.gd==='water'&&!FISHC.has(WCOMP[i]))n+=t.p&&bid(t.p.id)==='lily'?2:1}return n},{ids:['water','reed']}),6],
@@ -2365,7 +2370,7 @@ function computeFields(){
     else if(a.sp==='rabbit'){const f=FOXF[i]?.25:1;addStamp(BROWSE,x,y,1,.3*f);addStamp(BROWSE,x,y,2,.2*f)}
     // a pony herd wanders wide and grazes the coarse grass evenly
     else if(a.sp==='konik')addStamp(BROWSE,x,y,3,.35);
-    else if(a.sp==='deer')addStamp(BROWSE,x,y,3,WOLFF[i]?.2:1);}
+    else if(a.sp==='deer')addStamp(BROWSE,x,y,3,WOLFF[i]?.15:.7);}
   for(let i=0;i<N*N;i++)if(SHEL[i]<1)BROWSE[i]*=SHEL[i];
 }
 function seedField(type,i){
@@ -2415,20 +2420,21 @@ function succRaw(x,y){
     const n=Math.min(3,near(x,y,1,isGrassSrc));
     // grassland creeps out from grassland nearby; far from any, only the odd stray seed takes (so dandelions and willowherb hold on for a while)
     if(!n)return {next:'meadow',chance:(.000006+.00003*rainOf('meadow'))*(POL[i]?1.5:1),need:rainNote('meadow')};
-    return {next:'meadow',chance:.0005*n*(POL[i]?1.5:1),need:''};
+    return {next:'meadow',chance:.00015*n*(POL[i]?1.5:1),need:''};
   }
   if(bid(p.id)==='reed'){if(near(x,y,1,isWater))return {next:'willow',chance:0,need:'Reeds keep the fringe along open water: willow takes the reed bed further back.'};
     const s=seedOr('willow',i,.08);return {next:'willow',chance:.0003*s,need:seedField('willow',i)<.1?rainNote('willow'):''}}
   if(bid(p.id)==='heath'){
     // heather holds poor ground until broom feeds it or pines seed in; grazing slows both
-    const bs=has('broom')?seedOr('broom',i,.03):0,ps=seedOr('pine',i,.03),g=Math.max(.1,1-.5*b),next=bs>=ps?'broom':'pine';
+    // broom only takes heather where the soil has grown a little richer: the poorest heath stays heath
+    const bs=has('broom')&&t.fert>=.3?seedOr('broom',i,.03):0,ps=seedOr('pine',i,.03),g=Math.max(.1,1-.5*b),next=bs>=ps?'broom':'pine';
     return {next,chance:(next==='broom'?.00015*bs:.0001*ps)*g,need:`Heather keeps its ground poor, so only ${has('broom')?'broom or ':''}pine can follow it.${b>.05?` Grazing slows them ${brNote(b)}.`:''}`};
   }
   if(st===2){
     if(t.tox>.45)return {next:'hawthorn',chance:0,need:`Soil is ${pct(t.tox)} toxic; scrub needs under 45%.`};
     // heather creeps into poor, sour, dry grassland beside it
     if(has('heath')&&bid(p.id)==='meadow'&&t.fert<.35&&phOf(t)<=6&&WET[i]<.6){const hn=Math.min(3,near(x,y,1,isP('heath')));
-      if(hn)return {next:'heath',chance:.00012*hn*Math.max(.2,1-.6*b),need:'Poor, sour, dry grassland: the heather beside it creeps in.'}}
+      if(hn)return {next:'heath',chance:.00003*hn*Math.max(.2,1-.6*b),need:'Poor, sour, dry grassland: the heather beside it creeps in.'}}
     const rs=meadowResist(p.id),rich=rs>1?` An old meadow (level ${levelOf(p.id)}): scrub moves in ${Math.round(rs*10)/10}× slower here.`:'';
     const sn=t.stony||0;
     if(t.fert<.35||sn>.2){const why=sn>.2?`Stony ground (${pct(sn)} crushed stone)`:`Poor soil (richness ${pct(t.fert)})`;
@@ -2765,7 +2771,7 @@ function tick0(){
     // too many of them crop it to bare turf, and then they run out of food
     if(f.graze){if(t.fert>.15){t.fert=Math.max(.15,t.fert-.0003*Math.min(b,1.5)*TICK_K);fxAdd('graze',.0003*Math.min(b,1.5)*TICK_K,.15,x,y,.003)}
       if(b>=1.2&&t.p.g>.3){t.p.g=Math.max(.3,t.p.g-.003*(b-1)*TICK_K);overgrazed++}continue}
-    if(f.stage>=4&&t.p.g<.4){const cover=near(x,y,1,isP('hawthorn'))>=3;
+    if(f.stage>=4&&t.p.g<.4){const cover=near(x,y,1,isP('hawthorn'))>=(t.p.id==='oak'?1:3);
       if(Math.random()<.012*b*(cover?.2:1)*TICK_K){t.p=cover?{id:'hawthorn',g:.7}:{id:'meadow',g:.8};eaten++;mark(x,y,'graze');if(DEERF[i]&&FS[i])seeFx('line:deer',x,y)}}
     else if(f.kind==='shrub'&&t.p.g<.4){if(Math.random()<.006*b*TICK_K){t.p={id:'meadow',g:.8};eaten++}}
     // browsers strip the bark of young and middle-aged trees; a veteran's thick bark sees them off
@@ -2978,7 +2984,7 @@ function populations(){
   const season=SEA.idx<=1;
   if(MAST.fall&&!S.fx.mast&&S.t%30===0){const m=mastTree();if(m)seeFx('mast',m[0],m[1])}
   // the year after a mast, when the nuts are gone
-  const lean=!MAST.on&&SEA.idx>=2&&mastYear(Math.floor(WX.n/4)-1);
+  const lean=!MAST.on&&SEA.idx>=2&&mastYear(Math.floor(WX.n/4)-1)&&(D.gw.oak||0)+(D.gw.beech||0)>=MAST_MIN;
   for(const sp in FAUNA){if(sp==='bee')continue;const F=FAUNA[sp],list=S.an.filter(a=>a.sp===sp),ci=capInfo(sp),cap=Math.max(F.keystone?1:0,ci.cap);
     if(list.length>cap&&list.length){if(cap>0&&Math.random()<.03*TICK_K){const a=list[(Math.random()*list.length)|0];
       if(PREY[sp])seeFx('starve:'+sp,a.hx,a.hy);else if(lean&&MAST_EAT[sp])seeFx('crash:mast',a.hx,a.hy);else if(ci.k<1)fxAdd('lean',1,3,a.hx,a.hy);
@@ -3087,7 +3093,9 @@ function updateAnimals(dt){
       // on its way to a new home: follow the route tile by tile, crossing gardens if it must
       if(a.path&&a.path.length){const j=a.path.shift();
         if(canCross(F.mv,S.tiles[j])){a.w=.1+Math.random()*.3;a.tx=j%N+(Math.random()-.5)*.3;a.ty=((j/N)|0)+(Math.random()-.5)*.3;continue}
-        a.path=[]}
+        // the way is blocked now (new water, a fallen wall): find another route, or settle on this side
+        const mv=relocate(a,F,[a.hx,a.hy]);if(mv&&mv.path.length){a.hx=mv.h[0];a.hy=mv.h[1];a.path=mv.path;continue}
+        a.path=[];a.hx=Math.round(a.x);a.hy=Math.round(a.y)}
       if(F.mv==='fly'&&zz){a.w=0;a.tx=a.hx;a.ty=a.hy;continue}
       if(F.mv==='fly'){a.w=1+Math.random()*4;
         for(let k=0;k<10;k++){const r=Math.min(3,F.range),x=a.hx+((Math.random()*(2*r+1))|0)-r,y=a.hy+((Math.random()*(2*r+1))|0)-r;
@@ -3104,7 +3112,9 @@ function updateAnimals(dt){
       if(zz&&!cd){a.tx=a.hx;a.ty=a.hy;continue}
       // cut off from home (water or a wall in the way): find the way round along the corridor, or a new home on this side
       if(cd>F.range&&!opts.some(o=>o[2]<cd)){const mv=relocate(a,F,[a.hx,a.hy])||relocate(a,F);
-        if(mv&&mv.path.length){a.hx=mv.h[0];a.hy=mv.h[1];a.path=mv.path;a.w=.1;continue}}
+        if(mv&&mv.path.length){a.hx=mv.h[0];a.hy=mv.h[1];a.path=mv.path;a.w=.1;continue}
+        // no way back: it settles where it stands, and the daily home check decides whether it can stay
+        if(canStand(F.mv,T(cx,cy))){a.hx=cx;a.hy=cy;continue}}
       if(opts.length){opts.sort((p,q)=>p[2]-q[2]);const pool=far?opts.filter(o=>o[2]===opts[0][2]):opts,o=pool[(Math.random()*pool.length)|0];
         a.tx=o[0]+(Math.random()-.5)*.4;a.ty=o[1]+(Math.random()-.5)*.4}
       continue}
@@ -5519,7 +5529,7 @@ function animalMechanics(sp){const F=FAUNA[sp],out=[];
     out.push(fxLine('roots:earthworm','<b>Feeds the roots.</b> Young scrub and trees within 1 tile of its home grow 30% faster.'));
     out.push(fxLine('worms:food','<b>Food for others.</b> The more earthworms, the more thrushes (up to 30%) and boar (up to 15%) the land can feed.'))}
   if(sp==='thrush')out.push(fxLine('perch:thrush','<b>Plants hedges.</b> Drops haw seeds within 5 tiles of its home, so hawthorn comes up far from any hedge.'));
-  if(sp==='deer')out.push(fxLine('line:deer','<b>Browse line.</b> Eats the seedlings on the floor of its wood, so no young trees grow up under the old ones except inside thorny scrub.'));
+  if(sp==='deer')out.push(fxLine('line:deer','<b>Browse line.</b> Eats the seedlings on the floor of its wood, so no young trees grow up under the old ones except inside thorny scrub. One thorn bush beside an oak seedling is enough to save it.'));
   if(sp==='salmon')out.push(fxLine('feed:salmon','<b>Carries the sea inland.</b> Each autumn the spawned-out fish feed the banks: soil richness rises on land within 2 tiles of its home.'));
   if(sp==='boar')out.push(fxLine('root:boar','<b>Rooting.</b> Turns turf into bare, disturbed earth around its home, where pioneers and acorns sprout faster and beech seedlings struggle.'));
   if(sp==='rabbit')out.push(fxLine('scrape:rabbit','<b>Scrapes.</b> Digs small bare patches around its burrows, where pioneer flowers pop up.'));
